@@ -1,0 +1,6 @@
+{
+  "name": "Trí Tuệ Phản Biện",
+  "description": "Nền tảng đối thoại giả lập với AI theo mô hình Gamification rèn luyện tư duy phản biện và nhận diện lỗi ngụy biện cho học sinh THPT.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

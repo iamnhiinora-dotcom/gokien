@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Cool light paper background with ink border -->
+  <rect width="64" height="64" rx="8" fill="#f4f6f8" stroke="#16233b" stroke-width="2" />
+  
+  <!-- Tree branch segment -->
+  <path d="M12 8 L12 56" stroke="#94a3b8" stroke-width="4" stroke-linecap="round" />
+  <circle cx="12" cy="32" r="2.5" fill="#dc2626" />
+  
+  <!-- Woodpecker Gõ -->
+  <!-- Pencil Red Crest -->
+  <path d="M30 14 C26 10, 20 12, 18 16 C22 17, 26 19, 29 22 Z" fill="#dc2626" />
+  
+  <!-- Head & Body (Ink Navy) -->
+  <path d="M26 18 C32 18, 38 22, 38 30 C38 38, 34 46, 28 50 C26 51, 24 50, 24 47 C24 43, 26 38, 26 32 C26 26, 24 22, 26 18 Z" fill="#16233b" />
+  
+  <!-- Highlighter Yellow Wing / Cheek Accent -->
+  <path d="M30 30 C34 32, 38 36, 36 42 C33 44, 29 42, 28 38 Z" fill="#fde047" stroke="#16233b" stroke-width="1.2" />
+  
+  <!-- Beak tapping towards the tree flaw -->
+  <polygon points="26,24 13,31 26,29" fill="#16233b" />
+  
+  <!-- Eye -->
+  <circle cx="28" cy="23" r="2" fill="#ffffff" />
+  <circle cx="27.5" cy="23" r="1" fill="#16233b" />
+</svg>

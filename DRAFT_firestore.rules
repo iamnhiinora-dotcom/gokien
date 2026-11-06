@@ -1,0 +1,164 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // 1. Global Default-Deny Catch-All
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Validation for UserProfile
+    function isValidUserProfile(data) {
+      return data.id is string && data.id.size() <= 128
+        && data.displayName is string && data.displayName.size() > 0 && data.displayName.size() <= 100
+        && data.schoolClass is string && data.schoolClass.size() <= 100
+        && (!('email' in data) || (data.email is string && data.email.size() <= 128))
+        && (!('avatarSeed' in data) || (data.avatarSeed is string && data.avatarSeed.size() <= 50))
+        && data.level is int && data.level >= 1 && data.level <= 10
+        && data.xp is int && data.xp >= 0
+        && data.title is string && data.title.size() <= 80
+        && data.debatesWon is int && data.debatesWon >= 0
+        && data.fallaciesIdentified is int && data.fallaciesIdentified >= 0
+        && (!('streakCount' in data) || (data.streakCount is int && data.streakCount >= 0))
+        && (!('lastActiveDate' in data) || (data.lastActiveDate is string && data.lastActiveDate.size() <= 10))
+        && (!('soundEnabled' in data) || data.soundEnabled is bool)
+        && (!('screenShakeEnabled' in data) || data.screenShakeEnabled is bool);
+    }
+
+    // Validation for LeaderboardUser
+    function isValidLeaderboardUser(data) {
+      return data.id is string && data.id.size() <= 128
+        && data.displayName is string && data.displayName.size() > 0 && data.displayName.size() <= 100
+        && data.schoolClass is string && data.schoolClass.size() <= 100
+        && (!('avatarSeed' in data) || (data.avatarSeed is string && data.avatarSeed.size() <= 50))
+        && data.level is int && data.level >= 1 && data.level <= 10
+        && data.xp is int && data.xp >= 0
+        && data.title is string && data.title.size() <= 80
+        && data.debatesWon is int && data.debatesWon >= 0
+        && data.fallaciesFound is int && data.fallaciesFound >= 0;
+    }
+
+    // Validation for DebateMatchRecord
+    function isValidDebateMatch(data) {
+      return data.id is string && data.id.size() <= 128
+        && data.userId is string && data.userId.size() <= 128
+        && data.topicMotion is string && data.topicMotion.size() <= 500
+        && data.studentSide is string && (data.studentSide == 'pro' || data.studentSide == 'con')
+        && data.outcome is string && (data.outcome == 'victory' || data.outcome == 'defeat' || data.outcome == 'draw')
+        && data.studentHp is int && data.studentHp >= 0 && data.studentHp <= 100
+        && data.aiHp is int && data.aiHp >= 0 && data.aiHp <= 100
+        && data.xpEarned is int && data.xpEarned >= 0 && data.xpEarned <= 300
+        && (!('roundsCompleted' in data) || (data.roundsCompleted is int && data.roundsCompleted >= 1 && data.roundsCompleted <= 10))
+        && (!('personaName' in data) || (data.personaName is string && data.personaName.size() <= 100))
+        && (!('date' in data) || (data.date is string && data.date.size() <= 30))
+        && (!('timestamp' in data) || (data.timestamp is string && data.timestamp.size() <= 20));
+    }
+
+    // 2. USERS COLLECTION: Lưu trữ hồ sơ học sinh
+    // Bảo vệ PII: Chỉ chủ sở hữu mới được đọc (get). Không cho phép list toàn bộ users.
+    match /users/{userId} {
+      allow get: if isOwner(userId) && isValidId(userId);
+      allow list: if false; // Chặn duyệt toàn bộ danh sách users để chống thu thập PII/Email
+
+      // Học sinh khởi tạo hồ sơ khi lần đầu đăng nhập Google
+      allow create: if isOwner(userId)
+        && isValidId(userId)
+        && isValidUserProfile(incoming())
+        && incoming().id == userId
+        && incoming().xp == 0
+        && incoming().level == 1
+        && incoming().debatesWon == 0
+        && incoming().fallaciesIdentified == 0
+        && incoming().keys().hasAll(['id', 'displayName', 'schoolClass', 'level', 'xp', 'title', 'debatesWon', 'fallaciesIdentified']);
+
+      // Cập nhật hồ sơ từ trình duyệt:
+      // YÊU CẦU BẢO MẬT TUYỆT ĐỐI: Trình duyệt KHÔNG ĐƯỢC tự cộng XP, level, debatesWon, fallaciesIdentified!
+      // Các trường XP và thành tích chỉ được ghi nhận khi đúng với giá trị hiện hữu
+      allow update: if isOwner(userId)
+        && isValidId(userId)
+        && isValidUserProfile(incoming())
+        && incoming().id == existing().id
+        && incoming().xp == existing().xp
+        && incoming().level == existing().level
+        && incoming().debatesWon == existing().debatesWon
+        && incoming().fallaciesIdentified == existing().fallaciesIdentified
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'displayName',
+          'schoolClass',
+          'avatarSeed',
+          'soundEnabled',
+          'screenShakeEnabled',
+          'lastActiveDate',
+          'streakCount'
+        ]);
+
+      allow delete: if false;
+
+      // 3. SUBCOLLECTION: Lịch sử trận đấu của học sinh
+      match /matches/{matchId} {
+        allow get, list: if isOwner(userId) && isValidId(userId) && isValidId(matchId);
+
+        allow create: if isOwner(userId)
+          && isValidId(userId)
+          && isValidId(matchId)
+          && isValidDebateMatch(incoming())
+          && incoming().id == matchId
+          && incoming().userId == userId;
+
+        // Trận đấu sau khi ghi nhận là bất biến, không cho phép sửa đổi hoặc xóa
+        allow update, delete: if false;
+      }
+    }
+
+    // 4. LEADERBOARD COLLECTION: Bảng xếp hạng công khai toàn trường
+    // KHÔNG chứa email hay PII học sinh.
+    match /leaderboard/{userId} {
+      allow get, list: if true;
+
+      // Khởi tạo vị trí trên bảng xếp hạng
+      allow create: if isOwner(userId)
+        && isValidId(userId)
+        && isValidLeaderboardUser(incoming())
+        && incoming().id == userId
+        && incoming().xp == 0
+        && incoming().level == 1
+        && incoming().debatesWon == 0
+        && incoming().fallaciesFound == 0;
+
+      // Học sinh cập nhật tên hiển thị, avatar, lớp (không được tự sửa XP)
+      allow update: if isOwner(userId)
+        && isValidId(userId)
+        && isValidLeaderboardUser(incoming())
+        && incoming().id == existing().id
+        && incoming().xp == existing().xp
+        && incoming().level == existing().level
+        && incoming().debatesWon == existing().debatesWon
+        && incoming().fallaciesFound == existing().fallaciesFound
+        && incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'schoolClass', 'avatarSeed']);
+
+      allow delete: if false;
+    }
+  }
+}

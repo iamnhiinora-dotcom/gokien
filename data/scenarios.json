@@ -1,0 +1,855 @@
+[
+  {
+    "id": "sc_01",
+    "category": "hoc_duong",
+    "topicTitle": "Tranh cãi phân ban & chọn ngành thi Đại học",
+    "speaker": {
+      "name": "Thầy Hưng",
+      "role": "Giáo viên Chủ nhiệm lớp 11A"
+    },
+    "context": "Trong buổi họp phụ huynh và hướng nghiệp định hướng thi THPT Quốc gia, bạn Nam bày tỏ mong muốn thi vào ngành Thiết kế Đồ họa và Nghệ thuật số.",
+    "statement": "Học vẽ vời nghệ thuật thì sau này chỉ có ra đường đứng vẽ thuê dạo hoặc thất nghiệp thôi! Đã là học sinh trường chuyên thì một là phải thi Y khoa, hai là thi Công nghệ thông tin để làm kỹ sư. Chẳng có con đường nào khác để thành công cả!",
+    "flawText": "một là phải thi Y khoa, hai là thi Công nghệ thông tin để làm kỹ sư. Chẳng có con đường nào khác để thành công cả!",
+    "hiddenFallacyId": "false_dilemma",
+    "secondaryFallacyId": "slippery_slope",
+    "difficulty": "Co_ban",
+    "explanation": "Người nói đã mắc lỗi Ngụy biện Nhị nguyên giả tạo (False Dilemma) khi áp đặt chỉ có 2 thái cực: 'Thi Y / CNTT' hoặc 'Thất nghiệp / Vẽ dạo', cố tình phớt lờ thị trường công nghiệp sáng tạo, game và truyền thông số khổng lồ đang rất khát nhân lực chất lượng cao.",
+    "sampleRebuttal": "Thưa thầy, thành công trong sự nghiệp không chỉ giới hạn ở Y khoa hay CNTT. Ngành kinh tế sáng tạo và thiết kế sản phẩm số đang có nhu cầu nhân lực rất lớn. Việc ép buộc chỉ có 2 lựa chọn cực đoan là một ngụy biện nhị nguyên, bỏ qua năng khiếu thực sự và cơ hội việc làm đa dạng của học sinh."
+  },
+  {
+    "id": "sc_02",
+    "category": "mang_xa_hoi",
+    "topicTitle": "Drama tranh cãi bài viết trên diễn đàn học sinh",
+    "speaker": {
+      "name": "User @DarkKnight99",
+      "role": "Thành viên mạng xã hội"
+    },
+    "context": "Dưới bài viết phản ánh việc căng tin trường tăng giá đồ ăn nhưng giảm khẩu phần và chất lượng vệ sinh, một tài khoản vào bình luận gay gắt.",
+    "statement": "Nhìn lại cái avatar anime với cái tên giả mạo thì chắc hẳn ngoài đời bạn chỉ là một đứa nhút nhát, học hành dốt nát và chuyên đi kiếm chuyện bôi nhọ người khác. Loại người như bạn thì nói câu nào là rác câu đấy, tin làm sao được!",
+    "flawText": "Nhìn lại cái avatar anime với cái tên giả mạo thì chắc hẳn ngoài đời bạn chỉ là một đứa nhút nhát, học hành dốt nát",
+    "hiddenFallacyId": "ad_hominem",
+    "difficulty": "Co_ban",
+    "explanation": "Đây là lỗi Ngụy biện công kích cá nhân (Ad Hominem) điển hình. Thay vì đối thoại về vấn đề giá thành hay vệ sinh an toàn thực phẩm của căng tin, người này lại nhục mạ ảnh đại diện, giả định trình độ và nhân cách của người đăng bài.",
+    "sampleRebuttal": "Việc tôi dùng avatar gì hay tính cách ngoài đời của tôi không làm thay đổi sự thật rằng đĩa cơm căng tin hôm nay đã tăng thêm 5.000đ nhưng thức ăn nguội lạnh và thiếu dinh dưỡng. Hãy tập trung phản biện vào chất lượng dịch vụ thay vì công kích nhân thân của tôi."
+  },
+  {
+    "id": "sc_03",
+    "category": "cong_nghe_ai",
+    "topicTitle": "Học sinh dùng ChatGPT để hỗ trợ viết bài luận",
+    "speaker": {
+      "name": "Bác Thành",
+      "role": "Phụ huynh học sinh"
+    },
+    "context": "Trong buổi tọa đàm 'Ứng dụng AI trong trường học kỷ nguyên số', bác Thành phát biểu ý kiến phản đối việc nhà trường hướng dẫn học sinh dùng AI.",
+    "statement": "Nếu chúng ta để học sinh chạm vào các công cụ AI như ChatGPT, các cháu sẽ lười suy nghĩ, không chịu đọc sách nữa. Dần dà não bộ sẽ teo tóp, khả năng ngôn ngữ biến mất và thế hệ trẻ sẽ trở thành những sinh vật vô tri phụ thuộc hoàn toàn vào máy móc!",
+    "flawText": "Dần dà não bộ sẽ teo tóp, khả năng ngôn ngữ biến mất và thế hệ trẻ sẽ trở thành những sinh vật vô tri phụ thuộc hoàn toàn vào máy móc!",
+    "hiddenFallacyId": "slippery_slope",
+    "difficulty": "Trung_binh",
+    "explanation": "Ngụy biện Dốc trượt phi lý (Slippery Slope). Người nói dựng nên một chuỗi kịch bản ngày tận thế không có căn cứ: từ việc 'hướng dẫn dùng AI' suy diễn thành 'não teo tóp' và 'thế hệ vô tri', trong khi hoàn toàn có thể kiểm soát phương pháp dạy học tương tác.",
+    "sampleRebuttal": "Bác đã phóng đại một chuỗi nhân quả cực đoan mà không có nghiên cứu khoa học xác thực. Trước đây khi máy tính bỏ túi ra đời người ta cũng lo ngại học sinh mất khả năng tính toán, nhưng thực tế con người đã dùng nó để giải quyết các bài toán vĩ mô hơn. Nếu có phương pháp sư phạm đúng đắn, AI sẽ là trợ thủ nâng cao tư duy thay vì biến học sinh thành người vô tri."
+  },
+  {
+    "id": "sc_04",
+    "category": "hoc_duong",
+    "topicTitle": "Quy chế sử dụng đồng phục trong mùa nắng nóng",
+    "speaker": {
+      "name": "Bạn Minh",
+      "role": "Thành viên Ban chấp hành Đoàn trường"
+    },
+    "context": "Học sinh khối 10 kiến nghị cho phép mặc áo phông thể dục thoáng mát thay cho áo sơ mi dài tay đóng thùng trong những ngày nhiệt độ ngoài trời vượt 38 độ C.",
+    "statement": "Các bạn đòi mặc áo thể dục thoải mái à? Vậy bước tiếp theo các bạn sẽ đòi mặc quần đùi, áo ba lỗ, rồi thậm chí mặc cả đồ ngủ đi học cho mát mẻ đúng không? Trường học là nơi trang nghiêm, không thể biến thành cái bãi biển được!",
+    "flawText": "Vậy bước tiếp theo các bạn sẽ đòi mặc quần đùi, áo ba lỗ, rồi thậm chí mặc cả đồ ngủ đi học cho mát mẻ đúng không?",
+    "hiddenFallacyId": "straw_man",
+    "secondaryFallacyId": "slippery_slope",
+    "difficulty": "Trung_binh",
+    "explanation": "Ngụy biện Người rơm (Straw Man). Học sinh chỉ xin mặc áo phông thể dục đúng quy chuẩn của nhà trường, nhưng bạn Minh đã bóp méo thành 'muốn mặc quần đùi, áo ba lỗ, đồ ngủ như bãi biển' để dễ dàng công kích.",
+    "sampleRebuttal": "Bạn đang bóp méo kiến nghị của chúng tôi thành một hình nộm phi lý. Áo thể dục vẫn là đồng phục chính thức có in logo trường, lịch sự và sạch sẽ. Đề xuất của chúng tôi chỉ áp dụng trong điều kiện thời tiết khắc nghiệt vì sức khỏe học đường, chứ không ai đề xuất mặc áo ba lỗ hay đồ ngủ như bạn vừa phóng đại."
+  },
+  {
+    "id": "sc_05",
+    "category": "dao_duc_xa_hoi",
+    "topicTitle": "Tranh luận về việc ủng hộ quỹ thiện nguyện bão lũ",
+    "speaker": {
+      "name": "Chị Mai",
+      "role": "Trưởng nhóm phong trào sinh viên"
+    },
+    "context": "Khi các bạn học sinh trong lớp đang thảo luận xem nên đóng góp tiền mặt hay mua chăn màn, lương thực gửi về vùng bão lũ, chị Mai lên tiếng.",
+    "statement": "Những người dân ngoài kia đang phải chịu cảnh màn trời chiếu đất, cơm không đủ ăn, nước không đủ uống! Các em ngồi đây cân đo đong đếm tiền mặt hay vật phẩm thì đúng là những kẻ vô tâm, máu lạnh, không có một chút tình người nào!",
+    "flawText": "Các em ngồi đây cân đo đong đếm tiền mặt hay vật phẩm thì đúng là những kẻ vô tâm, máu lạnh, không có một chút tình người nào!",
+    "hiddenFallacyId": "appeal_to_emotion",
+    "difficulty": "Trung_binh",
+    "explanation": "Ngụy biện Lợi dụng cảm xúc (Appeal to Emotion). Chị Mai đã kích động lòng thương hại và nỗi cắn rứt lương tâm để vu cáo các bạn là 'máu lạnh', nhằm trốn tránh việc tính toán phương án cứu trợ tối ưu và thiết thực nhất.",
+    "sampleRebuttal": "Lòng trắc ẩn cần đi đôi với sự tỉnh táo và hiệu quả. Việc chúng em cân nhắc đóng góp hiện vật hay tiền mặt là để đảm bảo hàng cứu trợ đến đúng người và không bị hư hao trên đường ngập lụt. Việc thảo luận phương án tối ưu xuất phát từ trách nhiệm, hoàn toàn không phải là sự vô tâm như chị quy chụp."
+  },
+  {
+    "id": "sc_06",
+    "category": "cong_nghe_ai",
+    "topicTitle": "Trào lưu ăn kiêng chữa bệnh trên TikTok",
+    "speaker": {
+      "name": "Bạn Trâm",
+      "role": "Học sinh lớp 12 chuyên Sử"
+    },
+    "context": "Một nhóm bạn đang bàn về chế độ dinh dưỡng mùa thi cử, bạn Trâm khoe một phương pháp nhịn ăn gián đoạn khắc nghiệt.",
+    "statement": "Phương pháp nhịn ăn 23 tiếng mỗi ngày này chắc chắn cực kỳ chuẩn khoa học và chữa được bách bệnh! Cậu biết sao không? Giáo sư vật lý giải Nobel năm ngoái cũng vừa lên video khen ngợi phương pháp này đấy!",
+    "flawText": "Giáo sư vật lý giải Nobel năm ngoái cũng vừa lên video khen ngợi phương pháp này đấy!",
+    "hiddenFallacyId": "appeal_to_authority",
+    "difficulty": "Co_ban",
+    "explanation": "Ngụy biện Viện dẫn uy quyền sai chỗ (Appeal to Authority). Một vị Giáo sư đạt giải Nobel về Vật lý không có chuyên môn y sinh học hay dinh dưỡng học để kết luận về sự an toàn của việc nhịn ăn cực đoan.",
+    "sampleRebuttal": "Một nhà khoa học đạt giải Nobel Vật lý không phải là bác sĩ dinh dưỡng lâm sàng. Uy quyền trong ngành khoa học lượng tử không thể bảo chứng cho một phác đồ y khoa đường tiêu hóa. Chế độ ăn cho học sinh ôn thi cần căn cứ vào tháp dinh dưỡng của Bộ Y tế và khuyến cáo từ các chuyên gia dinh dưỡng thực thụ."
+  },
+  {
+    "id": "sc_07",
+    "category": "hoc_duong",
+    "topicTitle": "Vi phạm quy chế thi cử và văn hóa học tập",
+    "speaker": {
+      "name": "Bạn Dũng",
+      "role": "Học sinh lớp 11B"
+    },
+    "context": "Dũng bị lớp trưởng nhắc nhở vì mang điện thoại vào phòng thi khảo sát chất lượng đầu năm.",
+    "statement": "Cậu nhắc nhở tớ làm gì? Cả trường này ai đi thi mà chẳng lén giở tài liệu hoặc đem điện thoại vào kiểm tra đáp án. Cậu cứ làm như mình cậu thanh cao, ai cũng làm thế thì việc gì tớ phải chịu phạt một mình?",
+    "flawText": "Cả trường này ai đi thi mà chẳng lén giở tài liệu hoặc đem điện thoại vào kiểm tra đáp án",
+    "hiddenFallacyId": "bandwagon",
+    "secondaryFallacyId": "tu_quoque",
+    "difficulty": "Co_ban",
+    "explanation": "Ngụy biện Chạy theo đám đông (Bandwagon). Dũng cho rằng vì 'ai cũng làm thế' nên hành vi gian lận thi cử của mình là bình thường và không đáng bị phê bình.",
+    "sampleRebuttal": "Việc nhiều người vi phạm không thể biến một hành vi sai trái thành chuẩn mực. Quy chế thi cử được ban hành để bảo đảm sự công bằng cho tất cả thí sinh. Dù có bao nhiêu người vi phạm thì hành vi mang thiết bị gian lận vào phòng thi của bạn vẫn là hành vi sai quy chế và cần được xử lý."
+  },
+  {
+    "id": "sc_08",
+    "category": "dao_duc_xa_hoi",
+    "topicTitle": "Tranh luận về việc bảo tồn di tích lịch sử",
+    "speaker": {
+      "name": "Ông Đức",
+      "role": "Đại diện chủ đầu tư dự án"
+    },
+    "context": "Trong buổi lấy ý kiến người dân về việc phá bỏ một rạp chiếu bóng cổ kính xây dựng từ thời Pháp thuộc để làm trung tâm thương mại hiện đại.",
+    "statement": "Tại sao các vị cứ phải tiếc nuối một cái rạp hát cũ kỹ làm gì, trong khi ngoài biển đảo các chiến sĩ biên phòng còn đang phải thức trắng đêm chịu rét để bảo vệ chủ quyền tổ quốc?",
+    "flawText": "trong khi ngoài biển đảo các chiến sĩ biên phòng còn đang phải thức trắng đêm chịu rét để bảo vệ chủ quyền tổ quốc?",
+    "hiddenFallacyId": "red_herring",
+    "difficulty": "Trung_binh",
+    "explanation": "Ngụy biện Đánh lạc hướng / Cá trích đỏ (Red Herring). Người nói lôi chủ đề bảo vệ chủ quyền biển đảo đầy xúc động và thiêng liêng vào để dập tắt cuộc thảo luận về bảo tồn di sản kiến trúc đô thị.",
+    "sampleRebuttal": "Nhiệm vụ bảo vệ chủ quyền biển đảo của quân đội là tối thượng, nhưng điều đó hoàn toàn không liên quan đến trách nhiệm gìn giữ di sản văn hóa lịch sử của thành phố. Việc lôi vấn đề biên cương vào đây chỉ là sự đánh lạc hướng khỏi câu hỏi cốt lõi: Làm sao dung hòa giữa phát triển kinh tế và bảo tồn di tích cổ?"
+  },
+  {
+    "id": "sc_09",
+    "category": "hoc_duong",
+    "topicTitle": "Lập luận về nội quy trường học",
+    "speaker": {
+      "name": "Thầy Giám thị Tuấn",
+      "role": "Phó Ban Quản sinh"
+    },
+    "context": "Một nhóm học sinh đề đạt nguyện vọng xem xét lại điều khoản cấm mang đàn guitar vào giờ ra chơi.",
+    "statement": "Nội quy của trường ta cấm mang nhạc cụ vào giờ chơi là hoàn toàn hợp lý, bởi vì mọi điều khoản được ghi trong sổ nội quy đều đã được xây dựng một cách hợp lý và chuẩn mực!",
+    "flawText": "hoàn toàn hợp lý, bởi vì mọi điều khoản được ghi trong sổ nội quy đều đã được xây dựng một cách hợp lý và chuẩn mực!",
+    "hiddenFallacyId": "circular_reasoning",
+    "difficulty": "Co_ban",
+    "explanation": "Ngụy biện Luẩn quẩn / Lập luận vòng quanh (Circular Reasoning). Người nói dùng chính tiền đề 'nội quy chuẩn mực' để chứng minh kết luận 'nội quy hợp lý', mà không hề đưa ra lý do thực chất (như tiếng ồn, quản lý tài sản, an toàn...).",
+    "sampleRebuttal": "Thầy đang dùng chính mệnh đề cần chứng minh để làm bằng chứng. Câu hỏi thực sự của chúng em là: Đàn guitar trong giờ nghỉ giải lao gây ra tác hại cụ thể nào (như ồn ào ảnh hưởng lớp bên cạnh hay nguy cơ va chạm)? Nếu không nêu được nguyên nhân thực chất mà chỉ nói nội quy hợp lý vì nó là nội quy, thì đó là lập luận luẩn quẩn."
+  },
+  {
+    "id": "sc_10",
+    "category": "mang_xa_hoi",
+    "topicTitle": "Tương quan giữa bùa may mắn và điểm thi",
+    "speaker": {
+      "name": "Bạn Linh",
+      "role": "TikToker học đường"
+    },
+    "context": "Linh đăng video khoe chiếc vòng đá phong thủy màu tím vừa mua trên mạng với giá 500.000 đồng.",
+    "statement": "Tuần trước mình mua cái vòng phong thủy này, tuần này thi giữa kỳ môn Lý được tròn 10 điểm luôn! Rõ ràng năng lượng vũ trụ từ chiếc vòng tím này đã giúp mình giải sạch đề thi!",
+    "flawText": "Tuần trước mình mua cái vòng phong thủy này, tuần này thi giữa kỳ môn Lý được tròn 10 điểm luôn! Rõ ràng năng lượng vũ trụ từ chiếc vòng tím này đã giúp mình",
+    "hiddenFallacyId": "post_hoc",
+    "difficulty": "Co_ban",
+    "explanation": "Ngụy biện Nhân quả sau đó (Post Hoc Ergo Propter Hoc). Linh ngộ nhận vì mua vòng phong thủy trước rồi sau đó được 10 điểm Lý, nên cho rằng cái vòng là nguyên nhân tạo ra điểm số.",
+    "sampleRebuttal": "Sự kiện mua vòng xảy ra trước không đồng nghĩa nó là nguyên nhân tạo ra điểm số. Điểm 10 môn Lý là thành quả từ kiến thức, sự tập trung và ôn luyện bài tập của bạn trong suốt học kỳ. Đổ công sức đó cho một viên đá vô tri là sự nhầm lẫn giữa thứ tự thời gian và quan hệ nhân quả thực chất."
+  },
+  {
+    "id": "sc_11",
+    "category": "hoc_duong",
+    "topicTitle": "Tranh cãi phân chia trực nhật trong nhóm Zalo lớp",
+    "speaker": {
+      "name": "Bạn Huy",
+      "role": "Học sinh lớp 10A3"
+    },
+    "context": "Trong nhóm Zalo lớp 10A3, bạn lớp phó lao động nhắn tin nhắc nhở Huy vì hôm nay cậu quên đổ rác tổ 2 trước khi ra về.",
+    "statement": "Cậu làm như mình cậu chăm chỉ lắm ấy! Hôm thứ Tư tuần trước chính mắt tớ thấy cậu để quên chổi lau nhà ngoài hành lang đấy thôi. Bản thân cậu cũng đã làm tròn nhiệm vụ đâu mà mở mồm ra dạy đời người khác?",
+    "flawText": "Bản thân cậu cũng đã làm tròn nhiệm vụ đâu mà mở mồm ra dạy đời người khác?",
+    "hiddenFallacyId": "tu_quoque",
+    "difficulty": "Co_ban",
+    "explanation": "Ngụy biện 'Bạn cũng thế' (Tu Quoque). Thay vì thừa nhận việc mình quên đổ rác hôm nay, Huy quay sang bới móc lỗi quên chổi của lớp phó tuần trước để chối bỏ trách nhiệm hiện tại.",
+    "sampleRebuttal": "Việc lớp phó từng sơ suất trong quá khứ không làm cho hành vi quên đổ rác hôm nay của bạn trở thành đúng. Việc nào ra việc đó, bạn phụ trách đổ rác hôm nay thì cần hoàn thành trách nhiệm của ngày hôm nay."
+  },
+  {
+    "id": "sc_12",
+    "category": "mang_xa_hoi",
+    "topicTitle": "Bình luận Facebook về thói quen đọc sách",
+    "speaker": {
+      "name": "Tài khoản @ThanhTung_9x",
+      "role": "Người dùng mạng xã hội"
+    },
+    "context": "Một bạn học sinh viết bài review chia sẻ lợi ích của việc đọc sách mỗi ngày 30 phút, một người vào bình luận phản bác.",
+    "statement": "Tôi đọc Facebook của em thấy em vừa khoe lướt TikTok 2 tiếng hôm qua. Chính em còn nghiện mạng xã hội lòi mắt ra kia kìa, bày đặt lên mạng viết bài khuyên người khác đọc sách với cả phát triển bản thân, đạo đức giả vừa thôi!",
+    "flawText": "Chính em còn nghiện mạng xã hội lòi mắt ra kia kìa, bày đặt lên mạng viết bài khuyên người khác đọc sách",
+    "hiddenFallacyId": "tu_quoque",
+    "secondaryFallacyId": "ad_hominem",
+    "difficulty": "Trung_binh",
+    "explanation": "Ngụy biện 'Bạn cũng thế' (Tu Quoque) kết hợp công kích cá nhân. Lập luận về lợi ích của việc đọc sách hoàn toàn độc lập với việc người viết bài có từng lướt TikTok hay không. Hành vi cá nhân không làm mất đi giá trị của chân lý đọc sách.",
+    "sampleRebuttal": "Lợi ích của việc đọc sách mỗi ngày đối với trí nhớ và ngôn ngữ là sự thật đã được khoa học chứng minh. Việc tác giả bài viết có lúc giải trí bằng TikTok không làm triệt tiêu giá trị của lời khuyên đọc sách."
+  },
+  {
+    "id": "sc_13",
+    "category": "dao_duc_xa_hoi",
+    "topicTitle": "Tin nhắn gia đình về việc sử dụng điện thoại ban đêm",
+    "speaker": {
+      "name": "Bố Nam",
+      "role": "Phụ huynh"
+    },
+    "context": "Khi bố nhắc Nam không nên vừa cắm sạc vừa dùng điện thoại chơi game khuya trên giường ngủ, Nam cãi lại.",
+    "statement": "Bố bảo con không được vừa sạc vừa dùng điện thoại, nhưng tối nào bố chẳng vừa cắm sạc vừa xem bóng đá đến 12h đêm ở phòng khách! Bố làm được thì con cũng làm được, việc gì bố cứ phải cấm đoán con?",
+    "flawText": "tối nào bố chẳng vừa cắm sạc vừa xem bóng đá đến 12h đêm ở phòng khách! Bố làm được thì con cũng làm được",
+    "hiddenFallacyId": "tu_quoque",
+    "secondaryFallacyId": "ad_hominem",
+    "difficulty": "Nang_cao",
+    "explanation": "Ngụy biện 'Bạn cũng thế' (Tu Quoque). Nam dùng hành vi nguy hiểm của bố để biện minh cho sự an toàn của bản thân, trong khi nguy cơ chập cháy nổ pin khi vừa sạc vừa dùng là mối đe dọa vật lý có thật đối với cả hai bố con.",
+    "sampleRebuttal": "Nguy cơ pin quá nhiệt phát nổ là quy luật vật lý tác động lên mọi thiết bị. Việc bố làm sai không làm cho hành vi của con trở nên an toàn. Lời khuyên an toàn vẫn đúng đắn và cả bố lẫn con đều cần thay đổi thói quen nguy hiểm này."
+  },
+  {
+    "id": "sc_14",
+    "category": "mang_xa_hoi",
+    "topicTitle": "Tranh cãi về gu âm nhạc trong nhóm Facebook",
+    "speaker": {
+      "name": "Bạn Quốc",
+      "role": "Học sinh lớp 11C"
+    },
+    "context": "Trong bài đăng thảo luận về các bài hát rap có ca từ tích cực, Quốc vào phản đối việc nghe một bài rap truyền cảm hứng học tập.",
+    "statement": "Bài rap này hay ho cái nỗi gì? Bạn có biết thằng Tuấn 'cá biệt' chuyên trốn học đánh nhau ở trường mình cũng thần tượng ông rapper này không? Nghe cùng thần tượng với loại đầu gấu đấy thì gu thưởng thức của bạn cũng chỉ ngang hàng với mấy đứa du côn thôi!",
+    "flawText": "thằng Tuấn 'cá biệt' chuyên trốn học đánh nhau ở trường mình cũng thần tượng ông rapper này không? Nghe cùng thần tượng với loại đầu gấu đấy thì gu thưởng thức của bạn cũng chỉ ngang hàng",
+    "hiddenFallacyId": "guilt_by_association",
+    "difficulty": "Co_ban",
+    "explanation": "Ngụy biện Liên đới tội lỗi (Guilt by Association). Quốc đánh giá chất lượng bài hát và nhân cách người nghe chỉ dựa trên sự trùng hợp rằng một học sinh cá biệt cũng thích bài hát đó.",
+    "sampleRebuttal": "Giá trị nghệ thuật và thông điệp tích cực của một tác phẩm âm nhạc không bị hạ thấp chỉ vì một người có hành vi xấu cũng yêu thích nó. Quy chụp người nghe có cùng tính cách với người khác chỉ vì chung sở thích là sự liên đới vô căn cứ."
+  },
+  {
+    "id": "sc_15",
+    "category": "hoc_duong",
+    "topicTitle": "Thành lập Câu lạc bộ Board Game ở trường",
+    "speaker": {
+      "name": "Bác Lan",
+      "role": "Đại diện Hội Phụ huynh"
+    },
+    "context": "Trong buổi họp lấy ý kiến thành lập CLB Cờ chiến thuật và Trò chơi trí tuệ (Board Game) cho học sinh thư giãn cuối tuần.",
+    "statement": "Tôi kịch liệt phản đối cái CLB Board Game này! Mấy đứa học sinh trộm cắp xe đạp bị công an phường bắt tuần trước cũng toàn tụ tập chơi ma sói với bài Uno ở quán nước. Cho các cháu lập hội nhóm chơi mấy trò này là đang biến trường học thành ổ tệ nạn đấy!",
+    "flawText": "Mấy đứa học sinh trộm cắp xe đạp bị công an phường bắt tuần trước cũng toàn tụ tập chơi ma sói với bài Uno ở quán nước. Cho các cháu lập hội nhóm chơi mấy trò này là đang biến trường học thành ổ tệ nạn",
+    "hiddenFallacyId": "guilt_by_association",
+    "secondaryFallacyId": "slippery_slope",
+    "difficulty": "Trung_binh",
+    "explanation": "Ngụy biện Liên đới tội lỗi kết hợp dốc trượt phi lý. Bác Lan quy chụp bản thân trò chơi trí tuệ là xấu xa chỉ vì những kẻ phạm tội từng chơi nó, rồi suy diễn trường học sẽ thành ổ tệ nạn.",
+    "sampleRebuttal": "Board Game là hoạt động rèn luyện tư duy logic và kỹ năng giao tiếp được các trường đại học hàng đầu thế giới khuyến khích. Việc một vài cá nhân vi phạm pháp luật từng chơi trò chơi này không biến trò chơi hay các học sinh tham gia lành mạnh thành tội phạm."
+  },
+  {
+    "id": "sc_16",
+    "category": "cong_nghe_ai",
+    "topicTitle": "Tranh luận về phương pháp học tập cá nhân hóa",
+    "speaker": {
+      "name": "Thầy Vinh",
+      "role": "Giáo viên Lịch sử"
+    },
+    "context": "Một nhóm học sinh đề xuất áp dụng phương pháp ghi chép thông minh theo sơ đồ tư duy kết hợp thẻ flashcard số.",
+    "statement": "Tôi đọc báo thấy mấy kẻ cầm đầu đường dây lừa đảo tài chính trên mạng cũng khoe khoang là áp dụng kỹ thuật ghi chép sơ đồ này để huấn luyện nhân viên đa cấp. Một phương pháp được bọn lừa đảo sử dụng thì không có tư cách gì được mang vào môi trường giáo dục chân chính của chúng ta cả!",
+    "flawText": "Một phương pháp được bọn lừa đảo sử dụng thì không có tư cách gì được mang vào môi trường giáo dục chân chính của chúng ta cả!",
+    "hiddenFallacyId": "guilt_by_association",
+    "secondaryFallacyId": "ad_hominem",
+    "difficulty": "Nang_cao",
+    "explanation": "Ngụy biện Liên đới tội lỗi (Guilt by Association). Phương pháp ghi chép sơ đồ tư duy (Mindmap) và flashcard là công cụ học tập nhận thức đã được chứng minh hiệu quả; việc kẻ xấu lợi dụng công cụ không làm bản thân công cụ đó mang tội lỗi.",
+    "sampleRebuttal": "Một công cụ học tập hay phương pháp tư duy có tính trung lập. Giống như chiếc máy tính, kẻ xấu có thể dùng để lừa đảo nhưng nhà khoa học dùng để nghiên cứu. Bác bỏ phương pháp học tập hiệu quả chỉ vì kẻ xấu từng áp dụng nó là ngụy biện liên đới tội lỗi."
+  },
+  {
+    "id": "sc_17",
+    "category": "mang_xa_hoi",
+    "topicTitle": "Đánh giá học sinh một trường qua bình luận TikTok",
+    "speaker": {
+      "name": "Tài khoản @GenZ_Review",
+      "role": "TikToker học đường"
+    },
+    "context": "Sau khi xem video một bạn học sinh mặc đồng phục trường THPT K vượt đèn đỏ bị camera hành trình quay lại.",
+    "statement": "Xem clip là đủ hiểu học sinh trường K này ý thức như thế nào rồi! Hôm trước mình cũng thấy một đứa trường này chen lấn ở trạm xe buýt. Rõ ràng toàn bộ học sinh trường THPT K đều là những đứa vô kỷ luật, coi thường luật pháp!",
+    "flawText": "Rõ ràng toàn bộ học sinh trường THPT K đều là những đứa vô kỷ luật, coi thường luật pháp!",
+    "hiddenFallacyId": "hasty_generalization",
+    "difficulty": "Co_ban",
+    "explanation": "Ngụy biện Khái quát hóa vội vã (Hasty Generalization). Chỉ dựa vào 2 cá nhân vi phạm giao thông để vội vàng quy chụp cho toàn thể hàng nghìn học sinh của trường THPT K.",
+    "sampleRebuttal": "Trường THPT K có gần hai nghìn học sinh. Hai trường hợp vi phạm cá nhân không thể đại diện cho toàn bộ tập thể. Kết luận cả trường vô kỷ luật từ hai quan sát cá biệt là lỗi khái quát hóa vội vã và thiếu công bằng."
+  },
+  {
+    "id": "sc_18",
+    "category": "hoc_duong",
+    "topicTitle": "Bàn luận về phương pháp học môn Tiếng Anh",
+    "speaker": {
+      "name": "Bạn Hoàng",
+      "role": "Học sinh lớp 12"
+    },
+    "context": "Trong buổi chia sẻ kinh nghiệm ôn thi tốt nghiệp môn Tiếng Anh tại câu lạc bộ học tập.",
+    "statement": "Học ngữ pháp làm gì cho mệt đầu các bạn ơi! Mình biết hai bạn trong xóm chẳng học ngữ pháp ngày nào, chỉ xem phim hoạt hình Mỹ mà đợt thi thử IELTS vừa rồi vẫn được 7.5. Suy ra học ngữ pháp là vô bổ, cứ cày phim là giỏi tiếng Anh hết!",
+    "flawText": "Học ngữ pháp làm gì cho mệt đầu các bạn ơi! Mình biết hai bạn trong xóm chẳng học ngữ pháp ngày nào, chỉ xem phim hoạt hình Mỹ mà đợt thi thử IELTS vừa rồi vẫn được 7.5. Suy ra học ngữ pháp là vô bổ, cứ cày phim là giỏi tiếng Anh hết!",
+    "hiddenFallacyId": "hasty_generalization",
+    "secondaryFallacyId": "anecdotal",
+    "difficulty": "Trung_binh",
+    "explanation": "Ngụy biện Khái quát hóa vội vã kết hợp Chuyện kể cá nhân. Dùng trường hợp hiếm hoi của hai người bạn để phủ định hoàn toàn tầm quan trọng của ngữ pháp học thuật đối với số đông học sinh.",
+    "sampleRebuttal": "Hai bạn đó có thể có môi trường tiếp xúc ngoại ngữ đặc thù hoặc năng khiếu ngôn ngữ vượt trội. Đối với phần lớn người học, nắm vững cấu trúc ngữ pháp là nền tảng bắt buộc để đọc hiểu văn bản học thuật và viết chuẩn xác."
+  },
+  {
+    "id": "sc_19",
+    "category": "dao_duc_xa_hoi",
+    "topicTitle": "Câu cửa miệng 'Con nhà người ta' trong bữa cơm gia đình",
+    "speaker": {
+      "name": "Mẹ bạn Hoa",
+      "role": "Phụ huynh"
+    },
+    "context": "Trong bữa cơm tối khi nói về việc học đại học của con gái, mẹ Hoa so sánh với người quen trong họ.",
+    "statement": "Mẹ thấy con nhà bác Ba thi khối C sư phạm ra trường giờ làm giáo viên biên chế lương ổn định, con nhà cô Bảy cũng học sư phạm vừa mua được nhà. Đấy, con gái cứ đâm đầu vào thi sư phạm là cuộc đời ấm êm giàu có ngay, thi ngành khác làm gì cho bấp bênh!",
+    "flawText": "Đấy, con gái cứ đâm đầu vào thi sư phạm là cuộc đời ấm êm giàu có ngay, thi ngành khác làm gì cho bấp bênh!",
+    "hiddenFallacyId": "hasty_generalization",
+    "secondaryFallacyId": "false_dilemma",
+    "difficulty": "Nang_cao",
+    "explanation": "Ngụy biện Khái quát hóa vội vã dựa trên câu chuyện 'con nhà người ta'. Mẹ Hoa lấy thành công cá biệt của hai người họ hàng để kết luận rằng bất kỳ ai học sư phạm cũng sẽ giàu có ấm êm, bỏ qua bức tranh tổng thể về chỉ tiêu tuyển dụng và năng lực cá nhân.",
+    "sampleRebuttal": "Sự thành công của hai anh chị phụ thuộc vào rất nhiều yếu tố như cơ duyên công tác, năng lực và điều kiện kinh tế riêng. Không thể từ hai trường hợp đó mà khẳng định cứ học sư phạm là tự khắc giàu có, việc chọn nghề cần dựa trên năng lực và đam mê thực tế của con."
+  },
+  {
+    "id": "sc_20",
+    "category": "mang_xa_hoi",
+    "topicTitle": "Tranh luận về tác hại của thức khuya học bài",
+    "speaker": {
+      "name": "Bạn Khang",
+      "role": "Học sinh lớp 12"
+    },
+    "context": "Dưới bài viết của bác sĩ thần kinh cảnh báo học sinh không nên thức trắng đêm ôn thi trước ngày thi cử.",
+    "statement": "Bác sĩ này nói lý thuyết suông quá! Anh họ của mình năm ngoái ôn thi đại học toàn thức đến 4 giờ sáng, hôm nào cũng chỉ ngủ 3 tiếng mà thi vẫn đỗ thủ khoa Bách Khoa có sao đâu? Khoa học bảo hại não là dọa dẫm thôi, thức khuya mới là chìa khóa đỗ đạt!",
+    "flawText": "Anh họ của mình năm ngoái ôn thi đại học toàn thức đến 4 giờ sáng, hôm nào cũng chỉ ngủ 3 tiếng mà thi vẫn đỗ thủ khoa Bách Khoa có sao đâu? Khoa học bảo hại não là dọa dẫm thôi, thức khuya mới là chìa khóa đỗ đạt!",
+    "hiddenFallacyId": "anecdotal",
+    "difficulty": "Co_ban",
+    "explanation": "Ngụy biện bằng Chuyện kể cá nhân (Anecdotal Fallacy). Khang dùng câu chuyện của người anh họ để phủ nhận nghiên cứu y khoa về chu kỳ giấc ngủ và chức năng tái tạo tế bào thần kinh của hàng triệu người.",
+    "sampleRebuttal": "Trường hợp của anh họ bạn là một ngoại lệ về thể lực chịu đựng trong ngắn hạn. Nghiên cứu y học đã chứng minh thức khuya kéo dài làm suy giảm trí nhớ làm việc và tăng nguy cơ kiệt sức. Dùng một câu chuyện cá biệt để bác bỏ khuyến cáo khoa học là sai lầm."
+  },
+  {
+    "id": "sc_21",
+    "category": "dao_duc_xa_hoi",
+    "topicTitle": "Câu cửa miệng 'Ngày xưa bố mẹ…'",
+    "speaker": {
+      "name": "Bố Quân",
+      "role": "Phụ huynh"
+    },
+    "context": "Khi Quân phàn nàn về việc bàn học thiếu ánh sáng khiến mắt cậu bị tăng độ cận thị, bố Quân không đồng tình.",
+    "statement": "Ngày xưa thời bố làm gì có đèn bàn chống cận, toàn thắp đèn dầu le lói học trong gian bếp đầy khói mà mắt bố đến tận bây giờ 50 tuổi vẫn tinh tường có phải đeo kính đâu! Các con bây giờ đòi hỏi vẽ chuyện, cận thị là do lười biếng không chịu luyện mắt chứ đèn đóm nỗi gì!",
+    "flawText": "Ngày xưa thời bố làm gì có đèn bàn chống cận, toàn thắp đèn dầu le lói học trong gian bếp đầy khói mà mắt bố đến tận bây giờ 50 tuổi vẫn tinh tường có phải đeo kính đâu!",
+    "hiddenFallacyId": "anecdotal",
+    "secondaryFallacyId": "ad_hominem",
+    "difficulty": "Trung_binh",
+    "explanation": "Ngụy biện bằng Chuyện kể cá nhân dựa trên ký ức quá khứ ('Ngày xưa bố mẹ...'). Bố Quân dùng cơ địa mắt tốt của bản thân để bác bỏ cơ chế sinh học về ánh sáng yếu gây mỏi điều tiết và cận thị học đường.",
+    "sampleRebuttal": "Bố có cơ địa mắt khỏe là điều rất đáng quý, nhưng nhãn khoa đã chứng minh học tập lâu trong điều kiện thiếu sáng buộc thể mi phải co quắp quá mức dẫn đến cận thị. Trải nghiệm thời xưa của bố không làm thay đổi các quy luật y học bảo vệ thị lực hiện nay."
+  },
+  {
+    "id": "sc_22",
+    "category": "cong_nghe_ai",
+    "topicTitle": "Livestream bán khóa học làm giàu trên mạng",
+    "speaker": {
+      "name": "Diễn giả @TrieuPhuTre",
+      "role": "Chủ phòng livestream"
+    },
+    "context": "Trong buổi livestream bán khóa học 'Kiếm 50 triệu/tháng ở tuổi 16 bằng tiền số và tiếp thị liên kết'.",
+    "statement": "Các viện nghiên cứu kinh tế cảnh báo rủi ro lừa đảo là toàn dọa người nghèo! Các bạn nhìn tấm gương em Tuấn 15 tuổi ở Cà Mau đây này, mua khóa học của tôi tháng trước giờ đã mua được xe máy tay ga xịn rồi. Dữ liệu kinh tế vĩ mô làm gì có giá trị bằng một người thật việc thật trước mắt các bạn!",
+    "flawText": "Các bạn nhìn tấm gương em Tuấn 15 tuổi ở Cà Mau đây này, mua khóa học của tôi tháng trước giờ đã mua được xe máy tay ga xịn rồi. Dữ liệu kinh tế vĩ mô làm gì có giá trị bằng một người thật việc thật trước mắt các bạn!",
+    "hiddenFallacyId": "anecdotal",
+    "secondaryFallacyId": "straw_man",
+    "difficulty": "Nang_cao",
+    "explanation": "Ngụy biện bằng Chuyện kể cá nhân (Anecdotal Fallacy) kết hợp công kích dữ liệu khoa học. Diễn giả dùng một nhân vật chưa được kiểm chứng để lôi kéo đám đông, bác bỏ cảnh báo thống kê về tỷ lệ thua lỗ 95% của thị trường đầu tư tài chính mạo hiểm.",
+    "sampleRebuttal": "Một ví dụ cá biệt (chưa rõ có thật hay dàn dựng) không thể thay thế cho dữ liệu tài chính và cảnh báo rủi ro của các chuyên gia kinh tế. Quyết định đầu tư phải dựa trên phân tích dòng tiền và rủi ro pháp lý chứ không thể tin vào một câu chuyện truyền miệng trên livestream."
+  },
+  {
+    "id": "sc_23",
+    "category": "hoc_duong",
+    "topicTitle": "Bầu chọn lớp trưởng trong buổi sinh hoạt lớp",
+    "speaker": {
+      "name": "Bạn Phong",
+      "role": "Học sinh lớp 11D"
+    },
+    "context": "Trong buổi thảo luận kín giữa giờ ra chơi về việc bầu bạn An làm lớp trưởng vì An có học lực giỏi và khả năng tổ chức.",
+    "statement": "Các cậu đừng bầu cho An! Bạn ấy học giỏi nhưng gia đình bạn ấy có bố mẹ ly hôn, người trong gia đình đổ vỡ thì tâm lý làm sao bình thường được, làm sao mà có tư cách gánh vác trách nhiệm lớp trưởng được!",
+    "flawText": "gia đình bạn ấy có bố mẹ ly hôn, người trong gia đình đổ vỡ thì tâm lý làm sao bình thường được, làm sao mà có tư cách gánh vác",
+    "hiddenFallacyId": "ad_hominem",
+    "difficulty": "Trung_binh",
+    "explanation": "Ngụy biện Công kích cá nhân (Ad Hominem). Phong lôi hoàn cảnh gia đình của An - điều hoàn toàn không liên quan đến năng lực lãnh đạo hay đạo đức của An - ra để phán xét và phủ nhận tư cách làm lớp trưởng của bạn.",
+    "sampleRebuttal": "Hoàn cảnh hôn nhân của phụ huynh là chuyện riêng tư và hoàn toàn không định đoạt năng lực lãnh đạo hay phẩm chất của An. Đánh giá một lớp trưởng cần căn cứ vào tinh thần trách nhiệm, năng lực giao tiếp và sự tín nhiệm của tập thể."
+  },
+  {
+    "id": "sc_24",
+    "category": "hoc_duong",
+    "topicTitle": "Tranh cãi phân chia đề tài nghiên cứu khoa học",
+    "speaker": {
+      "name": "Bạn Lâm",
+      "role": "Trưởng nhóm nghiên cứu"
+    },
+    "context": "Khi bạn Chi đưa ra các số liệu phản biện lại tính khả thi của mô hình lọc nước bằng than hoạt tính mà nhóm đang theo đuổi.",
+    "statement": "Cậu thì biết cái gì về kỹ thuật lọc nước? Môn Hóa học kỳ trước cậu thi chỉ được có 7.0 điểm, trong khi tớ được 9.5 điểm. Điểm thấp thế thì ngồi yên nghe người giỏi hơn chỉ đạo đi, đừng có cãi cùn làm mất thời gian của nhóm!",
+    "flawText": "Môn Hóa học kỳ trước cậu thi chỉ được có 7.0 điểm, trong khi tớ được 9.5 điểm. Điểm thấp thế thì ngồi yên nghe người giỏi hơn chỉ đạo",
+    "hiddenFallacyId": "ad_hominem",
+    "secondaryFallacyId": "appeal_to_authority",
+    "difficulty": "Nang_cao",
+    "explanation": "Ngụy biện Công kích cá nhân (Ad Hominem) kết hợp ngụy biện quyền uy. Lâm không giải quyết số liệu phản biện của Chi về than hoạt tính mà đem điểm thi học kỳ của Chi ra để nhục mạ và tước đoạt quyền đóng góp ý kiến.",
+    "sampleRebuttal": "Điểm thi một kỳ học không quyết định tính đúng sai của một số liệu khoa học. Phản biện của Chi dựa trên tỷ lệ hấp phụ và chi phí của than hoạt tính, Lâm cần dùng dữ liệu thực nghiệm để trả lời chứ không thể dùng điểm số để gạt bỏ ý kiến của bạn."
+  },
+  {
+    "id": "sc_25",
+    "category": "hoc_duong",
+    "topicTitle": "Tranh luận về việc dời hạn nộp tiểu luận môn GDCD",
+    "speaker": {
+      "name": "Bạn Lớp trưởng",
+      "role": "Lớp trưởng 12A1"
+    },
+    "context": "Đại diện các tổ đề xuất xin cô giáo lùi hạn nộp tiểu luận 3 ngày vì trùng với lịch thi giữa kỳ của 3 môn tự nhiên.",
+    "statement": "Các bạn xin lùi hạn nộp bài là vì các bạn muốn bỏ bê môn GDCD, coi môn này là môn phụ rẻ tiền không đáng học đúng không? Nếu các bạn đã lười biếng và không coi trọng pháp luật thì sau này ra đời các bạn sống làm sao!",
+    "flawText": "xin lùi hạn nộp bài là vì các bạn muốn bỏ bê môn GDCD, coi môn này là môn phụ rẻ tiền không đáng học đúng không?",
+    "hiddenFallacyId": "straw_man",
+    "difficulty": "Co_ban",
+    "explanation": "Ngụy biện Người rơm (Straw Man). Học sinh chỉ xin điều chỉnh lịch vì áp lực thi cử trùng nhau, nhưng lớp trưởng bóp méo thành 'muốn bỏ bê môn GDCD' và 'coi môn này rẻ tiền'.",
+    "sampleRebuttal": "Cả lớp không hề coi thường môn GDCD hay có ý định bỏ bê. Kiến nghị lùi hạn 3 ngày là để các bạn có đủ thời gian đầu tư viết bài tiểu luận chất lượng nhất sau khi hoàn thành các bài thi dồn dập trong tuần."
+  },
+  {
+    "id": "sc_26",
+    "category": "mang_xa_hoi",
+    "topicTitle": "Bình luận TikTok về việc học sinh tham gia hoạt động tình nguyện",
+    "speaker": {
+      "name": "User @NetizenX",
+      "role": "Người bình luận"
+    },
+    "context": "Dưới clip học sinh khối 11 tổ chức ngày hội thu gom rác thải nhựa ở bãi biển địa phương.",
+    "statement": "Đúng là làm màu! Mấy đứa này đi nhặt rác là muốn cổ xúy cho mọi người cứ xả rác bừa bãi thoải mái đi rồi có học sinh dọn hộ chứ gì? Các bạn đang gián tiếp phá hoại ý thức bảo vệ môi trường của người dân đấy!",
+    "flawText": "đi nhặt rác là muốn cổ xúy cho mọi người cứ xả rác bừa bãi thoải mái đi rồi có học sinh dọn hộ chứ gì?",
+    "hiddenFallacyId": "straw_man",
+    "secondaryFallacyId": "ad_hominem",
+    "difficulty": "Nang_cao",
+    "explanation": "Ngụy biện Người rơm (Straw Man) kết hợp công kích cá nhân. Bóp méo hành động thu gom rác nâng cao nhận thức cộng đồng thành 'cổ xúy người khác xả rác bừa bãi'.",
+    "sampleRebuttal": "Hoạt động tình nguyện nhặt rác nhằm lan tỏa thông điệp giảm thiểu rác thải nhựa và làm sạch cảnh quan trước mắt. Gán ghép cho các bạn mục đích 'cổ xúy xả rác' là sự bóp méo ác ý và hoàn toàn sai sự thật."
+  },
+  {
+    "id": "sc_27",
+    "category": "hoc_duong",
+    "topicTitle": "Phản đối học phụ đạo vào chiều Chủ nhật",
+    "speaker": {
+      "name": "Thầy Tuấn",
+      "role": "Giáo viên dạy thêm"
+    },
+    "context": "Khi học sinh đề nghị không xếp lịch học thêm vào chiều Chủ nhật để các em có thời gian nghỉ ngơi và sinh hoạt với gia đình.",
+    "statement": "Học sinh thời nay lười nhác vừa thôi! Ngày xưa thời các thầy còn phải vừa đi chăn trâu vừa học bài dưới trăng, cơm không có mà ăn. Bây giờ các em ngồi phòng máy lạnh mà còn kêu mệt với đòi nghỉ ngơi, đúng là sướng quá hóa rồ!",
+    "flawText": "Ngày xưa thời các thầy còn phải vừa đi chăn trâu vừa học bài dưới trăng, cơm không có mà ăn. Bây giờ các em ngồi phòng máy lạnh mà còn kêu mệt",
+    "hiddenFallacyId": "red_herring",
+    "difficulty": "Co_ban",
+    "explanation": "Ngụy biện Đánh lạc hướng (Red Herring). Thầy giáo lôi hoàn cảnh chăn trâu thời bao cấp khó khăn trong quá khứ vào để đánh lạc hướng khỏi câu hỏi thực tế: Học sinh có cần một ngày nghỉ ngơi để phục hồi thể chất theo khoa học giáo dục hay không.",
+    "sampleRebuttal": "Sự gian khổ thời xưa của thầy rất đáng kính trọng, nhưng điều đó không làm thay đổi sự thật rằng não bộ học sinh cần có ngày nghỉ ngơi để phục hồi năng lượng học tập. Thảo luận về lịch học cần căn cứ vào hiệu quả tiếp thu chứ không thể so sánh khập khiễng với quá khứ."
+  },
+  {
+    "id": "sc_28",
+    "category": "mang_xa_hoi",
+    "topicTitle": "Livestream bán mỹ phẩm học sinh",
+    "speaker": {
+      "name": "Chị Hoa",
+      "role": "Người bán hàng online"
+    },
+    "context": "Khi một người xem bình luận hỏi về giấy kiểm định y tế và nguồn gốc xuất xứ của hộp kem trộn làm trắng da siêu tốc.",
+    "statement": "Sao em cứ vào đây săm soi giấy tờ kiểm định làm gì nhỉ? Em có biết ngoài kia bao nhiêu đồng bào miền núi đang bị sạt lở đất mất hết nhà cửa không? Sao em không đi làm từ thiện giúp người ta đi mà ngồi đây bắt bẻ hộp kem?",
+    "flawText": "Em có biết ngoài kia bao nhiêu đồng bào miền núi đang bị sạt lở đất mất hết nhà cửa không? Sao em không đi làm từ thiện giúp người ta đi mà ngồi đây bắt bẻ",
+    "hiddenFallacyId": "red_herring",
+    "secondaryFallacyId": "appeal_to_emotion",
+    "difficulty": "Nang_cao",
+    "explanation": "Ngụy biện Đánh lạc hướng (Red Herring) kết hợp lợi dụng cảm xúc. Người bán lôi thảm họa sạt lở đất ra để né tránh trách nhiệm cung cấp giấy tờ kiểm định an toàn y tế của sản phẩm bôi lên da người.",
+    "sampleRebuttal": "Thiên tai bão lũ là điều đau xót cần giúp đỡ, nhưng việc đó hoàn toàn không liên quan đến trách nhiệm pháp lý và an toàn sức khỏe của sản phẩm bạn đang bán. Việc né tránh cung cấp giấy kiểm định chứng tỏ sản phẩm có vấn đề mập mờ."
+  },
+  {
+    "id": "sc_29",
+    "category": "hoc_duong",
+    "topicTitle": "Kiến nghị cho phép học sinh đi xe đạp điện không cần tháo giỏ xe",
+    "speaker": {
+      "name": "Bác Bảo vệ",
+      "role": "Nhân viên an ninh trường"
+    },
+    "context": "Học sinh xin phép gắn thêm giỏ xe đạp điện để đựng cặp sách cho đỡ mỏi lưng khi đi đường xa.",
+    "statement": "Hôm nay các cháu đòi gắn giỏ xe cho tiện, ngày mai các cháu sẽ đòi độ còi hơi, rồi ngày kia sẽ độ pô xe máy, phóng nhanh lạng lách đánh võng rồi gây tai nạn chết người trên đường quốc lộ! Tuyệt đối không cho phép!",
+    "flawText": "ngày mai các cháu sẽ đòi độ còi hơi, rồi ngày kia sẽ độ pô xe máy, phóng nhanh lạng lách đánh võng rồi gây tai nạn chết người trên đường quốc lộ!",
+    "hiddenFallacyId": "slippery_slope",
+    "difficulty": "Co_ban",
+    "explanation": "Ngụy biện Dốc trượt phi lý (Slippery Slope). Từ việc gắn chiếc giỏ xe đạp đựng cặp sách đi học, người nói tự suy diễn thành độ còi hơi, độ pô và gây tai nạn chết người mà không có bất kỳ logic trung gian nào.",
+    "sampleRebuttal": "Gắn giỏ xe đúng kích thước kỹ thuật để đựng cặp sách giúp học sinh lái xe hai tay an toàn hơn, không hề dẫn tới việc độ xe hay vi phạm luật giao thông. Bác đang phóng đại một chuỗi tai họa không có thật để từ chối một nhu cầu chính đáng."
+  },
+  {
+    "id": "sc_30",
+    "category": "dao_duc_xa_hoi",
+    "topicTitle": "Tranh cãi về việc đóng góp quỹ liên hoan lớp",
+    "speaker": {
+      "name": "Bạn Trưởng ban Văn thể",
+      "role": "Học sinh lớp 12"
+    },
+    "context": "Trong buổi bàn về chi phí liên hoan cuối năm, một số bạn gia đình khó khăn xin phép đóng góp mức vừa phải.",
+    "statement": "Hoặc là cả lớp cùng đóng mỗi người 500 nghìn để ăn nhà hàng buffet sang chảnh cho xứng tầm kỷ niệm cuối cấp, hoặc là hủy luôn không liên hoan gì nữa! Ai không đóng đủ thì coi như không coi trọng tập thể lớp!",
+    "flawText": "Hoặc là cả lớp cùng đóng mỗi người 500 nghìn để ăn nhà hàng buffet sang chảnh cho xứng tầm kỷ niệm cuối cấp, hoặc là hủy luôn không liên hoan gì nữa!",
+    "hiddenFallacyId": "false_dilemma",
+    "secondaryFallacyId": "appeal_to_emotion",
+    "difficulty": "Trung_binh",
+    "explanation": "Ngụy biện Nhị nguyên giả tạo (False Dilemma). Ép buộc chỉ có 2 lựa chọn cực đoan: hoặc ăn nhà hàng đắt tiền hoặc hủy tiệc, cố tình phớt lờ các phương án ấm cúng và tiết kiệm hơn như liên hoan tại lớp.",
+    "sampleRebuttal": "Kỷ niệm cuối cấp không đo bằng độ sang chảnh của nhà hàng. Chúng ta hoàn toàn có thể chọn liên hoan ngọt tại lớp hoặc tự nấu ăn cùng nhau để tất cả các bạn đều có thể tham gia mà không bị gánh nặng chi phí."
+  },
+  {
+    "id": "sc_31",
+    "category": "mang_xa_hoi",
+    "topicTitle": "Bình luận Facebook về phương pháp tự học",
+    "speaker": {
+      "name": "User @TriThucTre",
+      "role": "Thành viên nhóm tự học"
+    },
+    "context": "Tranh luận về việc học sinh có nên đi học thêm hay tự học tại nhà bằng sách giáo khoa.",
+    "statement": "Hoặc là bạn tự học ở nhà 100% để rèn luyện tư duy độc lập thành thiên tài, hoặc là bạn đi học thêm rồi biến thành con rối học vẹt thụ động suốt đời. Không có con đường dung hòa nào giữa tự học và học thêm cả!",
+    "flawText": "Hoặc là bạn tự học ở nhà 100% để rèn luyện tư duy độc lập thành thiên tài, hoặc là bạn đi học thêm rồi biến thành con rối học vẹt thụ động suốt đời.",
+    "hiddenFallacyId": "false_dilemma",
+    "difficulty": "Nang_cao",
+    "explanation": "Ngụy biện Nhị nguyên giả tạo (False Dilemma). Tự học và học có người hướng dẫn là hai phương pháp bổ trợ lẫn nhau, việc chia thành hai cực 'thiên tài độc lập' và 'học vẹt thụ động' là phi thực tế.",
+    "sampleRebuttal": "Học thêm có thể giúp học sinh lấp lỗ hổng kiến thức nhanh chóng, sau đó tự học giúp đào sâu và củng cố. Rất nhiều thủ khoa kết hợp nhuần nhuyễn cả việc nghe thầy cô định hướng và tự rèn luyện bài tập tại nhà."
+  },
+  {
+    "id": "sc_32",
+    "category": "mang_xa_hoi",
+    "topicTitle": "Quảng cáo sữa phát triển trí não trên Facebook",
+    "speaker": {
+      "name": "Trang Fanpage @MeThongThai",
+      "role": "Người bán hàng sữa"
+    },
+    "context": "Bài đăng bán sữa bột công thức quảng cáo giúp học sinh lớp 12 tăng ngay 20 điểm IQ trong mùa thi cử.",
+    "statement": "Sản phẩm sữa bột này được chính cầu thủ tiền đạo nổi tiếng hàng đầu đội tuyển quốc gia tin dùng và khuyên uống mỗi ngày để học thông minh hơn. Cầu thủ đẳng cấp quốc gia đã chứng thực thì chất lượng tăng IQ là không cần bàn cãi!",
+    "flawText": "Cầu thủ đẳng cấp quốc gia đã chứng thực thì chất lượng tăng IQ là không cần bàn cãi!",
+    "hiddenFallacyId": "appeal_to_authority",
+    "difficulty": "Trung_binh",
+    "explanation": "Ngụy biện Viện dẫn uy quyền sai chỗ (Appeal to Authority). Cầu thủ bóng đá chỉ có chuyên môn về thể thao, không có bằng cấp hay chuyên môn y khoa để chứng thực tác dụng tăng chỉ số IQ của sữa bột.",
+    "sampleRebuttal": "Cầu thủ bóng đá xuất sắc ở kỹ năng thi đấu trên sân cỏ chứ không phải chuyên gia dinh dưỡng hay thần kinh học. Khẳng định một loại sữa giúp tăng IQ cần có nghiên cứu lâm sàng được Bộ Y tế cấp phép chứ không thể dựa vào hợp đồng quảng cáo của người nổi tiếng."
+  },
+  {
+    "id": "sc_33",
+    "category": "cong_nghe_ai",
+    "topicTitle": "Tranh cãi về tương lai của nghề dịch thuật",
+    "speaker": {
+      "name": "Bạn Long",
+      "role": "Học sinh lớp 11 chuyên Tin"
+    },
+    "context": "Bàn về việc học sinh có nên tiếp tục học chuyên ngành Biên - Phiên dịch trong thời đại AI dịch thuật phát triển.",
+    "statement": "Bác giám đốc công ty bất động sản giàu nhất tỉnh mình vừa tuyên bố: 'Trong 2 năm nữa tất cả các trường đại học ngoại ngữ sẽ đóng cửa vì AI dịch xịn hơn người'. Người giàu kiếm hàng nghìn tỷ nói thì chắc chắn chuẩn xác 100%, các bạn học tiếng Anh làm gì nữa!",
+    "flawText": "Người giàu kiếm hàng nghìn tỷ nói thì chắc chắn chuẩn xác 100%, các bạn học tiếng Anh làm gì nữa!",
+    "hiddenFallacyId": "appeal_to_authority",
+    "secondaryFallacyId": "slippery_slope",
+    "difficulty": "Nang_cao",
+    "explanation": "Ngụy biện Viện dẫn uy quyền sai chỗ kết hợp dốc trượt. Giàu có nhờ kinh doanh bất động sản không đồng nghĩa với có hiểu biết chuyên sâu về trí tuệ nhân tạo và ngôn ngữ học ứng dụng.",
+    "sampleRebuttal": "Thành công trong bất động sản không đem lại chuyên môn về khoa học máy tính hay giáo dục ngôn ngữ. Dịch thuật ngoại giao và văn học đòi hỏi sự thấu cảm văn hóa sâu sắc mà các chuyên gia công nghệ đều khẳng định AI chỉ đóng vai trò công cụ hỗ trợ."
+  },
+  {
+    "id": "sc_34",
+    "category": "mang_xa_hoi",
+    "topicTitle": "Tranh luận về việc sử dụng filter làm đẹp khi quay video",
+    "speaker": {
+      "name": "Bạn Yến",
+      "role": "TikToker"
+    },
+    "context": "Một bạn học sinh bị chỉ trích vì lạm dụng filter bóp mặt chỉnh màu quá đà trong video giới thiệu trường học.",
+    "statement": "Các bạn chỉ trích tớ dùng filter làm gì? Cả cái mạng xã hội TikTok hàng triệu người ai quay clip mà chẳng dùng filter để trông đẹp hơn. Người ta dùng ầm ầm thì tớ dùng có gì sai mà các bạn làm quá lên thế?",
+    "flawText": "Cả cái mạng xã hội TikTok hàng triệu người ai quay clip mà chẳng dùng filter để trông đẹp hơn. Người ta dùng ầm ầm thì tớ dùng có gì sai mà các bạn làm quá lên thế?",
+    "hiddenFallacyId": "bandwagon",
+    "difficulty": "Trung_binh",
+    "explanation": "Ngụy biện Chạy theo đám đông (Bandwagon). Lấy lý do 'hàng triệu người dùng' để biện hộ cho việc sử dụng hình ảnh bóp méo sai lệch trong một video mang tính thông tin chính thức của trường học.",
+    "sampleRebuttal": "Việc nhiều người dùng filter cho mục đích giải trí cá nhân không đồng nghĩa nó phù hợp cho một video đại diện giới thiệu hình ảnh trang nghiêm, chân thực của nhà trường."
+  },
+  {
+    "id": "sc_35",
+    "category": "hoc_duong",
+    "topicTitle": "Tranh cãi về trào lưu mua đồ chơi Labubu",
+    "speaker": {
+      "name": "Bạn Khánh",
+      "role": "Học sinh lớp 10"
+    },
+    "context": "Khánh xin tiền mẹ 2 triệu để mua hộp đồ chơi blind box theo phong trào của các bạn trong trường.",
+    "statement": "Mẹ ơi con phải mua bằng được con gấu này! Cả trường con từ lớp 10 đến lớp 12 ai cũng móc con này vào balo đi học, trên mạng ai cũng bảo món này là biểu tượng của học sinh sành điệu văn minh. Con mà không có thì con là đồ lạc hậu quê mùa!",
+    "flawText": "Cả trường con từ lớp 10 đến lớp 12 ai cũng móc con này vào balo đi học, trên mạng ai cũng bảo món này là biểu tượng của học sinh sành điệu văn minh. Con mà không có thì con là đồ lạc hậu quê mùa!",
+    "hiddenFallacyId": "bandwagon",
+    "secondaryFallacyId": "false_dilemma",
+    "difficulty": "Nang_cao",
+    "explanation": "Ngụy biện Chạy theo đám đông kết hợp nhị nguyên giả tạo. Khẳng định giá trị bản thân và sự văn minh dựa vào việc sở hữu một món đồ chơi đắt đỏ chỉ vì đám đông đang theo trào lưu.",
+    "sampleRebuttal": "Sự văn minh và phẩm giá của một học sinh được thể hiện qua kiến thức, thái độ cư xử và sự thấu hiểu hoàn cảnh gia đình chứ không nằm ở chiếc móc khóa đắt tiền theo trào lưu ngắn hạn của đám đông."
+  },
+  {
+    "id": "sc_36",
+    "category": "hoc_duong",
+    "topicTitle": "Tranh cãi về cách chấm điểm bài viết văn",
+    "speaker": {
+      "name": "Cô Phương",
+      "role": "Giáo viên Ngữ văn"
+    },
+    "context": "Khi học sinh hỏi lý do vì sao bài văn của mình lập luận chặt chẽ nhưng chỉ được 6 điểm, cô giáo giải thích.",
+    "statement": "Bài văn của em đạt điểm 6 vì cách cảm thụ văn học của em chưa đạt đến độ sâu sắc, mà lý do nó chưa sâu sắc là bởi vì nó chỉ xứng đáng với mức điểm 6 mà thôi!",
+    "flawText": "chưa đạt đến độ sâu sắc, mà lý do nó chưa sâu sắc là bởi vì nó chỉ xứng đáng với mức điểm 6 mà thôi!",
+    "hiddenFallacyId": "circular_reasoning",
+    "difficulty": "Trung_binh",
+    "explanation": "Ngụy biện Luẩn quẩn (Circular Reasoning). Dùng tiền đề 'chưa sâu sắc' để giải thích cho 'điểm 6', rồi lại dùng 'điểm 6' để chứng minh cho 'chưa sâu sắc' mà không chỉ ra tiêu chí chấm cụ thể.",
+    "sampleRebuttal": "Lời giải thích này bị luẩn quẩn vì lấy kết luận làm nguyên nhân. Để giúp học sinh tiến bộ, cô cần chỉ ra luận điểm nào thiếu dẫn chứng, cách dùng từ nào chưa phù hợp hoặc thiếu ý so với thang tiêu chí chấm."
+  },
+  {
+    "id": "sc_37",
+    "category": "dao_duc_xa_hoi",
+    "topicTitle": "Khẳng định chân lý trong cuộc tranh luận triết học",
+    "speaker": {
+      "name": "Bạn Toàn",
+      "role": "Học sinh chuyên Văn"
+    },
+    "context": "Trong buổi sinh hoạt câu lạc bộ tranh biện về chủ đề tự do ý chí và niềm tin.",
+    "statement": "Lời khẳng định trong cuốn sách này tuyệt đối không thể sai lầm, bởi vì tác giả của cuốn sách đã được khẳng định là một bậc vĩ nhân luôn nói ra chân lý không thể sai sót!",
+    "flawText": "tuyệt đối không thể sai lầm, bởi vì tác giả của cuốn sách đã được khẳng định là một bậc vĩ nhân luôn nói ra chân lý không thể sai sót!",
+    "hiddenFallacyId": "circular_reasoning",
+    "secondaryFallacyId": "appeal_to_authority",
+    "difficulty": "Nang_cao",
+    "explanation": "Ngụy biện Luẩn quẩn kết hợp viện dẫn uy quyền. Khẳng định sách không sai vì tác giả không sai, và tác giả không sai vì nói ra chân lý trong sách.",
+    "sampleRebuttal": "Đây là lập luận vòng quanh. Muốn chứng minh cuốn sách đúng, bạn phải đem các luận điểm trong đó đối chiếu với thực tế khách quan và các bằng chứng thực nghiệm, chứ không thể dùng sự hoàn hảo giả định của tác giả để tự chứng minh."
+  },
+  {
+    "id": "sc_38",
+    "category": "hoc_duong",
+    "topicTitle": "Tương quan giữa việc cắt tóc và kết quả kiểm tra",
+    "speaker": {
+      "name": "Bạn My",
+      "role": "Học sinh lớp 11"
+    },
+    "context": "My kể lại lý do vì sao cậu không dám cắt tóc trước các kỳ thi quan trọng.",
+    "statement": "Lần trước ngay sau hôm tớ đi cắt tóc thì hôm sau làm bài kiểm tra Sử bị điểm dưới trung bình! Rõ ràng cắt tóc làm bay mất kiến thức trong đầu, từ giờ trước khi thi cấm ai được đi cắt tóc kẻo trượt hết!",
+    "flawText": "ngay sau hôm tớ đi cắt tóc thì hôm sau làm bài kiểm tra Sử bị điểm dưới trung bình! Rõ ràng cắt tóc làm bay mất kiến thức",
+    "hiddenFallacyId": "post_hoc",
+    "difficulty": "Trung_binh",
+    "explanation": "Ngụy biện Nhân quả sau đó (Post Hoc). My nhầm lẫn giữa việc cắt tóc xảy ra trước và việc điểm Sử kém xảy ra sau thành quan hệ nguyên nhân - kết quả.",
+    "sampleRebuttal": "Tóc là chất sừng bên ngoài da đầu, không hề lưu trữ hay liên kết với các synap thần kinh chứa kiến thức trong não bộ. Điểm Sử kém là do chưa ôn kỹ bài chứ không liên quan đến việc cắt tóc."
+  },
+  {
+    "id": "sc_39",
+    "category": "cong_nghe_ai",
+    "topicTitle": "Thời điểm cài đặt ứng dụng và sự cố mạng trường học",
+    "speaker": {
+      "name": "Thầy Giám thị",
+      "role": "Phụ trách phòng tin học"
+    },
+    "context": "Hệ thống mạng Wi-Fi của trường bị nghẽn sau giờ giải lao khi học sinh cài đặt ứng dụng học tập mới.",
+    "statement": "Hệ thống Wi-Fi trường sập đúng vào lúc lớp 12A cài cái app học từ vựng tiếng Anh mới này. Rõ ràng chính cái app này đã phát tán mã độc làm nổ tung đường truyền internet của trường ta!",
+    "flawText": "Hệ thống Wi-Fi trường sập đúng vào lúc lớp 12A cài cái app học từ vựng tiếng Anh mới này. Rõ ràng chính cái app này đã phát tán mã độc làm nổ tung đường truyền internet của trường ta!",
+    "hiddenFallacyId": "post_hoc",
+    "secondaryFallacyId": "hasty_generalization",
+    "difficulty": "Nang_cao",
+    "explanation": "Ngụy biện Nhân quả sau đó kết hợp khái quát hóa vội vã. Hiện tượng mạng nghẽn trùng thời điểm cài app có thể do băng thông đường truyền hoặc thiết bị router quá tải chứ không phải do app chứa mã độc.",
+    "sampleRebuttal": "Sự trùng hợp thời gian không chứng minh app có mã độc. Cần kiểm tra nhật ký lưu lượng mạng (traffic log) của router xem có phải do hàng trăm máy cùng truy cập một lúc gây nghẽn băng thông vật lý hay không."
+  },
+  {
+    "id": "sc_40",
+    "category": "hoc_duong",
+    "topicTitle": "Xin miễn giảm trực nhật cuối tuần",
+    "speaker": {
+      "name": "Bạn Nam",
+      "role": "Học sinh lớp 10"
+    },
+    "context": "Nam xin ban cán sự lớp không phân công cậu đi quét dọn sân trường vào sáng thứ Bảy.",
+    "statement": "Các bạn nỡ lòng nào bắt tớ đi quét sân trường sáng thứ Bảy? Tuần này tớ đã phải đi học thêm mệt mỏi lắm rồi, mẹ tớ ở nhà lại đang ốm nữa. Các bạn mà còn bắt tớ đi lao động thì các bạn thật là tàn nhẫn không có trái tim!",
+    "flawText": "Các bạn mà còn bắt tớ đi lao động thì các bạn thật là tàn nhẫn không có trái tim!",
+    "hiddenFallacyId": "appeal_to_emotion",
+    "difficulty": "Co_ban",
+    "explanation": "Ngụy biện Lợi dụng cảm xúc (Appeal to Emotion). Nam dùng hoàn cảnh mệt mỏi và mẹ ốm để gây áp lực tâm lý, vu khống bạn bè 'tàn nhẫn' thay vì đề xuất đổi ca trực nhật văn minh.",
+    "sampleRebuttal": "Cả lớp rất chia sẻ khi mẹ bạn bị ốm, nhưng bạn có thể xin đổi lịch trực sang tuần sau với bạn khác thay vì chụp mũ tập thể là tàn nhẫn. Nội quy lao động cần được tôn trọng dựa trên sự sắp xếp công bằng."
+  },
+  {
+    "id": "sc_41",
+    "category": "mang_xa_hoi",
+    "topicTitle": "Livestream bán khóa học phương pháp ghi nhớ",
+    "speaker": {
+      "name": "Diễn giả @KhaiSangTuDuy",
+      "role": "Người bán khóa học"
+    },
+    "context": "Diễn giả kêu gọi học sinh lớp 12 đăng ký khóa học cấp tốc giá 3 triệu đồng vào ban đêm.",
+    "statement": "Các em có nhìn thấy đôi mắt thâm quầng và những giọt mồ hôi rơi trên trang sách của cha mẹ đang còng lưng kiếm từng đồng nuôi các em không? Nếu hôm nay các em tiếc 3 triệu không mua khóa học này thì các em là những đứa con bất hiếu, chà đạp lên đức hy sinh của cha mẹ!",
+    "flawText": "Nếu hôm nay các em tiếc 3 triệu không mua khóa học này thì các em là những đứa con bất hiếu, chà đạp lên đức hy sinh của cha mẹ!",
+    "hiddenFallacyId": "appeal_to_emotion",
+    "secondaryFallacyId": "false_dilemma",
+    "difficulty": "Nang_cao",
+    "explanation": "Ngụy biện Lợi dụng cảm xúc cực đoan kết hợp nhị nguyên giả tạo. Đánh vào lòng hiếu thảo và cảm giác tội lỗi của học sinh để ép mua khóa học đắt tiền.",
+    "sampleRebuttal": "Lòng hiếu thảo được thể hiện qua sự nỗ lực học tập chăm chỉ và yêu thương gia đình, hoàn toàn không được đo đếm bằng việc mua một khóa học thương mại. Người bán đang thao túng cảm xúc để trục lợi."
+  },
+  {
+    "id": "sc_42",
+    "category": "dao_duc_xa_hoi",
+    "topicTitle": "Đề xuất cho học sinh sử dụng máy tính bảng trong giờ học",
+    "speaker": {
+      "name": "Bác Dũng",
+      "role": "Phụ huynh học sinh"
+    },
+    "context": "Trong buổi họp phụ huynh đầu năm khi nhà trường lấy ý kiến về dự thảo lớp học thông minh sử dụng máy tính bảng phục vụ tra cứu học tập.",
+    "statement": "Nếu chúng ta cho phép các cháu đem máy tính bảng vào lớp, ban đầu các cháu sẽ mở app vẽ bậy, tiếp theo sẽ lén lút xem phim, rồi sau đó sẽ tụ tập cá độ cờ bạc trực tuyến, bỏ bê thi cử, dẫn đến trượt tốt nghiệp THPT và hủy hoại toàn bộ tương lai!",
+    "flawText": "ban đầu các cháu sẽ mở app vẽ bậy, tiếp theo sẽ lén lút xem phim, rồi sau đó sẽ tụ tập cá độ cờ bạc trực tuyến, bỏ bê thi cử, dẫn đến trượt tốt nghiệp THPT và hủy hoại toàn bộ tương lai!",
+    "hiddenFallacyId": "slippery_slope",
+    "secondaryFallacyId": "straw_man",
+    "difficulty": "Nang_cao",
+    "explanation": "Ngụy biện Dốc trượt phi lý (Slippery Slope) kết hợp người rơm. Người nói vẽ ra một chuỗi kịch bản ngày tận thế không có căn cứ logic: từ việc dùng máy tính bảng tra cứu suy diễn thành cá độ cờ bạc và hủy hoại cả tương lai.",
+    "sampleRebuttal": "Bác đang dựng nên một chuỗi nhân quả thảm họa cực đoan mà không có cơ sở. Máy tính bảng học tập hoàn toàn có thể được cài đặt phần mềm khóa ứng dụng giải trí và quản lý qua mạng nội bộ của trường, giúp học sinh tra cứu bài học hiệu quả mà không dẫn đến những nguy cơ phóng đại như bác vừa nêu."
+  },
+  {
+    "id": "sc_valid_01",
+    "category": "y_te_suc_khoe",
+    "topicTitle": "Khuyến nghị dinh dưỡng học đường tại hội nghị y tế",
+    "speaker": {
+      "name": "Bác sĩ Nguyễn Văn An",
+      "role": "Chuyên gia Dinh dưỡng Viện Y học Ứng dụng"
+    },
+    "context": "Trong buổi tọa đàm về sức khỏe học đường, bác sĩ phân tích về việc giảm đồ uống có gas trong trường học.",
+    "statement": "Dựa trên báo cáo khảo sát dinh dưỡng học sinh THPT năm 2024 của Viện Dinh dưỡng Quốc gia, việc tiêu thụ nước ngọt có gas vượt quá 3 lon mỗi tuần làm tăng 25% nguy cơ thừa cân và sâu răng. Vì vậy, nhà trường nên khuyến khích học sinh thay thế bằng nước lọc hoặc sữa hạt không đường.",
+    "flawText": "",
+    "hiddenFallacyId": "no_fallacy",
+    "difficulty": "Co_ban",
+    "explanation": "Lập luận hoàn toàn hợp lý: Dẫn nguồn dữ liệu từ cơ quan nghiên cứu uy tín đúng chuyên môn (Viện Dinh dưỡng Quốc gia), nêu rõ mối liên hệ nhân quả có số liệu kiểm chứng và đưa ra giải pháp khuyến khích thay thế mềm dẻo chứ không cực đoan.",
+    "sampleRebuttal": "Lập luận này hoàn toàn logic và hợp lý. Người nói có chuyên môn đúng ngành, số liệu trích dẫn rõ nguồn gốc và kết luận đưa ra vừa phải, mang tính xây dựng cho sức khỏe học sinh."
+  },
+  {
+    "id": "sc_valid_02",
+    "category": "hoc_duong",
+    "topicTitle": "Phương pháp rèn luyện phản xạ môn Toán",
+    "speaker": {
+      "name": "Thầy Minh",
+      "role": "Giáo viên Toán THPT"
+    },
+    "context": "Thầy Minh chia sẻ với học sinh về tầm quan trọng của việc làm bài tập định kỳ.",
+    "statement": "Việc giải từ 3 đến 5 bài toán mỗi ngày giúp não bộ củng cố trí nhớ dài hạn thông qua cơ chế lặp lại ngắt quãng (spaced repetition), điều đã được nhiều nghiên cứu tâm lý học nhận thức chứng minh. Tuy nhiên, việc luyện tập cần đi kèm hiểu sâu bản chất lý thuyết chứ không nên học thuộc lòng máy móc.",
+    "flawText": "",
+    "hiddenFallacyId": "no_fallacy",
+    "difficulty": "Trung_binh",
+    "explanation": "Lập luận hợp lý: Giải thích rõ cơ chế khoa học của trí nhớ (spaced repetition), không tuyệt đối hóa giải pháp mà còn chủ động nêu rõ điều kiện giới hạn ('cần hiểu sâu bản chất, không học vẹt').",
+    "sampleRebuttal": "Lập luận chặt chẽ và khoa học. Thầy đã chỉ rõ cơ chế vận hành của trí nhớ và đưa ra khuyến cáo cân bằng, không mắc lỗi tuyệt đối hóa hay ngụy biện."
+  },
+  {
+    "id": "sc_valid_03",
+    "category": "hoc_duong",
+    "topicTitle": "Phương án phân công trực nhật lớp công bằng",
+    "speaker": {
+      "name": "Bạn Mai",
+      "role": "Lớp phó Lao động"
+    },
+    "context": "Trong buổi sinh hoạt lớp bàn về kế hoạch vệ sinh lớp học học kỳ mới.",
+    "statement": "Để việc trực nhật công bằng, mình đề xuất chia đều 4 tổ luân phiên theo từng tuần. Mỗi tuần tổ trưởng sẽ tự phân công cụ thể quét lớp và lau bảng. Nếu bạn nào có lịch trùng thi đội tuyển thì báo trước 2 ngày để đổi ca với bạn khác, tránh ảnh hưởng đến việc học của các bạn.",
+    "flawText": "",
+    "hiddenFallacyId": "no_fallacy",
+    "difficulty": "Co_ban",
+    "explanation": "Lập luận hợp lý: Đưa ra cơ chế phân công minh bạch, có tính khả thi cao, có phương án dự phòng linh hoạt cho trường hợp đặc biệt chứ không áp đặt mệnh lệnh cứng nhắc.",
+    "sampleRebuttal": "Kế hoạch rất hợp lý và công bằng. Đề xuất có tính toán đến trường hợp ngoại lệ và tôn trọng thời gian học tập của các thành viên trong lớp."
+  },
+  {
+    "id": "sc_valid_04",
+    "category": "cong_nghe_ai",
+    "topicTitle": "Sử dụng mạng xã hội có chừng mực",
+    "speaker": {
+      "name": "Bạn Tuấn",
+      "role": "Học sinh lớp 12"
+    },
+    "context": "Trong bài thuyết trình môn GDCD về tác động của công nghệ số đối với đời sống thanh thiếu niên.",
+    "statement": "Mạng xã hội mang lại cơ hội kết nối bạn bè và tìm kiếm tài liệu học tập rất phong phú, nhưng nếu sử dụng quá 3 tiếng mỗi ngày có thể gây xao nhãng bài vở. Vì vậy, thay vì cấm đoán cực đoan, mỗi học sinh nên tự đặt giới hạn thời gian trên điện thoại và tắt thông báo khi bắt đầu giờ tự học.",
+    "flawText": "",
+    "hiddenFallacyId": "no_fallacy",
+    "difficulty": "Trung_binh",
+    "explanation": "Lập luận hợp lý: Phân tích khách quan cả hai mặt lợi và hại, bác bỏ tư duy nhị nguyên cực đoan ('thay vì cấm đoán') và đề xuất biện pháp tự chủ có thể thực hiện được ngay.",
+    "sampleRebuttal": "Luận điểm rất thấu đáo, nhìn nhận vấn đề đa chiều và đề xuất giải pháp dung hòa, thực tế mà không hề rơi vào bẫy ngụy biện nhị nguyên hay dốc trượt."
+  },
+  {
+    "id": "sc_valid_05",
+    "category": "hoc_duong",
+    "topicTitle": "Định hướng nghề nghiệp dựa trên năng lực và thị trường",
+    "speaker": {
+      "name": "Chị Hương",
+      "role": "Chuyên viên tư vấn hướng nghiệp"
+    },
+    "context": "Trong buổi tư vấn chọn ngành nghề cho học sinh khối 12 trước kỳ thi tốt nghiệp THPT.",
+    "statement": "Khi chọn ngành học, các em nên cân nhắc điểm giao thoa giữa sở thích cá nhân, năng lực học tập thực tế và nhu cầu của thị trường lao động trong 5 năm tới. Đừng chỉ chạy theo các ngành 'hot' nhất thời của đám đông, nhưng cũng không nên bỏ qua các báo cáo thống kê việc làm từ Bộ Lao động.",
+    "flawText": "",
+    "hiddenFallacyId": "no_fallacy",
+    "difficulty": "Nang_cao",
+    "explanation": "Lập luận hợp lý: Cảnh báo tránh bẫy chạy theo đám đông (Bandwagon), đồng thời nhắc nhở tôn trọng số liệu thống kê chính thống và sự phù hợp của cá nhân.",
+    "sampleRebuttal": "Lời khuyên rất chuẩn xác và toàn diện. Chuyên viên đã khuyên học sinh tránh bẫy tâm lý đám đông và đưa ra khung đánh giá đa chiều dựa trên số liệu thực tế."
+  },
+  {
+    "id": "sc_valid_06",
+    "category": "hoc_duong",
+    "topicTitle": "Nhận xét bài kiểm tra Vật lý",
+    "speaker": {
+      "name": "Thầy Quang",
+      "role": "Giáo viên Vật lý"
+    },
+    "context": "Thầy Quang trả bài kiểm tra định kỳ 1 tiết chương Động lực học chất điểm.",
+    "statement": "Ở câu số 4, nhiều bạn chưa đạt điểm tối đa không phải vì tính toán sai, mà do các bạn quên chưa phân tích lực ma sát nghỉ khi vật chưa chuyển động. Các em xem lại ví dụ mẫu ở trang 45 sách giáo khoa để nắm rõ điều kiện áp dụng định luật II Newton.",
+    "flawText": "",
+    "hiddenFallacyId": "no_fallacy",
+    "difficulty": "Co_ban",
+    "explanation": "Lập luận hợp lý: Đánh giá thẳng vào mắt xích logic chuyên môn cụ thể (lực ma sát nghỉ), trích dẫn tài liệu học tập chính thức và hướng dẫn cách khắc phục cụ thể.",
+    "sampleRebuttal": "Nhận xét của thầy hoàn toàn chuẩn xác và mang tính sư phạm cao, chỉ ra chính xác sai sót về mặt khoa học mà không có bất kỳ sự công kích hay suy diễn nào."
+  },
+  {
+    "id": "sc_valid_07",
+    "category": "moi_truong",
+    "topicTitle": "Dự án phân loại rác thải tại nguồn trong trường học",
+    "speaker": {
+      "name": "Bạn Nga",
+      "role": "Chủ nhiệm CLB Môi Trường Xanh"
+    },
+    "context": "Nga trình bày đề án đặt thùng rác 3 màu tại các hành lang lớp học trước Ban Giám hiệu.",
+    "statement": "Theo số liệu khảo sát tuần trước, 60% rác thải tại trường chúng ta là vỏ hộp sữa và chai nhựa có thể tái chế. Việc bố trí thùng rác phân loại kèm bảng hướng dẫn hình ảnh sẽ giúp giảm tải cho nhân viên vệ sinh và tạo nguồn quỹ nhỏ cho phong tràu kế hoạch nhỏ của trường.",
+    "flawText": "",
+    "hiddenFallacyId": "no_fallacy",
+    "difficulty": "Trung_binh",
+    "explanation": "Lập luận hợp lý: Có dữ liệu khảo sát thực tế tại địa bàn, phân tích rõ lợi ích kinh tế - môi trường cụ thể và đề xuất giải pháp trực quan dễ thực hiện.",
+    "sampleRebuttal": "Dự án có căn cứ thực nghiệm rõ ràng, mục tiêu thực tế và chuỗi tác động tích cực cụ thể, hoàn toàn thuyết phục và không mắc lỗi ngụy biện."
+  },
+  {
+    "id": "sc_valid_08",
+    "category": "hoc_duong",
+    "topicTitle": "So sánh giữa sách in truyền thống và sách điện tử",
+    "speaker": {
+      "name": "Bạn Lan",
+      "role": "Thành viên CLB Sách và Hành động"
+    },
+    "context": "Trong buổi tọa đàm về văn hóa đọc trong kỷ nguyên số.",
+    "statement": "Sách in giúp mắt đỡ mỏi và mang lại cảm giác xúc giác tập trung hơn, trong khi máy đọc sách điện tử lại tiện lợi để lưu trữ hàng nghìn đầu sách khi di chuyển. Việc lựa chọn phương tiện nào phụ thuộc vào hoàn cảnh và thói quen của từng người, quan trọng nhất vẫn là chất lượng tiếp thu tri thức.",
+    "flawText": "",
+    "hiddenFallacyId": "no_fallacy",
+    "difficulty": "Trung_binh",
+    "explanation": "Lập luận hợp lý: Đánh giá công bằng ưu - nhược điểm của cả hai công nghệ, không thiên kiến, không áp đặt và tập trung vào giá trị cốt lõi là việc tiếp thu tri thức.",
+    "sampleRebuttal": "Quan điểm rất công tâm và tỉnh táo. Lan đã tránh được bẫy thiên vị công nghệ hay bảo thủ truyền thống, khẳng định bản chất mục tiêu của việc đọc sách."
+  },
+  {
+    "id": "sc_valid_09",
+    "category": "hoc_duong",
+    "topicTitle": "Nguyên tắc làm việc nhóm hiệu quả",
+    "speaker": {
+      "name": "Bạn Đức",
+      "role": "Học sinh lớp 11A"
+    },
+    "context": "Trong buổi tổng kết dự án học tập liên môn Lịch sử - Địa lý.",
+    "statement": "Làm việc nhóm chỉ thực sự phát huy tác dụng khi mỗi thành viên đã tự tìm hiểu tài liệu trước ở nhà. Nếu bước vào buổi thảo luận mà không ai chuẩn bị gì, thời gian sẽ bị lãng phí vào việc đọc lại kiến thức cơ bản thay vì tranh luận các góc nhìn chuyên sâu.",
+    "flawText": "",
+    "hiddenFallacyId": "no_fallacy",
+    "difficulty": "Nang_cao",
+    "explanation": "Lập luận hợp lý: Phân tích chính xác cơ chế phối hợp nhóm và điều kiện tiên quyết (chuẩn bị trước) để tạo ra giá trị gia tăng trong học tập hợp tác.",
+    "sampleRebuttal": "Lập luận rất sắc bén và thực tế. Đức đã chỉ ra đúng điều kiện cần để học tập nhóm đạt hiệu quả cao, phản ánh đúng cơ chế tương tác nhóm tích cực."
+  },
+  {
+    "id": "sc_valid_10",
+    "category": "dao_duc_xa_hoi",
+    "topicTitle": "Quy định về độ tuổi điều khiển phương tiện xe gắn máy",
+    "speaker": {
+      "name": "Đại úy Trần Tuấn",
+      "role": "Cán bộ Cảnh sát Giao thông tuyên truyền"
+    },
+    "context": "Trong buổi phổ biến kiến thức pháp luật giao thông đầu năm học tại sân trường.",
+    "statement": "Quy định học sinh dưới 16 tuổi không được điều khiển xe máy điện và dưới 18 tuổi không được lái xe máy trên 50cc được xây dựng dựa trên sự phát triển thể chất, phản xạ xử lý tình huống khẩn cấp và căn cứ theo Luật Giao thông Đường bộ, nhằm bảo vệ tính mạng cho chính các em và người tham gia giao thông.",
+    "flawText": "",
+    "hiddenFallacyId": "no_fallacy",
+    "difficulty": "Co_ban",
+    "explanation": "Lập luận hợp lý: Viện dẫn căn cứ pháp lý chính thức kết hợp giải thích cơ chế an toàn sinh học (phản xạ và thể chất), mục đích vì sự an toàn chung chứ không vì áp đặt quyền lực cảm tính.",
+    "sampleRebuttal": "Lập luận có căn cứ pháp lý và cơ sở khoa học rõ ràng. Mục đích bảo vệ an toàn tính mạng là khách quan và đúng đắn, không vi phạm bất kỳ lỗi logic nào."
+  }
+]

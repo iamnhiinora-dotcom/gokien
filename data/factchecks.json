@@ -1,0 +1,507 @@
+[
+  {
+    "id": "fc_01",
+    "title": "Tỷ lệ nhập viện vọt tăng 300% sau vắc-xin thế hệ mới?",
+    "category": "y_te_suc_khoe",
+    "categoryLabel": "Y tế & Sức khỏe",
+    "type": "cat_xen_so_lieu",
+    "typeLabel": "Số liệu bị cắt xén (Cherry-picked data)",
+    "sourceClaim": {
+      "platform": "Facebook",
+      "author": "Hội Y Học Tự Nhiên & Khỏe Mạnh",
+      "authorHandle": "@yhoctunhien_vn",
+      "avatarInitials": "YH",
+      "publishedTime": "12 giờ trước",
+      "headline": "CHẤN ĐỘNG: Nghiên cứu quốc tế khẳng định vắc-xin thế hệ mới làm tăng vọt 300% tỷ lệ nhập viện ở người trẻ!",
+      "content": "Hãy nhìn vào biểu đồ nghiên cứu này mà xem! Tỷ lệ thanh thiếu niên phải nhập viện đã tăng vọt từ 100% lên tới 400% (tức tăng 300%) sau chiến dịch tiêm phòng vừa qua. Các phụ huynh hãy tỉnh táo dừng ngay việc cho con tiêm vắc-xin kẻo rước họa vào thân!",
+      "mediaType": "screenshot",
+      "mediaDescription": "Ảnh chụp màn hình phóng to một biểu đồ cột hiển thị mức tăng 300%, nhưng bị cắt mất trục tung tuyệt đối và phần chú thích cỡ mẫu.",
+      "mediaDetail": {
+        "viralMetric": "14.500 lượt chia sẻ · 3.200 bình luận",
+        "imageCaption": "Biểu đồ cột bị cắt xén chỉ hiện mức tăng tương đối 300%"
+      }
+    },
+    "siftGuidance": {
+      "stop": "Dừng lại: Tiêu đề giật gân, sử dụng từ ngữ kích động nỗi sợ hãi ('CHẤN ĐỘNG', 'rước họa vào thân') của phụ huynh.",
+      "investigate": "Kiểm tra nguồn: Fanpage 'Hội Y Học Tự Nhiên' không có chứng chỉ chuyên môn y khoa, thường xuyên bán thực phẩm chức năng.",
+      "findBetter": "Tìm nguồn tốt hơn: Tra cứu trang của Tổ chức Y tế Thế giới (WHO), Bộ Y tế và các tạp chí y khoa bình duyệt (Lancet, NEJM).",
+      "trace": "Truy về gốc: Tìm bài báo nghiên cứu gốc để xem mẫu số tuyệt đối: thực tế số ca nhập viện tăng từ 1 ca lên 4 ca trên 100.000 người, trong khi số ca tử vong ở nhóm không tiêm cao gấp 28 lần."
+    },
+    "truthVerdict": "gay_hieu_lam",
+    "truthVerdictLabel": "Gây hiểu lầm (Cắt xén số liệu)",
+    "explanation": "Thông tin gây hiểu lầm nghiêm trọng do ngụy biện phóng đại rủi ro tương đối (Relative Risk) và giấu nhẹm rủi ro tuyệt đối (Absolute Risk). Việc tăng từ 1 ca lên 4 ca trên 100.000 người là mức tăng tương đối 300%, nhưng con số tuyệt đối cực kỳ nhỏ (0,004%), trong khi hiệu quả bảo vệ giảm tử vong của vắc-xin lên tới hơn 95%.",
+    "debunkSources": [
+      {
+        "title": "Tổ chức Y tế Thế giới (WHO) - An toàn và hiệu quả của vắc-xin",
+        "url": "https://www.who.int/news-room/questions-and-answers/item/coronavirus-disease-(covid-19)-vaccines-safety",
+        "publisher": "WHO Official"
+      },
+      {
+        "title": "Cổng thông tin Bộ Y tế Việt Nam - Khuyến cáo tiêm chủng học đường",
+        "url": "https://moh.gov.vn",
+        "publisher": "Bộ Y tế"
+      }
+    ]
+  },
+  {
+    "id": "fc_02",
+    "title": "Học phí trường đại học X tăng chóng mặt gấp 5 lần?",
+    "category": "giao_duc",
+    "categoryLabel": "Giáo dục & Học đường",
+    "type": "bieu_do_truc_tung",
+    "typeLabel": "Biểu đồ có trục tung không bắt đầu từ 0 (Truncated Y-axis)",
+    "sourceClaim": {
+      "platform": "TikTok",
+      "author": "Góc Sinh Viên Bức Xúc",
+      "authorHandle": "@sinhvien_review247",
+      "avatarInitials": "SV",
+      "publishedTime": "1 ngày trước",
+      "headline": "SỐC TOÀN TẬP: Học phí đại học X vừa tăng phi mã gấp 5 lần chỉ sau đúng 1 năm, sinh viên nghèo biết sống sao?!",
+      "content": "Nhìn biểu đồ so sánh cột học phí năm 2023 và 2024 của trường đại học X mà phát khóc! Cột năm 2024 cao gấp 5 lần cột năm 2023. Tăng giá thế này thì chỉ có con nhà đại gia mới dám học tiếp!",
+      "mediaType": "chart",
+      "mediaDescription": "Biểu đồ cột so sánh học phí 2 năm: cột năm 2023 trông lùn tịt sát đáy, cột năm 2024 cao chót vót chạm đỉnh.",
+      "mediaDetail": {
+        "chartData": [
+          { "label": "Năm 2023", "value": 28.5 },
+          { "label": "Năm 2024", "value": 29.2 }
+        ],
+        "yAxisMin": 28.0,
+        "yAxisMax": 29.5,
+        "viralMetric": "85.000 lượt xem · 4.100 bình luận"
+      }
+    },
+    "siftGuidance": {
+      "stop": "Dừng lại: Hình ảnh biểu đồ gây hiệu ứng thị giác cực đoan, kích động sự bức xúc về tài chính.",
+      "investigate": "Kiểm tra nguồn: Kênh TikTok ẩn danh chuyên đăng tải tin drama giật gân, không dẫn link thông báo học phí chính thức.",
+      "findBetter": "Tìm nguồn tốt hơn: Vào trực tiếp cổng thông tin tuyển sinh hoặc thông báo công khai biểu phí của trường đại học X.",
+      "trace": "Truy về gốc: Nhìn kỹ vào các con số đánh dấu trên trục tung (Y-axis). Trục Y không bắt đầu từ số 0 mà bị cắt xén bắt đầu từ 28 triệu đến 29.5 triệu. Thực tế học phí chỉ tăng từ 28.5 triệu lên 29.2 triệu (tăng 2.45% theo đúng khung trần quy định của Nhà nước)."
+    },
+    "truthVerdict": "gay_hieu_lam",
+    "truthVerdictLabel": "Gây hiểu lầm (Thao túng thị giác biểu đồ)",
+    "explanation": "Biểu đồ bị cắt ngắn trục tung (Truncated Graph) khiến độ chênh lệch chỉ 700.000 VNĐ (tăng 2.45%) bị khuếch đại thị giác thành cột cao gấp 5 lần. Đây là thủ thuật kinh điển trong thống kê trực quan nhằm đánh lừa cảm xúc người xem mà không cần phải bịa đặt số liệu.",
+    "debunkSources": [
+      {
+        "title": "Nghị định 81/2021/NĐ-CP của Chính phủ quy định về cơ chế thu, quản lý học phí",
+        "url": "https://vanban.chinhphu.vn",
+        "publisher": "Cổng Thông tin Điện tử Chính phủ"
+      }
+    ]
+  },
+  {
+    "id": "fc_03",
+    "title": "Quán trà sữa là thủ phạm làm tụt điểm thi tốt nghiệp THPT?",
+    "category": "doi_song",
+    "categoryLabel": "Đời sống & Thống kê",
+    "type": "nham_tuong_quan",
+    "typeLabel": "Nhầm tương quan với nhân quả (Correlation vs Causation)",
+    "sourceClaim": {
+      "platform": "Báo điện tử",
+      "author": "Chuyên trang Đời Sống & Tiêu Dùng Mạng",
+      "publishedTime": "Hôm qua",
+      "headline": "PHÁT HIỆN GIẬT MÌNH: Quận nào càng nhiều quán trà sữa thì điểm thi tốt nghiệp môn Toán càng thấp thảm hại!",
+      "content": "Một báo cáo điều tra vừa chỉ ra mối tương quan hoàn hảo (r = 0.89) giữa mật độ quán trà sữa trên địa bàn và tỷ lệ học sinh bị điểm dưới trung bình môn Toán. Trà sữa chứa nhiều đường làm ức chế tế bào tư duy logic của học sinh, dẫn đến kết quả thi cử tụt dốc!",
+      "mediaType": "chart",
+      "mediaDescription": "Đồ thị phân tán (Scatter plot) vẽ các điểm dữ liệu giữa số lượng quán trà sữa và điểm thi tốt nghiệp.",
+      "mediaDetail": {
+        "viralMetric": "22.000 lượt đọc · 890 lượt chia sẻ"
+      }
+    },
+    "siftGuidance": {
+      "stop": "Dừng lại: Một phát hiện nghe có vẻ hài hước nhưng kết luận nhân quả rất vô lý ('uống trà sữa làm dốt Toán').",
+      "investigate": "Kiểm tra nguồn: Trang tin tổng hợp 'xào bài', không dẫn nguồn nghiên cứu hay tổ chức thống kê giáo dục nào.",
+      "findBetter": "Tìm nguồn tốt hơn: Tìm kiếm các tài liệu nghiên cứu về các yếu tố ảnh hưởng đến điểm thi THPT (điều kiện kinh tế - xã hội, chất lượng giáo viên, cơ sở vật chất).",
+      "trace": "Truy về gốc: Phân tích biến ẩn trung gian (Confounding Variable). Các khu vực tập trung nhiều quán trà sữa là khu đô thị đông dân cư, tập trung nhiều trung tâm giáo dục nghề nghiệp, tỷ lệ thí sinh tự do cao. Hai hiện tượng cùng tăng không có nghĩa A gây ra B (Spurious Correlation)."
+    },
+    "truthVerdict": "sai",
+    "truthVerdictLabel": "Sai sự thật (Đánh tráo tương quan thành nhân quả)",
+    "explanation": "Lập luận phạm lỗi ngụy biện 'Tương quan không phải là Nhân quả' (Correlation is not Causation). Mối liên hệ toán học giữa số lượng quán trà sữa và điểm thi là sự tương quan giả (Spurious correlation) do biến ẩn thứ ba chi phối (mật độ dân số đô thị và cơ cấu thí sinh), không hề có mối quan hệ nhân quả sinh học nào.",
+    "debunkSources": [
+      {
+        "title": "Nguyên lý Thống kê: Phân biệt Tương quan và Quan hệ Nhân quả (Harvard Online)",
+        "url": "https://online.hbs.edu/blog/post/correlation-vs-causation",
+        "publisher": "Harvard Business School Online"
+      }
+    ]
+  },
+  {
+    "id": "fc_04",
+    "title": "Bắt buộc toàn bộ học sinh THPT phải học thêm ban đêm?",
+    "category": "giao_duc",
+    "categoryLabel": "Giáo dục & Chính sách",
+    "type": "giat_tit_sai_noi_dung",
+    "typeLabel": "Tiêu đề giật tít khác nội dung (Clickbait Headline)",
+    "sourceClaim": {
+      "platform": "Báo điện tử",
+      "author": "Báo Tin Nóng 24/7",
+      "publishedTime": "3 ngày trước",
+      "headline": "CHÍNH THỨC: Bắt buộc toàn bộ học sinh THPT cả nước phải học thêm vào ban đêm từ tháng 11/2026?!",
+      "content": "Một quyết định gây chấn động đang khiến hàng triệu phụ huynh và học sinh đứng ngồi không yên khi quy định giờ học ban đêm bắt đầu có hiệu lực...",
+      "mediaType": "screenshot",
+      "mediaDescription": "Ảnh chụp bài báo giật tít màu đỏ in đậm kèm ảnh minh họa học sinh ngủ gục trên bàn học lúc nửa đêm.",
+      "mediaDetail": {
+        "viralMetric": "52.000 lượt chia sẻ trên các nhóm Zalo phụ huynh"
+      }
+    },
+    "siftGuidance": {
+      "stop": "Dừng lại: Tiêu đề gây sốc có dấu chấm hỏi chấm than (?!), đánh vào tâm lý bức xúc về quá tải học thêm.",
+      "investigate": "Kiểm tra nguồn: Trang tin 'Tin Nóng 24/7' là trang tin lá cải chuyên đặt tít câu view kiếm tiền quảng cáo.",
+      "findBetter": "Tìm nguồn tốt hơn: Kiểm tra văn bản quy phạm pháp luật tại Cổng thông tin Bộ Giáo dục và Đào tạo (moet.gov.vn) hoặc Thông tấn xã Việt Nam.",
+      "trace": "Truy về gốc: Đọc toàn bộ nội dung chi tiết bài viết bên dưới. Thực tế nội dung chỉ trích dẫn đề xuất của một trường THPT nội trú vùng cao mở cửa thư viện đến 20h30 cho học sinh tự nguyện ôn bài, hoàn toàn không có bất kỳ quy định bắt buộc nào đối với học sinh cả nước."
+    },
+    "truthVerdict": "sai",
+    "truthVerdictLabel": "Sai sự thật (Tiêu đề giật tít bịa đặt, trái ngược nội dung)",
+    "explanation": "Tiêu đề hoàn toàn bịa đặt và mâu thuẫn với nội dung bên trong. Người viết cố tình dùng từ 'BẮT BUỘC toàn bộ học sinh cả nước' để câu view giật gân, trong khi thực tế chỉ là mô hình mở thư viện tự nguyện tại một cơ sở trường nội trú cụ thể.",
+    "debunkSources": [
+      {
+        "title": "Cổng Thông tin Điện tử Bộ Giáo dục và Đào tạo Việt Nam",
+        "url": "https://moet.gov.vn",
+        "publisher": "Bộ GD&ĐT"
+      },
+      {
+        "title": "Báo Tuổi Trẻ - Cảnh giác với các tin đồn giật tít về quy chế học đường",
+        "url": "https://tuoitre.vn",
+        "publisher": "Báo Tuổi Trẻ"
+      }
+    ]
+  },
+  {
+    "id": "fc_05",
+    "title": "Vỡ đập thủy điện tại miền Trung, hàng nghìn nhà chìm trong biển nước?",
+    "category": "mang_xa_hoi",
+    "categoryLabel": "Mạng xã hội & Khẩn cấp",
+    "type": "anh_cu_su_kien_moi",
+    "typeLabel": "Ảnh cũ gắn sự kiện mới (Recycled Out-of-Context Media)",
+    "sourceClaim": {
+      "platform": "TikTok",
+      "author": "Kênh Tin Bão Khẩn Cấp",
+      "authorHandle": "@tinbaovn_live",
+      "avatarInitials": "TB",
+      "publishedTime": "Sáng nay",
+      "headline": "TIN KHẨN CẤP: Vừa vỡ đập thủy điện lớn ở miền Trung sáng nay, nước dâng ngập nóc nhà, chia sẻ gấp để cứu dân!",
+      "content": "Cảnh báo khẩn cấp bà con ơi! Đập thủy điện vừa bị vỡ toác thân đập, dòng lũ đỏ ngầu cuốn trôi hàng loạt ngôi nhà. Hãy chia sẻ ngay để đội cứu hộ biết vị trí mà đến cứu!",
+      "mediaType": "image",
+      "mediaDescription": "Hình ảnh dòng lũ đỏ ngầu đục ngầu đang cuốn phăng một góc đập bê tông và hàng chục ngôi nhà bị chìm nghỉm.",
+      "mediaDetail": {
+        "viralMetric": "110.000 lượt chia sẻ · 1.8M lượt xem"
+      }
+    },
+    "siftGuidance": {
+      "stop": "Dừng lại: Tin thiên tai khẩn cấp kèm lời kêu gọi 'chia sẻ gấp' thường kích hoạt tâm lý hoảng loạn và chia sẻ không suy nghĩ.",
+      "investigate": "Kiểm tra nguồn: Tài khoản TikTok mới lập, không có dấu tích xác minh, không nêu tên cụ thể đập thủy điện nào hay ở tỉnh nào.",
+      "findBetter": "Tìm nguồn tốt hơn: Xem bản tin dự báo thời tiết và thiên tai từ Trung tâm Dự báo Khí tượng Thủy văn Quốc gia và Đài Truyền hình Việt Nam (VTV).",
+      "trace": "Truy về gốc: Sử dụng tính năng Google Reverse Image Search hoặc TinEye trên ảnh chụp màn hình video. Bức ảnh này thực chất là hình ảnh sự cố vỡ đập thủy điện Xe-Pian Xe-Namnoy tại tỉnh Attapeu (Lào) xảy ra từ tháng 7 năm 2018."
+    },
+    "truthVerdict": "sai",
+    "truthVerdictLabel": "Sai sự thật (Dùng ảnh cũ từ nước ngoài để bịa đặt thảm họa)",
+    "explanation": "Tin giả 100%. Kẻ xấu đã lấy hình ảnh vụ vỡ đập thủy điện tại Lào năm 2018 rồi cắt ghép, gán ghép vào thời điểm hiện tại ở miền Trung Việt Nam nhằm câu like, trục lợi tiền quyên góp cứu trợ hoặc gây hoang mang dư luận xã hội.",
+    "debunkSources": [
+      {
+        "title": "Trung tâm Dự báo Khí tượng Thủy văn Quốc gia (NCHMF)",
+        "url": "https://nchmf.gov.vn",
+        "publisher": "NCHMF"
+      },
+      {
+        "title": "Báo điện tử VnExpress - Tư liệu sự cố vỡ đập thủy điện Xe-Pian tại Lào năm 2018",
+        "url": "https://vnexpress.net",
+        "publisher": "VnExpress"
+      }
+    ]
+  },
+  {
+    "id": "fc_06",
+    "title": "Bill Gates khuyên: 'Đừng học đại học, hãy chơi game để khởi nghiệp'?",
+    "category": "mang_xa_hoi",
+    "categoryLabel": "Mạng xã hội & Danh nhân",
+    "type": "trich_dan_gia_mao",
+    "typeLabel": "Trích dẫn bịa của người nổi tiếng (Fake Celebrity Quote)",
+    "sourceClaim": {
+      "platform": "Facebook",
+      "author": "Triết Lý Khởi Nghiệp Trẻ",
+      "authorHandle": "@khoinghiep_trieu_usd",
+      "avatarInitials": "KN",
+      "publishedTime": "2 ngày trước",
+      "headline": "Lời khuyên đắt giá của tỷ phú Bill Gates dành cho thanh niên thế hệ mới!",
+      "content": "'Đừng lãng phí 4 năm đại học nghe những ông thầy không có tiền dạy bạn làm giàu. Tôi đã bỏ học và dành thời gian chơi điện tử, lập trình và giờ tôi là người giàu nhất thế giới. Tấm bằng đại học là tờ giấy vô giá trị nhất!' - Bill Gates phát biểu tại Diễn đàn Kinh tế Thế giới.",
+      "mediaType": "screenshot",
+      "mediaDescription": "Bức ảnh chân dung Bill Gates mặc vest cười tươi, bên cạnh là đoạn quote in hoa đặt trong dấu ngoặc kép bằng phông chữ trang trọng.",
+      "mediaDetail": {
+        "viralMetric": "34.000 lượt like · 9.800 lượt chia sẻ"
+      }
+    },
+    "siftGuidance": {
+      "stop": "Dừng lại: Câu trích dẫn tâng bốc tư tưởng bỏ học và chơi game, rất hợp tâm lý muốn thành công nhanh của người trẻ.",
+      "investigate": "Kiểm tra nguồn: Fanpage chuyên bán khóa học làm giàu đa cấp, không hề trích dẫn văn bản hay video gốc từ WEF.",
+      "findBetter": "Tìm nguồn tốt hơn: Tra cứu trang blog chính thức của Bill Gates (GatesNotes) hoặc hồ sơ lưu trữ các bài phát biểu của ông trên các kênh báo chí uy tín (Reuters, BBC).",
+      "trace": "Truy về gốc: Tìm kiếm nguyên văn phát biểu tiếng Anh trên GatesNotes. Bill Gates nhiều lần khẳng định: 'Mặc dù tôi bỏ học và may mắn thành công, nhưng bằng đại học vẫn là con đường an toàn và chắc chắn nhất dẫn đến thành công cho mọi người. Nước Mỹ và thế giới cần thêm nhiều người tốt nghiệp đại học'."
+    },
+    "truthVerdict": "sai",
+    "truthVerdictLabel": "Sai sự thật (Trích dẫn giả mạo hoàn toàn)",
+    "explanation": "Câu trích dẫn hoàn toàn là giả mạo do các trang mạng tự bịa đặt. Bill Gates chưa bao giờ khuyên thanh niên bỏ học chơi game; ngược lại, quỹ từ thiện của ông đã đầu tư hàng tỷ USD cho các chương trình học bổng đại học và thúc đẩy tỷ lệ tốt nghiệp trên toàn cầu.",
+    "debunkSources": [
+      {
+        "title": "GatesNotes - Blog chính thức của Bill Gates về tầm quan trọng của việc học đại học",
+        "url": "https://www.gatesnotes.com",
+        "publisher": "GatesNotes Official"
+      },
+      {
+        "title": "FactCheck.org - Bác bỏ các trích dẫn ngụy tạo gán cho các tỷ phú công nghệ",
+        "url": "https://www.factcheck.org",
+        "publisher": "FactCheck.org"
+      }
+    ]
+  },
+  {
+    "id": "fc_07",
+    "title": "Rùa biển khổng lồ màu vàng dài 15m dạt vào bờ biển Đà Nẵng?",
+    "category": "cong_nghe",
+    "categoryLabel": "Công nghệ & AI Fake",
+    "type": "ai_deepfake",
+    "typeLabel": "Ảnh do AI tạo giả mạo (AI-Generated Deepfake Image)",
+    "sourceClaim": {
+      "platform": "TikTok",
+      "author": "Kỳ Lạ Bốn Phương",
+      "authorHandle": "@kylaboncphuong_tv",
+      "avatarInitials": "KL",
+      "publishedTime": "Hôm qua",
+      "headline": "HIỆN TƯỢNG TÂM LINH KỲ BÍ: Cụ rùa vàng khổng lồ dài 15 mét vừa dạt vào bãi biển Mỹ Khê sáng sớm nay!",
+      "content": "Bà con Đà Nẵng rạng sáng nay phát hiện một cụ rùa biển màu vàng óng ánh to như một chiếc xe buýt dạt vào bờ. Các nhà khoa học cũng phải bó tay trước sinh vật kỳ bí này. Ai nhìn thấy cụ hãy thả tim và gõ 'Cầu bình an' để nhận phước lành!",
+      "mediaType": "image",
+      "mediaDescription": "Bức ảnh siêu thực chụp một con rùa biển màu vàng rực rỡ dài hàng chục mét trên bãi cát, xung quanh là hàng trăm người dân đang vây quanh chiêm bái.",
+      "mediaDetail": {
+        "viralMetric": "220.000 lượt like · 45.000 bình luận 'Cầu bình an'"
+      }
+    },
+    "siftGuidance": {
+      "stop": "Dừng lại: Hình ảnh mang tính chất mê tín dị đoan và kêu gọi tương tác ('gõ Cầu bình an để nhận phước').",
+      "investigate": "Kiểm tra nguồn: Kênh TikTok chuyên đăng các video sinh vật lạ kỳ ảo kiếm tiền sáng tạo nội dung.",
+      "findBetter": "Tìm nguồn tốt hơn: Kiểm tra các báo chính thống của thành phố Đà Nẵng (Báo Đà Nẵng, Cổng TTĐT TP Đà Nẵng) và Chi cục Thủy sản Đà Nẵng.",
+      "trace": "Truy về gốc: Phóng to bức ảnh quan sát các dấu hiệu tạo sinh bằng AI (Artifacts): Bàn tay của người đứng gần bị biến dạng 6-7 ngón, làn da của rùa bóng loáng như sáp nến nhân tạo, người đứng trên bãi biển không có bóng đổ trên cát theo hướng nắng, hoa văn trên mai rùa bị méo mó bất thường."
+    },
+    "truthVerdict": "sai",
+    "truthVerdictLabel": "Sai sự thật (Hình ảnh được tạo bởi Trí tuệ Nhân tạo Midjourney/Stable Diffusion)",
+    "explanation": "Bức ảnh là sản phẩm đồ họa được tạo ra bởi mô hình AI (như Midjourney hoặc DALL-E) nhằm câu view và tương tác mê tín. Về mặt sinh học, loài rùa biển lớn nhất thế giới (rùa da) chỉ dài tối đa 2 mét và nặng khoảng 700kg; không tồn tại loài rùa biển nào dài 15 mét.",
+    "debunkSources": [
+      {
+        "title": "Chi cục Thủy sản - Sở Nông nghiệp & Phát triển Nông thôn TP Đà Nẵng",
+        "url": "https://danang.gov.vn",
+        "publisher": "UBND TP Đà Nẵng"
+      },
+      {
+        "title": "Hiệp hội Bảo tồn Động vật Hoang dã (WCS) - Đặc điểm sinh học các loài rùa biển",
+        "url": "https://vietnam.wcs.org",
+        "publisher": "WCS Vietnam"
+      }
+    ]
+  },
+  {
+    "id": "fc_08",
+    "title": "Trứng gà giả làm từ cao su và hóa chất tràn ngập chợ?",
+    "category": "doi_song",
+    "categoryLabel": "Đời sống & Tiêu dùng",
+    "type": "tin_nhan_chuyen_tiep",
+    "typeLabel": "Tin nhắn chuyển tiếp chưa kiểm chứng (Viral Forwarded Rumor)",
+    "sourceClaim": {
+      "platform": "Zalo",
+      "author": "Người dùng Zalo ẩn danh",
+      "avatarInitials": "ZL",
+      "publishedTime": "Chuyển tiếp nhiều lần",
+      "headline": "CẢNH BÁO KHẨN CẤP ĐẾN MỌI GIA ĐÌNH: Trứng gà cao su Trung Quốc độc hại!",
+      "content": "Các mẹ cẩn thận nhé! Sáng nay em mua trứng ngoài chợ về luộc lên lòng đỏ nảy tưng tưng như bóng bàn, đốt lên có mùi khét lẹt của nhựa cao su. Ăn vào là ung thư ruột ngay tức khắc. Mọi người chia sẻ gấp cho bạn bè người thân tránh xa!",
+      "mediaType": "forwarded_message",
+      "mediaDescription": "Đoạn tin nhắn có nhãn 'Được chuyển tiếp nhiều lần' trên Zalo kèm video quay cảnh một người dùng tay bóp quả trứng lòng đỏ dai nảy.",
+      "mediaDetail": {
+        "viralMetric": "Hàng nghìn lượt chuyển tiếp trong các nhóm Zalo chung cư, tổ dân phố"
+      }
+    },
+    "siftGuidance": {
+      "stop": "Dừng lại: Tin nhắn có huy hiệu 'Chuyển tiếp nhiều lần' kèm lời kêu gọi 'chia sẻ gấp' thường là tin đồn thất thiệt lưu truyền nhiều năm.",
+      "investigate": "Kiểm tra nguồn: Tin nhắn không rõ ai là người quay video đầu tiên, không có địa chỉ chợ cụ thể hay ngày tháng xác minh.",
+      "findBetter": "Tìm nguồn tốt hơn: Kiểm tra thông tin từ Cục An toàn Thực phẩm (Bộ Y tế) và Chi cục Chăn nuôi Thú y.",
+      "trace": "Truy về gốc: Tìm hiểu hiện tượng khoa học thực phẩm. Khi trứng gà bị bảo quản trong ngăn đá tủ lạnh hoặc thời tiết quá lạnh dưới 0 độ C, các protein trong lòng đỏ bị đông tụ gelation khiến lòng đỏ trở nên dai và nảy như cao su khi luộc. Về mặt kinh tế học, chi phí sản xuất một quả trứng giả tinh vi như thật cao gấp 10 lần giá trị một quả trứng gà tự nhiên."
+    },
+    "truthVerdict": "sai",
+    "truthVerdictLabel": "Sai sự thật (Tin đồn hoang đường bị bác bỏ nhiều lần)",
+    "explanation": "Tin đồn 'trứng gà giả bằng cao su' là tin thất thiệt đã lan truyền hơn 10 năm qua. Cục An toàn Thực phẩm (Bộ Y tế) và các viện kiểm nghiệm thực phẩm quốc gia đã nhiều lần lấy mẫu và khẳng định không có trứng gà giả; hiện tượng lòng đỏ dai nảy là phản ứng vật lý tự nhiên của protein khi bị đông đá.",
+    "debunkSources": [
+      {
+        "title": "Cục An toàn Thực phẩm (Bộ Y tế) - Bác bỏ tin đồn thất thiệt về trứng gà giả",
+        "url": "https://vfa.gov.vn",
+        "publisher": "Cục An toàn Thực phẩm"
+      },
+      {
+        "title": "Báo VietnamNet - Giải mã khoa học hiện tượng lòng đỏ trứng luộc nảy như cao su",
+        "url": "https://vietnamnet.vn",
+        "publisher": "Báo VietnamNet"
+      }
+    ]
+  },
+  {
+    "id": "fc_09",
+    "title": "Ăn sô-cô-la đen giúp chữa dứt điểm bệnh ung thư?",
+    "category": "y_te_suc_khoe",
+    "categoryLabel": "Y tế & Khoa học",
+    "type": "nghien_cuu_bop_meo",
+    "typeLabel": "Bóp méo kết quả nghiên cứu khoa học (Misinterpreted Science)",
+    "sourceClaim": {
+      "platform": "Báo điện tử",
+      "author": "Tạp Chí Sống Khỏe & Tự Nhiên",
+      "publishedTime": "Tuần trước",
+      "headline": "KHOA HỌC ĐÃ CHỨNG MINH: Ăn sô-cô-la đen mỗi ngày giúp tiêu diệt 100% tế bào ung thư và kéo dài tuổi thọ!",
+      "content": "Một nghiên cứu mới đăng tải trên tạp chí khoa học quốc tế vừa chứng minh sô-cô-la đen chứa hoạt chất thần kỳ làm teo nhỏ khối u ác tính. Bệnh nhân ung thư chỉ cần ăn 2 thanh sô-cô-la mỗi ngày là có thể thay thế hoàn toàn xạ trị và hóa trị độc hại!",
+      "mediaType": "screenshot",
+      "mediaDescription": "Ảnh bài báo mạng chèn ảnh thanh sô-cô-la đen bên cạnh hình ảnh minh họa tế bào ung thư bị phân hủy.",
+      "mediaDetail": {
+        "viralMetric": "18.000 lượt chia sẻ trên Facebook"
+      }
+    },
+    "siftGuidance": {
+      "stop": "Dừng lại: Tuyên bố 'chữa khỏi 100% ung thư' và 'thay thế hóa trị' là dấu hiệu cực kỳ nguy hiểm của thông tin y tế sai lệch.",
+      "investigate": "Kiểm tra nguồn: Trang tin điện tử tổng hợp, không phải tạp chí y học chuyên ngành.",
+      "findBetter": "Tìm nguồn tốt hơn: Tra cứu hướng dẫn điều trị của Viện Ung thư Quốc gia Hoa Kỳ (NCI) hoặc Bệnh viện K Trung ương.",
+      "trace": "Truy về gốc: Tìm nghiên cứu gốc được nhắc đến trong bài. Thí nghiệm gốc chỉ sử dụng chiết xuất nồng độ cao của hợp chất polyphenol đổ trực tiếp lên tế bào ung thư trong ống nghiệm (In Vitro). Các nhà khoa học kết luận rõ ràng rằng cơ thể người tiêu hóa sô-cô-la theo cơ chế khác và việc ăn nhiều sô-cô-la làm tăng lượng đường, chất béo có hại cho tim mạch."
+    },
+    "truthVerdict": "gay_hieu_lam",
+    "truthVerdictLabel": "Gây hiểu lầm nghiêm trọng (Bóp méo thử nghiệm ống nghiệm)",
+    "explanation": "Thông tin phóng đại nguy hiểm. Nghiên cứu trong phòng thí nghiệm trên đĩa petri (In Vitro) hoàn toàn khác biệt với thử nghiệm lâm sàng trên cơ thể người sống (In Vivo). Việc khuyên bệnh nhân bỏ hóa trị để ăn sô-cô-la có thể cướp đi cơ hội vàng sống sót của người bệnh.",
+    "debunkSources": [
+      {
+        "title": "Viện Ung thư Quốc gia Hoa Kỳ (NCI) - Các huyền thoại và sự thật về điều trị ung thư",
+        "url": "https://www.cancer.gov",
+        "publisher": "National Cancer Institute"
+      },
+      {
+        "title": "Bệnh viện K Trung ương - Cảnh báo các phương pháp chữa ung thư truyền miệng phản khoa học",
+        "url": "https://benhvienk.vn",
+        "publisher": "Bệnh viện K"
+      }
+    ]
+  },
+  {
+    "id": "fc_10",
+    "title": "Phương án thi tốt nghiệp THPT từ năm 2025 chỉ còn 4 môn?",
+    "category": "giao_duc",
+    "categoryLabel": "Giáo dục & Thi cử",
+    "type": "giat_tit_sai_noi_dung",
+    "typeLabel": "Thông tin có thật từ cơ quan chính thức (Verified Fact)",
+    "sourceClaim": {
+      "platform": "Facebook",
+      "author": "Bạn Học THPT - Cẩm Nang Học Đường",
+      "authorHandle": "@banhocthpt",
+      "avatarInitials": "BH",
+      "publishedTime": "3 ngày trước",
+      "headline": "Kỳ thi tốt nghiệp THPT từ năm 2025 chính thức thi 4 môn: Toán, Ngữ văn và 2 môn tự chọn!",
+      "content": "Tin vui cho các bạn học sinh khối 10, 11 và 12! Theo phương án thi tốt nghiệp THPT mới nhất của Bộ Giáo dục và Đào tạo, thí sinh sẽ chỉ thi 2 môn bắt buộc là Toán và Ngữ văn, cùng 2 môn tự chọn trong số các môn còn lại đã học ở lớp 12.",
+      "mediaType": "screenshot",
+      "mediaDescription": "Ảnh chụp trích lục Quyết định của Bộ Giáo dục và Đào tạo kèm bảng sơ đồ phân bổ môn thi tốt nghiệp THPT.",
+      "mediaDetail": {
+        "viralMetric": "78.000 lượt tương tác · 12.000 lượt chia sẻ"
+      }
+    },
+    "siftGuidance": {
+      "stop": "Dừng lại: Thông tin liên quan mật thiết đến lộ trình thi cử của bản thân, cần đối chiếu văn bản quy phạm pháp luật.",
+      "investigate": "Kiểm tra nguồn: Fanpage học sinh tổng hợp lại thông tin, có trích dẫn số quyết định của cơ quan nhà nước.",
+      "findBetter": "Tìm nguồn tốt hơn: Kiểm tra trực tiếp trên Cổng Thông tin Điện tử Bộ Giáo dục và Đào tạo (moet.gov.vn) hoặc Báo Giáo dục và Thời đại.",
+      "trace": "Truy về gốc: Tra cứu Quyết định số 4068/QĐ-BGDĐT ngày 28/11/2023 của Bộ Giáo dục và Đào tạo phê duyệt 'Phương án tổ chức kỳ thi và xét công nhận tốt nghiệp THPT từ năm 2025'. Văn bản quy định rõ thí sinh thi 2 môn bắt buộc (Toán, Ngữ văn) và 2 môn tự chọn."
+    },
+    "truthVerdict": "dung",
+    "truthVerdictLabel": "Đúng sự thật (Thông tin chính xác theo văn bản Nhà nước)",
+    "explanation": "Thông tin hoàn toàn CHÍNH XÁC. Bộ Giáo dục và Đào tạo đã chính thức ban hành Quyết định 4068/QĐ-BGDĐT xác nhận từ năm 2025 kỳ thi tốt nghiệp THPT gồm 4 môn: Toán, Ngữ văn bắt buộc và 2 môn tự chọn trong số Hóa học, Vật lý, Sinh học, Lịch sử, Địa lý, GD Kinh tế & Pháp luật, Tin học, Công nghệ, Ngoại ngữ.",
+    "debunkSources": [
+      {
+        "title": "Bộ GD&ĐT công bố Phương án tổ chức Kỳ thi tốt nghiệp THPT từ năm 2025",
+        "url": "https://moet.gov.vn/tintuc/Pages/tin-tong-hop.aspx?ItemID=8894",
+        "publisher": "Cổng TTĐT Bộ GD&ĐT"
+      },
+      {
+        "title": "Báo Giáo dục & Thời đại - Chi tiết phương án thi tốt nghiệp THPT 2+2 từ năm 2025",
+        "url": "https://giaoducthoidai.vn",
+        "publisher": "Báo Giáo dục & Thời đại"
+      }
+    ]
+  },
+  {
+    "id": "fc_11",
+    "title": "Ghi âm lộ đề thi học sinh giỏi: Giám đốc Sở tuyên bố hủy kết quả?",
+    "category": "cong_nghe",
+    "categoryLabel": "Công nghệ & AI Voice Deepfake",
+    "type": "ai_deepfake",
+    "typeLabel": "Giọng nói do AI tạo giả mạo (Voice Deepfake Audio)",
+    "sourceClaim": {
+      "platform": "Zalo",
+      "author": "Đoạn ghi âm rò rỉ trong nhóm Telegram học sinh",
+      "avatarInitials": "TG",
+      "publishedTime": "Tối qua",
+      "headline": "RÒ RỈ BĂNG GHI ÂM: Giám đốc Sở GD&ĐT phát biểu trong cuộc họp kín tuyên bố hủy kết quả thi HSG vì lộ đề!",
+      "content": "File âm thanh 45 giây ghi lại giọng nói rất giống một vị lãnh đạo: 'Tôi yêu cầu niêm phong toàn bộ bài thi và hủy bỏ đợt thi học sinh giỏi vừa qua, tuần sau toàn bộ các em sẽ phải thi lại từ đầu...'",
+      "mediaType": "audio_transcript",
+      "mediaDescription": "Đoạn ghi âm ngắn với âm thanh nền giả tiếng ồn phòng họp và chất giọng đều đều không có ngữ điệu tự nhiên.",
+      "mediaDetail": {
+        "viralMetric": "Lan truyền chóng mặt trong các nhóm ôn thi học sinh giỏi toàn tỉnh"
+      }
+    },
+    "siftGuidance": {
+      "stop": "Dừng lại: Đoạn ghi âm nặc danh gây hoang mang cực độ cho học sinh trước kỳ xét tuyển đại học.",
+      "investigate": "Kiểm tra nguồn: Nguồn phát tán từ một tài khoản Telegram ẩn danh, không có văn bản đóng dấu của Sở GD&ĐT.",
+      "findBetter": "Tìm nguồn tốt hơn: Kiểm tra thông cáo báo chí chính thức trên trang tin của Sở Giáo dục và Đào tạo tỉnh hoặc liên hệ giáo viên chủ nhiệm.",
+      "trace": "Truy về gốc: Phân tích kỹ thuật âm thanh (Voice synthesis artifacts). Đoạn ghi âm thiếu âm thở tự nhiên, âm đuôi của các phụ âm bị bẹt và đứt gãy, ngữ điệu phẳng lì đặc trưng của công cụ sao chép giọng nói bằng AI (Voice Cloning tool). Sở GD&ĐT đã phát đi thông cáo báo chí khẩn cấp khẳng định đoạn ghi âm là giả mạo."
+    },
+    "truthVerdict": "sai",
+    "truthVerdictLabel": "Sai sự thật (Giọng nói cắt ghép giả mạo bằng AI Voice Cloning)",
+    "explanation": "Đoạn ghi âm là sản phẩm mạo danh sử dụng công nghệ Deepfake Voice Cloning. Kẻ xấu lấy mẫu giọng nói từ các video phát biểu công khai của lãnh đạo để nhân bản giọng và tạo nội dung giả mạo gây náo loạn tâm lý thí sinh.",
+    "debunkSources": [
+      {
+        "title": "Thông cáo báo chí chính thức bác bỏ tin đồn lộ đề thi của Sở GD&ĐT",
+        "url": "https://moet.gov.vn",
+        "publisher": "Sở Giáo dục và Đào tạo"
+      },
+      {
+        "title": "Cục An toàn Thông tin (Bộ TT&TT) - Cảnh báo thủ đoạn sử dụng Deepfake giọng nói lừa đảo và gây rối",
+        "url": "https://ais.gov.vn",
+        "publisher": "Cục An toàn Thông tin"
+      }
+    ]
+  },
+  {
+    "id": "fc_12",
+    "title": "Tiểu hành tinh 10.000 tỷ USD bay sát làm lệch quỹ đạo Mặt Trăng?",
+    "category": "doi_song",
+    "categoryLabel": "Khoa học & Vũ trụ",
+    "type": "cat_xen_so_lieu",
+    "typeLabel": "Số liệu bị cắt xén & Thổi phồng giật gân (Sensationalized Science)",
+    "sourceClaim": {
+      "platform": "TikTok",
+      "author": "Vũ Trụ Huyền Bí 360",
+      "authorHandle": "@vutruhuyenbi_360",
+      "avatarInitials": "VT",
+      "publishedTime": "3 ngày trước",
+      "headline": "NGUY HIỂM CỰC ĐỘ: Tiểu hành tinh chứa vàng 10.000 tỷ USD sắp đâm sượt qua Trái Đất và làm lệch quỹ đạo Mặt Trăng!",
+      "content": "Cơ quan vũ trụ NASA đang giấu giếm điều này! Vào thứ Bảy tuần tới, một tiểu hành tinh khổng lồ chứa toàn vàng và bạch kim sẽ áp sát Trái Đất ở khoảng cách nguy hiểm, lực hấp dẫn của nó sẽ hút lệch quỹ đạo mặt trăng gây ra sóng thần toàn cầu!",
+      "mediaType": "image",
+      "mediaDescription": "Video hoạt họa 3D mô phỏng thiên thạch bốc cháy rực lửa bay sượt qua mặt trăng và trái đất kèm nhạc nền cảnh báo ngày tận thế.",
+      "mediaDetail": {
+        "viralMetric": "450.000 lượt xem · 28.000 lượt chia sẻ"
+      }
+    },
+    "siftGuidance": {
+      "stop": "Dừng lại: Thuyết âm mưu ngày tận thế kết hợp số tiền khổng lồ ('NASA đang giấu giếm', '10.000 tỷ USD') là công thức câu view kinh điển.",
+      "investigate": "Kiểm tra nguồn: Kênh TikTok cá nhân không có liên kết với bất kỳ đài thiên văn hay viện nghiên cứu vũ trụ nào.",
+      "findBetter": "Tìm nguồn tốt hơn: Kiểm tra danh mục vật thể bay gần Trái Đất của NASA (Center for Near Earth Object Studies - CNEOS) hoặc Hội Thiên văn Hà Nội (HAS).",
+      "trace": "Truy về gốc: Tiểu hành tinh được nhắc đến là 16 Psyche. Tàu thăm dò Psyche của NASA phóng lên để nghiên cứu tiểu hành tinh này nằm ở vành đai chính giữa sao Hỏa và sao Mộc (cách Trái Đất hơn 370 triệu km), hoàn toàn không có chuyện bay sát Trái Đất hay làm lệch quỹ đạo Mặt Trăng."
+    },
+    "truthVerdict": "sai",
+    "truthVerdictLabel": "Sai sự thật (Thổi phồng giật gân về tiểu hành tinh 16 Psyche)",
+    "explanation": "Thông tin hoàn toàn sai lệch và bịa đặt. Tiểu hành tinh 16 Psyche nằm cách Trái Đất hàng trăm triệu kilomet trong vành đai tiểu hành tinh giữa sao Hỏa và sao Mộc. Nó không hề tiếp cận gần Trái Đất và không có bất kỳ nguy cơ nào đối với Mặt Trăng hay Trái Đất.",
+    "debunkSources": [
+      {
+        "title": "NASA Jet Propulsion Laboratory - Psyche Mission Overview",
+        "url": "https://www.jpl.nasa.gov/missions/psyche",
+        "publisher": "NASA JPL"
+      },
+      {
+        "title": "NASA Center for Near Earth Object Studies (CNEOS)",
+        "url": "https://cneos.jpl.nasa.gov",
+        "publisher": "NASA CNEOS"
+      }
+    ]
+  }
+]

@@ -1,0 +1,252 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // 1. Global Default-Deny Catch-All
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Global Helpers
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Validation for UserProfile
+    function isValidUserProfile(data) {
+      return data.id is string && data.id.size() <= 128
+        && data.displayName is string && data.displayName.size() > 0 && data.displayName.size() <= 100
+        && (!('name' in data) || (data.name is string && data.name.size() <= 100))
+        && data.schoolClass is string && data.schoolClass.size() <= 100
+        && (!('school' in data) || (data.school is string && data.school.size() <= 100))
+        && (!('email' in data) || (data.email is string && data.email.size() <= 128))
+        && (!('avatarSeed' in data) || (data.avatarSeed is string && data.avatarSeed.size() <= 50))
+        && data.level is int && data.level >= 1 && data.level <= 10
+        && data.xp is int && data.xp >= 0
+        && (!('currentXP' in data) || (data.currentXP is int && data.currentXP >= 0))
+        && (!('nextLevelXP' in data) || (data.nextLevelXP is int && data.nextLevelXP >= 0))
+        && data.title is string && data.title.size() <= 80
+        && data.debatesWon is int && data.debatesWon >= 0
+        && data.fallaciesIdentified is int && data.fallaciesIdentified >= 0
+        && (!('totalDebates' in data) || (data.totalDebates is int && data.totalDebates >= 0))
+        && (!('unlockedBadgeIds' in data) || data.unlockedBadgeIds is list)
+        && (!('streakCount' in data) || (data.streakCount is int && data.streakCount >= 0))
+        && (!('lastActiveDate' in data) || (data.lastActiveDate is string && data.lastActiveDate.size() <= 10))
+        && (!('claimedQuestIds' in data) || data.claimedQuestIds is list)
+        && (!('lastQuestDate' in data) || (data.lastQuestDate is string && data.lastQuestDate.size() <= 10))
+        && (!('soundEnabled' in data) || data.soundEnabled is bool)
+        && (!('screenShakeEnabled' in data) || data.screenShakeEnabled is bool)
+        && (!('lastMatchId' in data) || (data.lastMatchId is string && data.lastMatchId.size() <= 128))
+        && (!('diagnosticTestA' in data) || data.diagnosticTestA is map)
+        && (!('diagnosticTestB' in data) || data.diagnosticTestB is map);
+    }
+
+    // Validation for LeaderboardUser
+    function isValidLeaderboardUser(data) {
+      return data.id is string && data.id.size() <= 128
+        && data.displayName is string && data.displayName.size() > 0 && data.displayName.size() <= 100
+        && (!('name' in data) || (data.name is string && data.name.size() <= 100))
+        && data.schoolClass is string && data.schoolClass.size() <= 100
+        && (!('avatarSeed' in data) || (data.avatarSeed is string && data.avatarSeed.size() <= 50))
+        && data.level is int && data.level >= 1 && data.level <= 10
+        && data.xp is int && data.xp >= 0
+        && data.title is string && data.title.size() <= 80
+        && data.debatesWon is int && data.debatesWon >= 0
+        && data.fallaciesFound is int && data.fallaciesFound >= 0;
+    }
+
+    // Validation for DebateMatchRecord
+    function isValidDebateMatch(data) {
+      return data.id is string && data.id.size() <= 128
+        && data.userId is string && data.userId.size() <= 128
+        && data.topicMotion is string && data.topicMotion.size() <= 500
+        && data.studentSide is string && (data.studentSide == 'pro' || data.studentSide == 'con')
+        && data.outcome is string && (data.outcome == 'victory' || data.outcome == 'defeat' || data.outcome == 'draw')
+        && data.studentHp is int && data.studentHp >= 0 && data.studentHp <= 100
+        && data.aiHp is int && data.aiHp >= 0 && data.aiHp <= 100
+        && data.xpEarned is int && data.xpEarned >= 0 && data.xpEarned <= 300
+        && (!('roundsCompleted' in data) || (data.roundsCompleted is int && data.roundsCompleted >= 1 && data.roundsCompleted <= 10))
+        && (!('personaName' in data) || (data.personaName is string && data.personaName.size() <= 100))
+        && (!('date' in data) || (data.date is string && data.date.size() <= 30))
+        && (!('timestamp' in data) || (data.timestamp is string && data.timestamp.size() <= 20));
+    }
+
+    // 2. USERS COLLECTION: Lưu trữ hồ sơ học sinh
+    // Bảo vệ PII: Chỉ chủ sở hữu mới được đọc (get). Không cho phép list toàn bộ users.
+    match /users/{userId} {
+      allow get: if isOwner(userId) && isValidId(userId);
+      allow list: if false;
+
+      // Khởi tạo hồ sơ khi lần đầu đăng nhập Google
+      allow create: if isOwner(userId)
+        && isValidId(userId)
+        && isValidUserProfile(incoming())
+        && incoming().id == userId
+        && incoming().xp == 0
+        && incoming().level == 1
+        && incoming().debatesWon == 0
+        && incoming().fallaciesIdentified == 0;
+
+      // Action-Based Updates:
+      // Action 1 (Profile Edit): Cập nhật thông tin cá nhân/cài đặt. XP và số trận thắng không đổi.
+      // Action 2 (AI Match Evaluation Reward): Chỉ được cộng XP và thắng trận khi ghi kèm bản ghi trận đấu tương ứng qua batch write (existsAfter).
+      // Action 3 (AI Fallacy Evaluation Reward): Chỉ được cộng XP khi ghi nhận tiến trình kèm số lỗi vạch được tăng đúng 1 đơn vị và XP tăng tối đa 150.
+      // Action 4 (Learning Activities & Streak & Quest): Cho phép cộng XP học tập hợp lệ từ chuỗi ngày rèn luyện, nhiệm vụ, bài kiểm tra chẩn đoán.
+      allow update: if isOwner(userId)
+        && isValidId(userId)
+        && isValidUserProfile(incoming())
+        && incoming().id == existing().id
+        && (
+          // Branch 1: Profile Settings Update (XP không đổi)
+          (
+            incoming().xp == existing().xp
+            && incoming().level == existing().level
+            && incoming().debatesWon == existing().debatesWon
+            && incoming().fallaciesIdentified == existing().fallaciesIdentified
+            && incoming().diff(existing()).affectedKeys().hasOnly([
+              'displayName',
+              'name',
+              'schoolClass',
+              'school',
+              'avatarSeed',
+              'soundEnabled',
+              'screenShakeEnabled',
+              'lastActiveDate',
+              'streakCount'
+            ])
+          )
+          ||
+          // Branch 2: Match Result Atomic Batch (Phải kèm theo bản ghi trận đấu)
+          (
+            'lastMatchId' in incoming()
+            && isValidId(incoming().lastMatchId)
+            && existsAfter(/databases/$(database)/documents/users/$(userId)/matches/$(incoming().lastMatchId))
+            && incoming().xp >= existing().xp
+            && incoming().xp <= existing().xp + 250
+            && incoming().diff(existing()).affectedKeys().hasOnly([
+              'xp',
+              'currentXP',
+              'level',
+              'nextLevelXP',
+              'title',
+              'debatesWon',
+              'unlockedBadgeIds',
+              'lastActiveDate',
+              'streakCount',
+              'lastMatchId'
+            ])
+          )
+          ||
+          // Branch 3: Fallacy Result Reward (XP tăng tối đa 150 sau khi AI chấm điểm)
+          (
+            incoming().fallaciesIdentified >= existing().fallaciesIdentified
+            && incoming().fallaciesIdentified <= existing().fallaciesIdentified + 1
+            && incoming().xp >= existing().xp
+            && incoming().xp <= existing().xp + 150
+            && incoming().diff(existing()).affectedKeys().hasOnly([
+              'xp',
+              'currentXP',
+              'level',
+              'nextLevelXP',
+              'title',
+              'fallaciesIdentified',
+              'unlockedBadgeIds',
+              'lastActiveDate',
+              'streakCount'
+            ])
+          )
+          ||
+          // Branch 4: Hoạt động học tập (Nhiệm vụ, Điểm danh Streak, Bài test chẩn đoán, Cờ cá ngựa)
+          (
+            incoming().xp >= existing().xp
+            && incoming().xp <= existing().xp + 300
+            && incoming().level >= existing().level && incoming().level <= 10
+            && incoming().debatesWon == existing().debatesWon
+            && incoming().fallaciesIdentified == existing().fallaciesIdentified
+            && incoming().diff(existing()).affectedKeys().hasOnly([
+              'xp',
+              'currentXP',
+              'level',
+              'nextLevelXP',
+              'title',
+              'streakCount',
+              'lastActiveDate',
+              'claimedQuestIds',
+              'lastQuestDate',
+              'unlockedBadgeIds',
+              'diagnosticTestA',
+              'diagnosticTestB'
+            ])
+          )
+        );
+
+      allow delete: if false;
+
+      // 3. SUBCOLLECTION: Lịch sử trận đấu của học sinh
+      match /matches/{matchId} {
+        allow get, list: if isOwner(userId) && isValidId(userId) && isValidId(matchId);
+
+        allow create: if isOwner(userId)
+          && isValidId(userId)
+          && isValidId(matchId)
+          && isValidDebateMatch(incoming())
+          && incoming().id == matchId
+          && incoming().userId == userId;
+
+        // Trận đấu sau khi ghi nhận là bất biến
+        allow update, delete: if false;
+      }
+    }
+
+    // 4. LEADERBOARD COLLECTION: Bảng xếp hạng công khai toàn trường
+    // KHÔNG chứa email hay PII học sinh.
+    match /leaderboard/{userId} {
+      allow get, list: if true;
+
+      allow create: if isOwner(userId)
+        && isValidId(userId)
+        && isValidLeaderboardUser(incoming())
+        && incoming().id == userId
+        && incoming().xp == 0
+        && incoming().level == 1
+        && incoming().debatesWon == 0
+        && incoming().fallaciesFound == 0;
+
+      allow update: if isOwner(userId)
+        && isValidId(userId)
+        && isValidLeaderboardUser(incoming())
+        && incoming().id == existing().id
+        && incoming().xp >= existing().xp
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'displayName',
+          'name',
+          'schoolClass',
+          'avatarSeed',
+          'level',
+          'xp',
+          'title',
+          'debatesWon',
+          'fallaciesFound'
+        ]);
+
+      allow delete: if false;
+    }
+  }
+}

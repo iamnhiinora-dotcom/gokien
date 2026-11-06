@@ -1,0 +1,6 @@
+{
+  "summary":  "Cập nhật tài liệu kiến trúc và tiến độ hoàn thành 4 yêu cầu cấu trúc giao diện:\n1. Giao diện Sáng (Light Mode) đồng nhất với nền ngà #F8F6F1, card #FFFFFF viền #E5E1D8, chữ #1E2433, vàng #FACC15.\n2. Gộp Đấu trường 1v1 và WSDC 3v3 thành một mục \"Đấu trường\" với segmented control, tóm tắt luật động, chọn chủ đề dùng chung 27 chủ đề, các bước sau thích ứng theo chế độ.\n3. Tách riêng \"Tiến độ\" (đúng thứ tự 9 phần cá nhân) và \"Bảng xếp hạng\" (Podium Top 3, bộ lọc lớp, sắp xếp theo XP hoặc Số trận thắng, ghim hạng người dùng hiện tại).\n4. Menu điều hướng gồm 6 mục chuẩn trên một dòng (whitespace-nowrap), cuộn ngang không thanh cuộn và bottom nav tiện dụng trên di động.",
+  "updatedAt":  "2026-10-30T15:15:11.008654831Z",
+  "requestFeedback":  true,
+  "userFacing":  true
+}

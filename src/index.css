@@ -1,0 +1,461 @@
+@import "tailwindcss";
+
+@theme {
+  --font-serif: 'Literata', 'Be Vietnam Pro', Georgia, serif;
+  --font-sans: 'Lexend', 'Be Vietnam Pro', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+  /* Theme tokens */
+  --color-page: #F8F6F1;
+  --color-card: #FFFFFF;
+  --color-subtle: #F2EFE8;
+  --color-border-main: #E5E1D8;
+  --color-border-btn: #D6D1C4;
+
+  --color-text-main: #1E2433;
+  --color-text-sub: #4A5263;
+  --color-text-muted: #6B7280;
+  --color-link: #B45309;
+
+  --color-brand-yellow: #FACC15;
+  --color-brand-yellow-hover: #EAB308;
+  --color-brand-yellow-text: #A16207;
+  --color-badge-yellow-bg: #FEF3C7;
+  --color-badge-yellow-text: #92400E;
+
+  --color-prop-blue: #2563EB;
+  --color-prop-blue-light: #DBEAFE;
+  --color-opp-red: #DC2626;
+  --color-opp-red-light: #FEE2E2;
+  --color-success-green: #15803D;
+  --color-success-green-light: #DCFCE7;
+}
+
+@layer base {
+  :root {
+    /* Nền và khung */
+    --bg-page: #F8F6F1;
+    --bg-card: #FFFFFF;
+    --bg-subtle: #F2EFE8;
+    --border-main: #E5E1D8;
+    --border-btn: #D6D1C4;
+    --overlay-modal: rgba(15, 23, 42, 0.4);
+
+    /* Màu chữ chuẩn WCAG AA */
+    --text-main: #1E2433;
+    --text-sub: #4A5263;
+    --text-muted: #6B7280;
+    --link-color: #B45309;
+
+    /* Màu vàng thương hiệu */
+    --brand-yellow: #FACC15;
+    --brand-yellow-hover: #EAB308;
+    --brand-yellow-text: #A16207;
+    --badge-yellow-bg: #FEF3C7;
+    --badge-yellow-text: #92400E;
+
+    /* Màu chức năng */
+    --prop-blue: #2563EB;
+    --prop-blue-light: #DBEAFE;
+    --opp-red: #DC2626;
+    --opp-red-light: #FEE2E2;
+    --success-green: #15803D;
+    --success-green-light: #DCFCE7;
+
+    /* Bút dạ quang & lỗi */
+    --highlight-bg: #FDE68A;
+    --highlight-text: #1E2433;
+    --highlight-underline: #D97706;
+
+    /* Tương thích ngược với các biến cũ */
+    --bg-paper: #F8F6F1;
+    --paper-card: #FFFFFF;
+    --paper-card-subtle: #F2EFE8;
+    --ink: #1E2433;
+    --ink-muted: #4A5263;
+    --border-paper: #E5E1D8;
+    --highlighter: #FDE68A;
+    --highlighter-strong: #FACC15;
+    --pencil-red: #DC2626;
+  }
+
+  /* Khắc phục triệt để hiển thị font tiếng Việt, dính liền hoàn hảo dấu thanh và dấu mũ */
+  html {
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: "kern" 1, "liga" 1, "calt" 1, "mark" 1, "mkmk" 1;
+    font-variant-ligatures: common-ligatures contextual;
+    font-optical-sizing: auto;
+    font-synthesis: none;
+    background-color: var(--bg-page);
+    color: var(--text-main);
+  }
+
+  body {
+    font-family: var(--font-sans) !important;
+    font-feature-settings: "kern" 1, "liga" 1, "calt" 1, "mark" 1, "mkmk" 1;
+    font-variant-ligatures: common-ligatures contextual;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-synthesis: none;
+    background-color: var(--bg-page) !important;
+    color: var(--text-main) !important;
+    overflow-x: hidden;
+    line-height: 1.6;
+    letter-spacing: -0.01em;
+  }
+
+  h1, h2, h3, h4, h5, h6, .font-serif {
+    font-family: var(--font-serif) !important;
+    font-feature-settings: "kern" 1, "liga" 1, "calt" 1, "mark" 1, "mkmk" 1;
+    font-variant-ligatures: common-ligatures contextual;
+    text-rendering: optimizeLegibility;
+    font-synthesis: none;
+    color: var(--text-main);
+    letter-spacing: -0.02em;
+  }
+
+  a {
+    color: var(--link-color);
+    text-decoration: none;
+    transition: color 0.15s ease, text-decoration 0.15s ease;
+  }
+  a:hover {
+    text-decoration: underline;
+  }
+}
+
+/* ==========================================================================
+   BẢNG MÀU THỐNG NHẤT CHO GIAO DIỆN SÁNG (LIGHT PALETTE ENFORCEMENT)
+   ========================================================================== */
+
+/* 1. Nền trang và Thẻ Card */
+.paper-card {
+  background-color: #FFFFFF !important;
+  border: 1px solid #E5E1D8 !important;
+  border-radius: 6px;
+  color: #1E2433 !important;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.03), 0 1px 2px -1px rgba(0, 0, 0, 0.03);
+}
+
+header {
+  background-color: #FFFFFF !important;
+  border-bottom: 1px solid #E5E1D8 !important;
+}
+
+footer {
+  background-color: #FFFFFF !important;
+  border-top: 1px solid #E5E1D8 !important;
+  color: #4A5263 !important;
+}
+
+/* 2. Nền phụ: Ô Input, Textarea, Select, Bảng xen kẽ */
+input, textarea, select {
+  background-color: #F2EFE8 !important;
+  border: 1px solid #E5E1D8 !important;
+  color: #1E2433 !important;
+  border-radius: 4px;
+}
+
+input:focus, textarea:focus, select:focus {
+  border-color: #FACC15 !important;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(250, 204, 21, 0.25);
+}
+
+input::placeholder, textarea::placeholder {
+  color: #6B7280 !important;
+}
+
+/* 3. Lớp phủ sau Modal (Overlay) */
+.fixed.inset-0.z-50.bg-slate-900\/60,
+.fixed.inset-0.z-50.bg-slate-900\/80,
+.modal-overlay {
+  background-color: rgba(15, 23, 42, 0.4) !important;
+  backdrop-filter: blur(2px);
+}
+
+/* 4. Nút chính & Nút phụ */
+.btn-primary {
+  background-color: #FACC15 !important;
+  color: #1E2433 !important;
+  font-weight: 600 !important;
+  border: none !important;
+  transition: background-color 0.15s ease;
+}
+.btn-primary:hover {
+  background-color: #EAB308 !important;
+}
+
+.btn-secondary {
+  background-color: #FFFFFF !important;
+  border: 1px solid #D6D1C4 !important;
+  color: #1E2433 !important;
+  transition: background-color 0.15s ease;
+}
+.btn-secondary:hover {
+  background-color: #F2EFE8 !important;
+}
+
+/* 5. Nhãn / Badge vàng */
+.badge-yellow {
+  background-color: #FEF3C7 !important;
+  color: #92400E !important;
+  font-weight: 600;
+  border: 1px solid #FDE68A;
+}
+
+/* Vàng khi làm chữ hoặc icon trên nền sáng -> vàng đậm #A16207 */
+.text-amber-500,
+.text-amber-400,
+.text-amber-300,
+.text-yellow-400,
+.text-yellow-500 {
+  color: #A16207 !important;
+}
+
+/* 6. Màu chức năng */
+/* Phe Ủng hộ (Prop), thông tin: #2563EB, nền nhạt #DBEAFE */
+.side-prop,
+.badge-prop {
+  background-color: #DBEAFE !important;
+  color: #2563EB !important;
+  border-color: #BFDBFE !important;
+}
+
+/* Phe Phản đối (Opp), lỗi, mất máu HP: #DC2626, nền nhạt #FEE2E2 */
+.side-opp,
+.badge-opp,
+.pencil-red,
+.text-pencil-red {
+  color: #DC2626 !important;
+}
+
+.pencil-red-border {
+  border-color: #FECACA !important;
+  background-color: #FEE2E2 !important;
+}
+
+/* Đúng, thắng, hoàn thành: chữ #15803D, nền nhạt #DCFCE7 */
+.badge-success {
+  background-color: #DCFCE7 !important;
+  color: #15803D !important;
+  border-color: #BBF7D0 !important;
+}
+
+/* 7. Bút dạ quang (phần nhặt hạt sạn) */
+.highlighter-mark {
+  background-color: #FDE68A !important;
+  color: #1E2433 !important;
+  font-weight: 600;
+  padding: 0.12em 0.35em;
+  border-radius: 3px;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+.highlighter-sweep-active {
+  background-image: linear-gradient(to right, #FDE68A, #FDE68A) !important;
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  animation: highlighterSweep 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  color: #1E2433 !important;
+  font-weight: 700;
+  border-radius: 3px;
+  padding: 0.12em 0.35em;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+/* Cụm từ có lỗi gạch chân nét đứt màu #D97706 */
+.flaw-underline {
+  border-bottom: 2px dashed #D97706 !important;
+  cursor: pointer;
+  color: #1E2433 !important;
+}
+.flaw-underline:hover {
+  background-color: #FEF3C7 !important;
+}
+
+/* Con dấu đỏ "ĐÃ PHÁT HIỆN" */
+.stamp-detected {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border: 2px solid #DC2626 !important;
+  color: #DC2626 !important;
+  font-family: var(--font-mono);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.3rem 0.65rem;
+  border-radius: 4px;
+  background-color: #FEE2E2 !important;
+  transform: rotate(-7deg);
+  box-shadow: 0 1px 3px rgba(220, 38, 38, 0.2);
+  animation: stampDropEffect 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  user-select: none;
+}
+
+.stamp-verified {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border: 2px solid #15803D !important;
+  color: #15803D !important;
+  font-family: var(--font-mono);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.3rem 0.65rem;
+  border-radius: 4px;
+  background-color: #DCFCE7 !important;
+  transform: rotate(-6deg);
+  box-shadow: 0 1px 3px rgba(21, 128, 61, 0.2);
+  animation: stampDropEffect 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  user-select: none;
+}
+
+/* ==========================================================================
+   TỰ ĐỘNG CHUYỂN TẤT CẢ CÁC CLASS DARK VÀ NỀN TỐI SANG GIAO DIỆN SÁNG
+   (Đảm bảo không còn bất kỳ mảng tối sót lại nào)
+   ========================================================================== */
+
+/* Ép tất cả các màu nền tối sang màu thẻ trắng hoặc màu phụ kem ngà */
+[class*="bg-[#0c1322]"],
+[class*="bg-[#121c2e]"],
+[class*="bg-[#151f33]"],
+[class*="bg-[#16233b]"],
+[class*="bg-[#111c30]"],
+[class*="bg-[#182438]"],
+[class*="bg-[#1e2e4a]"],
+[class*="bg-[#1e2c47]"],
+[class*="bg-[#0f172a]"],
+[class*="bg-[#1e293b]"],
+[class*="bg-slate-900"],
+[class*="bg-slate-800"] {
+  background-color: #FFFFFF;
+}
+
+/* Khối phụ hoặc thanh tìm kiếm */
+[class*="bg-[#0c1322]"].border,
+[class*="bg-[#151f33]"].border,
+input[class*="bg-[#0c1322]"],
+textarea[class*="bg-[#0c1322]"],
+[class*="bg-[#0c1322]"] > div {
+  background-color: #F2EFE8;
+}
+
+/* Ép viền tối sang #E5E1D8 */
+[class*="border-[#243249]"],
+[class*="border-slate-800"],
+[class*="border-slate-700"] {
+  border-color: #E5E1D8 !important;
+}
+
+/* Ép chữ trắng / chữ xám mờ trên nền sáng thành #1E2433 hoặc #4A5263 */
+.text-white:not([class*="bg-[#DC2626]"]):not([class*="bg-[#2563EB]"]):not([class*="bg-[#15803D]"]):not(button.bg-red-600 *):not(button.bg-blue-600 *),
+[class*="text-slate-100"]:not([class*="bg-[#DC2626]"] *):not([class*="bg-[#2563EB]"] *),
+[class*="text-slate-200"]:not([class*="bg-[#DC2626]"] *):not([class*="bg-[#2563EB]"] *) {
+  color: #1E2433 !important;
+}
+
+[class*="text-slate-300"],
+[class*="text-slate-400"] {
+  color: #4A5263 !important;
+}
+
+[class*="text-slate-500"] {
+  color: #6B7280 !important;
+}
+
+/* Không dùng chữ trắng trên nền vàng */
+[class*="bg-[#fde047]"],
+[class*="bg-[#facc15]"],
+[class*="bg-amber-400"],
+[class*="bg-[#FACC15]"] {
+  color: #1E2433 !important;
+}
+
+[class*="bg-[#fde047]"] *,
+[class*="bg-[#facc15]"] *,
+[class*="bg-amber-400"] *,
+[class*="bg-[#FACC15]"] * {
+  color: #1E2433 !important;
+}
+
+/* Nút phụ hover */
+[class*="hover:bg-slate-800"]:hover,
+[class*="hover:bg-slate-700"]:hover,
+[class*="hover:bg-[#1e2c47]"]:hover {
+  background-color: #F2EFE8 !important;
+  color: #1E2433 !important;
+}
+
+/* Thanh cuộn tối giản */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #D6D1C4;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #B8B2A5;
+}
+
+/* Animation keyframes */
+@keyframes highlighterSweep {
+  0% {
+    background-size: 0% 100%;
+  }
+  100% {
+    background-size: 100% 100%;
+  }
+}
+
+@keyframes stampDropEffect {
+  0% {
+    opacity: 0;
+    transform: scale(2.2) rotate(-18deg);
+  }
+  50% {
+    opacity: 0.9;
+    transform: scale(0.92) rotate(-6deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(-7deg);
+  }
+}
+
+@keyframes shakeAnimation {
+  0%, 100% { transform: translate(0, 0); }
+  25% { transform: translate(-2px, 1px); }
+  75% { transform: translate(2px, -1px); }
+}
+
+.animate-screen-shake {
+  animation: shakeAnimation 0.3s ease-in-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .highlighter-sweep-active {
+    animation: none !important;
+    background-size: 100% 100% !important;
+  }
+  .stamp-detected,
+  .stamp-verified {
+    animation: none !important;
+    transform: rotate(-7deg) !important;
+  }
+  .animate-screen-shake {
+    animation: none !important;
+  }
+}

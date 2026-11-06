@@ -1,0 +1,215 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Hồ sơ học sinh cá nhân lưu trữ trên Firestore",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Firebase Auth UID của học sinh",
+          "maxLength": 128
+        },
+        "email": {
+          "type": "string",
+          "description": "Email Google của học sinh",
+          "maxLength": 128
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Họ và tên hiển thị của học sinh",
+          "maxLength": 100
+        },
+        "schoolClass": {
+          "type": "string",
+          "description": "Lớp học và trường của học sinh (vd: 11A1, 10 Tin, 12 Chuyên Anh)",
+          "maxLength": 100
+        },
+        "avatarSeed": {
+          "type": "string",
+          "description": "Mã nhận diện hình đại diện học sinh",
+          "maxLength": 50
+        },
+        "level": {
+          "type": "integer",
+          "description": "Cấp độ hiện tại từ 1 đến 10"
+        },
+        "xp": {
+          "type": "integer",
+          "description": "Tổng điểm kinh nghiệm tích lũy"
+        },
+        "currentXP": {
+          "type": "integer",
+          "description": "Điểm kinh nghiệm hiện tại (luôn đồng bộ với xp)"
+        },
+        "claimedQuestIds": {
+          "type": "array",
+          "description": "Danh sách mã nhiệm vụ đã nhận thưởng trong ngày"
+        },
+        "lastQuestDate": {
+          "type": "string",
+          "description": "Ngày gần nhất nhận thưởng nhiệm vụ (YYYY-MM-DD)",
+          "maxLength": 10
+        },
+        "title": {
+          "type": "string",
+          "description": "Danh vị tương ứng với cấp độ",
+          "maxLength": 80
+        },
+        "debatesWon": {
+          "type": "integer",
+          "description": "Số trận tranh biện đã chiến thắng"
+        },
+        "fallaciesIdentified": {
+          "type": "integer",
+          "description": "Số bẫy ngụy biện đã phát hiện thành công"
+        },
+        "streakCount": {
+          "type": "integer",
+          "description": "Số ngày rèn luyện liên tục"
+        },
+        "lastActiveDate": {
+          "type": "string",
+          "description": "Ngày hoạt động gần nhất (YYYY-MM-DD)",
+          "maxLength": 10
+        },
+        "soundEnabled": {
+          "type": "boolean",
+          "description": "Bật tắt âm thanh hiệu ứng"
+        },
+        "screenShakeEnabled": {
+          "type": "boolean",
+          "description": "Bật tắt rung màn hình"
+        }
+      },
+      "required": ["id", "displayName", "schoolClass", "level", "xp", "title", "debatesWon", "fallaciesIdentified"]
+    },
+    "LeaderboardUser": {
+      "title": "LeaderboardUser",
+      "description": "Bản ghi công khai trên bảng xếp hạng (không chứa email hay PII)",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "UID học sinh",
+          "maxLength": 128
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Họ tên hiển thị học sinh",
+          "maxLength": 100
+        },
+        "schoolClass": {
+          "type": "string",
+          "description": "Lớp học (vd: 10 Tin, 11A1, 12 Chuyên Anh)",
+          "maxLength": 100
+        },
+        "avatarSeed": {
+          "type": "string",
+          "description": "Avatar seed",
+          "maxLength": 50
+        },
+        "level": {
+          "type": "integer",
+          "description": "Cấp độ"
+        },
+        "xp": {
+          "type": "integer",
+          "description": "Điểm XP"
+        },
+        "title": {
+          "type": "string",
+          "description": "Danh vị",
+          "maxLength": 80
+        },
+        "debatesWon": {
+          "type": "integer",
+          "description": "Số trận thắng"
+        },
+        "fallaciesFound": {
+          "type": "integer",
+          "description": "Số bẫy lỗi phát hiện"
+        }
+      },
+      "required": ["id", "displayName", "schoolClass", "level", "xp", "title", "debatesWon", "fallaciesFound"]
+    },
+    "DebateMatchRecord": {
+      "title": "DebateMatchRecord",
+      "description": "Lịch sử các trận đấu tranh biện của học sinh",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "ID trận đấu",
+          "maxLength": 128
+        },
+        "userId": {
+          "type": "string",
+          "description": "UID của học sinh tham gia",
+          "maxLength": 128
+        },
+        "topicMotion": {
+          "type": "string",
+          "description": "Chủ đề kiến nghị WSDC",
+          "maxLength": 500
+        },
+        "studentSide": {
+          "type": "string",
+          "description": "Phe của học sinh",
+          "enum": ["pro", "con"]
+        },
+        "outcome": {
+          "type": "string",
+          "description": "Kết quả trận đấu",
+          "enum": ["victory", "defeat", "draw"]
+        },
+        "studentHp": {
+          "type": "integer",
+          "description": "Máu còn lại của học sinh"
+        },
+        "aiHp": {
+          "type": "integer",
+          "description": "Máu còn lại của AI"
+        },
+        "xpEarned": {
+          "type": "integer",
+          "description": "Điểm XP nhận được"
+        },
+        "roundsCompleted": {
+          "type": "integer",
+          "description": "Số hiệp hoàn thành"
+        },
+        "personaName": {
+          "type": "string",
+          "description": "Tên đối thủ AI",
+          "maxLength": 100
+        },
+        "date": {
+          "type": "string",
+          "description": "Ngày thi đấu",
+          "maxLength": 30
+        },
+        "timestamp": {
+          "type": "string",
+          "description": "Giờ thi đấu",
+          "maxLength": 20
+        }
+      },
+      "required": ["id", "userId", "topicMotion", "studentSide", "outcome", "studentHp", "aiHp", "xpEarned"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "Hồ sơ riêng tư của từng học sinh"
+    },
+    "/leaderboard/{userId}": {
+      "schema": "LeaderboardUser",
+      "description": "Thông tin xếp hạng công khai (không lộ email học sinh)"
+    },
+    "/users/{userId}/matches/{matchId}": {
+      "schema": "DebateMatchRecord",
+      "description": "Nhật ký lịch sử các trận đấu của từng học sinh"
+    }
+  }
+}
