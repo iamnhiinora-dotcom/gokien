@@ -27,6 +27,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
   const [name, setName] = useState(profile?.name || 'Học sinh');
   const [school, setSchool] = useState(profile?.school || '11A1');
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -44,11 +45,18 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
     onClose();
   };
 
-  const handleReset = () => {
-    resetProgress();
-    setShowResetConfirm(false);
-    soundFX.playClick();
-    onClose();
+  const handleReset = async () => {
+    setIsResetting(true);
+    try {
+      await resetProgress();
+      setShowResetConfirm(false);
+      soundFX.playClick();
+      onClose();
+    } catch (err) {
+      console.error('Lỗi khi đặt lại tiến độ:', err);
+    } finally {
+      setIsResetting(false);
+    }
   };
 
   return (
@@ -210,21 +218,23 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
               </button>
             ) : (
               <div className="p-3 bg-[#FEE2E2] border border-[#FCA5A5] rounded-md space-y-2">
-                <div className="text-xs text-[#DC2626] font-medium">
-                  Bạn có chắc chắn muốn xóa toàn bộ điểm số và kết quả đã làm?
+                <div className="text-xs text-[#DC2626] font-medium leading-relaxed">
+                  Bạn có chắc chắn muốn xóa toàn bộ điểm số, cấp độ và lịch sử thi đấu về ban đầu? Dữ liệu trên hệ thống sẽ được đặt lại về Level 1 và 0 XP.
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 items-center">
                   <button
                     type="button"
                     onClick={handleReset}
-                    className="px-3 py-1 bg-[#DC2626] hover:bg-red-700 text-white rounded text-xs font-semibold cursor-pointer"
+                    disabled={isResetting}
+                    className="px-3 py-1 bg-[#DC2626] hover:bg-red-700 disabled:opacity-50 text-white rounded text-xs font-semibold cursor-pointer"
                   >
-                    Xác nhận đặt lại
+                    {isResetting ? 'Đang đặt lại...' : 'Xác nhận đặt lại'}
                   </button>
                   <button
                     type="button"
                     onClick={() => setShowResetConfirm(false)}
-                    className="px-3 py-1 bg-white border border-[#D6D1C4] text-[#1E2433] hover:bg-[#F2EFE8] rounded text-xs cursor-pointer"
+                    disabled={isResetting}
+                    className="px-3 py-1 bg-white border border-[#D6D1C4] text-[#1E2433] hover:bg-[#F2EFE8] disabled:opacity-50 rounded text-xs cursor-pointer"
                   >
                     Hủy bỏ
                   </button>

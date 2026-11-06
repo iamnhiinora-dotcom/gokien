@@ -27,10 +27,13 @@ import {
   limit, 
   where,
   getDocFromServer,
-  writeBatch
+  writeBatch,
+  runTransaction,
+  deleteDoc
 } from 'firebase/firestore';
 import firebaseConfig from '../../firebase-applet-config.json';
 import { UserProfile, LeaderboardUser, DebateMatchRecord, DiagnosticTestResult } from '../types';
+import { getProgressFromXP } from '../utils/levelSystem';
 
 // Khởi tạo Firebase App và Firestore kết nối đúng database ID
 const app = initializeApp(firebaseConfig);
@@ -119,11 +122,9 @@ export async function fetchUserProfile(userId: string): Promise<UserProfile | nu
       const raw = docSnap.data() as any;
       const name = raw.name || raw.displayName || (raw.email ? raw.email.split('@')[0] : '') || 'Học sinh';
       const school = raw.school || raw.schoolClass || '11A1';
-      const level = Math.max(1, Number(raw.level || 1));
-      // Fix Lỗi 1: Đảm bảo đồng bộ tuyệt đối giữa currentXP và xp, khắc phục trường hợp currentXP = 0 và xp = 500
+      // Tính lại toàn bộ Level, Title và NextLevelXP từ nguồn chân lý duy nhất (getProgressFromXP)
       const currentXP = Math.max(Number(raw.currentXP || 0), Number(raw.xp || 0));
-      const nextLevelXP = Number(raw.nextLevelXP || (level === 1 ? 300 : level === 2 ? 700 : level === 3 ? 1200 : level === 4 ? 2000 : level === 5 ? 3200 : 5000));
-      const title = raw.title || (level === 1 ? 'Tập sự phản biện' : level === 2 ? 'Người tập sự' : 'Chiến binh phản biện');
+      const progress = getProgressFromXP(currentXP);
 
       const profile: UserProfile = {
         id: userId,
@@ -132,11 +133,11 @@ export async function fetchUserProfile(userId: string): Promise<UserProfile | nu
         name,
         school,
         avatarSeed: raw.avatarSeed || userId.slice(0, 5),
-        level,
-        currentXP,
-        xp: currentXP,
-        nextLevelXP,
-        title,
+        level: progress.level,
+        currentXP: progress.currentXP,
+        xp: progress.xp,
+        nextLevelXP: progress.nextLevelXP,
+        title: progress.title,
         totalDebates: Number(raw.totalDebates ?? ((raw.debatesWon || 0) + (raw.debatesLost || 0))),
         debatesWon: Number(raw.debatesWon || 0),
         fallaciesIdentified: Number(raw.fallaciesIdentified || 0),
@@ -442,6 +443,199 @@ export async function syncUserProgressToFirestore(
     await batch.commit();
   } catch (error) {
     handleFirestoreError(error, OperationType.UPDATE, path);
+  }
+}
+
+export interface AwardXPOptions {
+  rewardXP: number;
+  questIdToClaim?: string;
+  todayDate?: string;
+  testSetToRecord?: {
+    testSet: 'A' | 'B';
+    result: DiagnosticTestResult;
+  };
+  streakBonus?: {
+    streakCount: number;
+    lastActiveDate: string;
+  };
+  unlockedBadgeIds?: string[];
+}
+
+/**
+ * 9. Cộng điểm XP và cập nhật tiến trình bằng Firestore Transaction
+ * Đọc XP mới nhất từ server, ngăn chặn mất điểm khi thao tác liên tiếp
+ * và bảo đảm chống nhận thưởng 2 lần cho nhiệm vụ/bài kiểm tra/streak.
+ */
+export async function awardXPInFirestore(
+  userId: string,
+  options: AwardXPOptions
+): Promise<{
+  currentXP: number;
+  xp: number;
+  level: number;
+  nextLevelXP: number;
+  title: string;
+  claimedQuestIds?: string[];
+  lastQuestDate?: string;
+  streakCount?: number;
+  lastActiveDate?: string;
+  unlockedBadgeIds?: string[];
+  diagnosticTestA?: DiagnosticTestResult;
+  diagnosticTestB?: DiagnosticTestResult;
+}> {
+  const path = `users/${userId}`;
+  try {
+    return await runTransaction(db, async (tx) => {
+      const userRef = doc(db, 'users', userId);
+      const leaderboardRef = doc(db, 'leaderboard', userId);
+
+      const snapshot = await tx.get(userRef);
+      if (!snapshot.exists()) {
+        throw new Error('User not found');
+      }
+
+      const userData = snapshot.data();
+
+      // Kiểm tra chống nhận thưởng nhiệm vụ 2 lần trong cùng transaction
+      let updatedClaimedIds = Array.isArray(userData.claimedQuestIds) ? [...userData.claimedQuestIds] : [];
+      let updatedLastQuestDate = userData.lastQuestDate;
+
+      if (options.questIdToClaim) {
+        const today = options.todayDate || new Date().toISOString().slice(0, 10);
+        // Nếu trong cùng ngày và nhiệm vụ đã nhận thưởng -> Chặn không cho nhận lại
+        if (userData.lastQuestDate === today && updatedClaimedIds.includes(options.questIdToClaim)) {
+          throw new Error('Nhiệm vụ này đã được nhận thưởng trong ngày');
+        }
+        if (userData.lastQuestDate !== today) {
+          updatedClaimedIds = [options.questIdToClaim];
+          updatedLastQuestDate = today;
+        } else {
+          updatedClaimedIds.push(options.questIdToClaim);
+          updatedLastQuestDate = today;
+        }
+      }
+
+      // Kiểm tra streak không cộng 2 lần trong ngày
+      let updatedStreakCount = userData.streakCount;
+      let updatedLastActiveDate = userData.lastActiveDate;
+      if (options.streakBonus) {
+        updatedStreakCount = options.streakBonus.streakCount;
+        updatedLastActiveDate = options.streakBonus.lastActiveDate;
+      }
+
+      // Đọc XP mới nhất từ Firestore transaction
+      const currentXP = Math.max(Number(userData.xp || 0), Number(userData.currentXP || 0));
+      const newXP = currentXP + Math.max(0, options.rewardXP);
+      const progress = getProgressFromXP(newXP);
+
+      const userUpdates: Record<string, any> = {
+        xp: newXP,
+        currentXP: newXP,
+        level: progress.level,
+        nextLevelXP: progress.nextLevelXP,
+        title: progress.title
+      };
+
+      if (options.questIdToClaim) {
+        userUpdates.claimedQuestIds = updatedClaimedIds;
+        userUpdates.lastQuestDate = updatedLastQuestDate;
+      }
+
+      if (options.streakBonus) {
+        userUpdates.streakCount = updatedStreakCount;
+        userUpdates.lastActiveDate = updatedLastActiveDate;
+      }
+
+      if (options.unlockedBadgeIds) {
+        userUpdates.unlockedBadgeIds = options.unlockedBadgeIds;
+      }
+
+      let diagA = userData.diagnosticTestA;
+      let diagB = userData.diagnosticTestB;
+      if (options.testSetToRecord) {
+        if (options.testSetToRecord.testSet === 'A') {
+          userUpdates.diagnosticTestA = options.testSetToRecord.result;
+          diagA = options.testSetToRecord.result;
+        } else {
+          userUpdates.diagnosticTestB = options.testSetToRecord.result;
+          diagB = options.testSetToRecord.result;
+        }
+      }
+
+      tx.update(userRef, userUpdates);
+
+      tx.update(leaderboardRef, {
+        xp: newXP,
+        level: progress.level,
+        title: progress.title
+      });
+
+      return {
+        ...progress,
+        claimedQuestIds: userUpdates.claimedQuestIds,
+        lastQuestDate: userUpdates.lastQuestDate,
+        streakCount: userUpdates.streakCount,
+        lastActiveDate: userUpdates.lastActiveDate,
+        unlockedBadgeIds: userUpdates.unlockedBadgeIds,
+        diagnosticTestA: diagA,
+        diagnosticTestB: diagB
+      };
+    });
+  } catch (error) {
+    handleFirestoreError(error, OperationType.WRITE, path);
+    throw error;
+  }
+}
+
+/**
+ * 10. Đặt lại toàn bộ tiến độ cá nhân của học sinh (Reset Progress)
+ * Cập nhật users, leaderboard về Level 1 / 0 XP, xóa lịch sử trận đấu.
+ */
+export async function resetUserProfileInFirestore(userId: string): Promise<void> {
+  const path = `users/${userId}`;
+  try {
+    const today = new Date().toISOString().slice(0, 10);
+    const batch = writeBatch(db);
+
+    // 1. Reset tài liệu users
+    const userRef = doc(db, 'users', userId);
+    batch.update(userRef, {
+      xp: 0,
+      currentXP: 0,
+      level: 1,
+      nextLevelXP: 300,
+      title: 'Tập sự phản biện',
+      totalDebates: 0,
+      debatesWon: 0,
+      fallaciesIdentified: 0,
+      unlockedBadgeIds: [],
+      streakCount: 1,
+      lastActiveDate: today,
+      claimedQuestIds: [],
+      lastQuestDate: today
+    });
+
+    // 2. Reset tài liệu leaderboard
+    const lbRef = doc(db, 'leaderboard', userId);
+    batch.update(lbRef, {
+      xp: 0,
+      level: 1,
+      title: 'Tập sự phản biện',
+      debatesWon: 0,
+      fallaciesFound: 0
+    });
+
+    // 3. Xóa các trận đấu trong subcollection matches
+    const matchesCol = collection(db, 'users', userId, 'matches');
+    const matchesSnap = await getDocs(matchesCol);
+    matchesSnap.forEach(docSnap => {
+      batch.delete(docSnap.ref);
+    });
+
+    await batch.commit();
+  } catch (error) {
+    handleFirestoreError(error, OperationType.WRITE, path);
+    throw error;
   }
 }
 

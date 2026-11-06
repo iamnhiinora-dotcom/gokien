@@ -195,6 +195,32 @@ service cloud.firestore {
               'diagnosticTestB'
             ])
           )
+          ||
+          // Branch 5: Profile Reset Action (Đặt lại toàn bộ tiến độ cá nhân về ban đầu)
+          (
+            incoming().xp == 0
+            && incoming().level == 1
+            && incoming().debatesWon == 0
+            && incoming().fallaciesIdentified == 0
+            && incoming().title == 'Tập sự phản biện'
+            && incoming().diff(existing()).affectedKeys().hasOnly([
+              'xp',
+              'currentXP',
+              'level',
+              'nextLevelXP',
+              'title',
+              'totalDebates',
+              'debatesWon',
+              'fallaciesIdentified',
+              'unlockedBadgeIds',
+              'streakCount',
+              'lastActiveDate',
+              'claimedQuestIds',
+              'lastQuestDate',
+              'diagnosticTestA',
+              'diagnosticTestB'
+            ])
+          )
         );
 
       allow delete: if false;
@@ -210,8 +236,9 @@ service cloud.firestore {
           && incoming().id == matchId
           && incoming().userId == userId;
 
-        // Trận đấu sau khi ghi nhận là bất biến
-        allow update, delete: if false;
+        // Cho phép xóa trận đấu khi đặt lại tiến trình
+        allow delete: if isOwner(userId) && isValidId(userId) && isValidId(matchId);
+        allow update: if false;
       }
     }
 
@@ -233,7 +260,11 @@ service cloud.firestore {
         && isValidId(userId)
         && isValidLeaderboardUser(incoming())
         && incoming().id == existing().id
-        && incoming().xp >= existing().xp
+        && (
+          (incoming().xp >= existing().xp)
+          ||
+          (incoming().xp == 0 && incoming().level == 1 && incoming().debatesWon == 0 && incoming().fallaciesFound == 0)
+        )
         && incoming().diff(existing()).affectedKeys().hasOnly([
           'displayName',
           'name',
