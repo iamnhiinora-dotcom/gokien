@@ -166,10 +166,6 @@ export const FallacyChallengeView: React.FC = () => {
           soundFX.playDefeat();
         }
 
-        if (evaluation.xpEarned > 0) {
-          addXP(evaluation.xpEarned, `Hoàn thành phân tích: "${activeScenario.topicTitle}"`);
-        }
-
         recordFallacyResult(
           evaluation.fallacyCorrect,
           evaluation.totalScore,
@@ -180,7 +176,9 @@ export const FallacyChallengeView: React.FC = () => {
               : (FALLACIES.find(f => f.id === activeScenario.hiddenFallacyId)?.name || activeScenario.hiddenFallacyId),
             logicScore: evaluation.logicScore,
             identificationScore: evaluation.fallacyAccuracyScore
-          }
+          },
+          evaluation.xpEarned,
+          `Hoàn thành phân tích: "${activeScenario.topicTitle}"`
         );
 
         if (!completedScenarioIds.includes(activeScenario.id)) {
@@ -197,7 +195,7 @@ export const FallacyChallengeView: React.FC = () => {
           fallacyName: isNoFallacyScenario ? 'Lập luận hợp lý' : activeScenario.hiddenFallacyId,
           logicScore: 0,
           identificationScore: 0
-        });
+        }, 0);
       }
     } catch (err: any) {
       console.error('Lỗi khi chấm điểm phân tích:', err);

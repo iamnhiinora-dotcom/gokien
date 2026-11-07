@@ -7,7 +7,7 @@
  * Không còn mật khẩu, tài khoản mẫu hay dữ liệu ảo.
  */
 
-import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback, useRef } from 'react';
 import { User as FirebaseUser, onAuthStateChanged } from 'firebase/auth';
 import { 
   UserProfile, 
@@ -32,6 +32,8 @@ import {
   syncUserProgressToFirestore,
   awardXPInFirestore,
   resetUserProfileInFirestore,
+  saveDailyQuestsInFirestore,
+  saveUnlockedBadgesInFirestore,
   fetchStudentMatches,
   fetchLeaderboardFromFirestore
 } from '../services/firebase';
@@ -229,8 +231,10 @@ interface GamificationContextType {
   recordFallacyResult: (
     isCorrect: boolean, 
     score: number,
-    details?: { scenarioId?: string; fallacyName?: string; logicScore?: number; identificationScore?: number }
-  ) => void;
+    details?: { scenarioId?: string; fallacyName?: string; logicScore?: number; identificationScore?: number },
+    customXpEarned?: number,
+    customReason?: string
+  ) => Promise<void> | void;
   recordDebateEnd: (
     outcomeOrWon: boolean | 'victory' | 'defeat' | Partial<DebateMatchRecord>,
     remainingHp?: number,
@@ -270,6 +274,10 @@ export const GamificationProvider: React.FC<{ children: ReactNode }> = ({ childr
   // 2. State Hồ Sơ, Huy Hiệu, Lịch Sử
   const [profile, setProfile] = useState<UserProfile>(GUEST_PROFILE);
   const [badges, setBadges] = useState<Badge[]>(INITIAL_BADGES);
+  const unlockedBadgeIdsRef = useRef<Set<string>>(new Set());
+  const claimingQuestIdsRef = useRef<Set<string>>(new Set());
+  const isRecordingDiagTestRef = useRef<boolean>(false);
+  const isRecordingFallacyRef = useRef<boolean>(false);
   const [quests, setQuests] = useState<DailyQuest[]>(INITIAL_QUESTS);
   const [debateHistory, setDebateHistory] = useState<DebateMatchRecord[]>([]);
 
@@ -310,26 +318,15 @@ export const GamificationProvider: React.FC<{ children: ReactNode }> = ({ childr
   // Helper quản lý tiến độ và chống nhận thưởng lặp lại cho Nhiệm vụ hàng ngày (Fix Lỗi 3)
   const getQuestStorageKey = (userId: string) => `tri_tue_phan_bien_quests_${userId}`;
 
-  const loadLocalQuests = (userId: string, today: string, cloudClaimedIds?: string[], cloudLastDate?: string): DailyQuest[] => {
-    let savedData: { date: string; quests: { id: string; currentCount: number; isCompleted: boolean; isClaimed: boolean }[] } | null = null;
-    if (typeof window !== 'undefined') {
-      try {
-        const raw = localStorage.getItem(getQuestStorageKey(userId));
-        if (raw) savedData = JSON.parse(raw);
-      } catch {}
-    }
-
-    const effectiveDate = cloudLastDate || savedData?.date;
-    // Nếu khác ngày hôm nay -> Tự động đặt lại nhiệm vụ cho ngày mới
-    if (effectiveDate && effectiveDate !== today) {
-      return INITIAL_QUESTS;
-    }
-
-    const claimedSet = new Set(cloudClaimedIds || []);
+  const mergeWithQuestDefinitions = (
+    savedQuests: { id: string; currentCount: number; isCompleted: boolean; isClaimed: boolean }[] | undefined,
+    claimedQuestIds?: string[]
+  ): DailyQuest[] => {
+    const claimedSet = new Set(claimedQuestIds || []);
     return INITIAL_QUESTS.map(q => {
-      const saved = savedData?.quests?.find(sq => sq.id === q.id);
+      const saved = savedQuests?.find(sq => sq.id === q.id);
       const isClaimed = claimedSet.has(q.id) || (saved?.isClaimed ?? false);
-      const currentCount = saved?.currentCount ?? (isClaimed ? q.targetCount : 0);
+      const currentCount = isClaimed ? q.targetCount : (saved?.currentCount ?? 0);
       return {
         ...q,
         currentCount,
@@ -339,7 +336,46 @@ export const GamificationProvider: React.FC<{ children: ReactNode }> = ({ childr
     });
   };
 
-  const saveQuestsState = (userId: string, today: string, currentQuests: DailyQuest[]) => {
+  const loadQuests = (
+    userId: string, 
+    today: string, 
+    cloudDailyQuests?: { date: string; quests: { id: string; currentCount: number; isCompleted: boolean; isClaimed: boolean }[] },
+    cloudClaimedIds?: string[], 
+    cloudLastDate?: string
+  ): DailyQuest[] => {
+    // 1. Ưu tiên số 1: Đọc tiến độ dailyQuests từ Firestore (nếu cùng ngày)
+    if (cloudDailyQuests && cloudDailyQuests.date === today && Array.isArray(cloudDailyQuests.quests)) {
+      return mergeWithQuestDefinitions(cloudDailyQuests.quests, cloudClaimedIds);
+    }
+
+    // 2. Nếu ngày ghi nhận trên đám mây khác ngày hôm nay -> Đặt lại nhiệm vụ cho ngày mới
+    const effectiveDate = cloudDailyQuests?.date || cloudLastDate;
+    if (effectiveDate && effectiveDate !== today) {
+      return INITIAL_QUESTS;
+    }
+
+    // 3. Fallback đọc từ bộ nhớ tạm localStorage
+    let savedLocal: { date: string; quests: { id: string; currentCount: number; isCompleted: boolean; isClaimed: boolean }[] } | null = null;
+    if (typeof window !== 'undefined') {
+      try {
+        const raw = localStorage.getItem(getQuestStorageKey(userId));
+        if (raw) savedLocal = JSON.parse(raw);
+      } catch {}
+    }
+
+    if (savedLocal && savedLocal.date === today && Array.isArray(savedLocal.quests)) {
+      return mergeWithQuestDefinitions(savedLocal.quests, cloudClaimedIds);
+    }
+
+    return INITIAL_QUESTS;
+  };
+
+  const saveQuestsState = (
+    userId: string, 
+    today: string, 
+    currentQuests: DailyQuest[], 
+    syncToCloud: boolean = false
+  ) => {
     if (typeof window !== 'undefined') {
       try {
         localStorage.setItem(getQuestStorageKey(userId), JSON.stringify({
@@ -352,6 +388,12 @@ export const GamificationProvider: React.FC<{ children: ReactNode }> = ({ childr
           }))
         }));
       } catch {}
+    }
+
+    if (syncToCloud && userId !== 'guest') {
+      saveDailyQuestsInFirestore(userId, currentQuests, today).catch(err => {
+        console.error('Lỗi đồng bộ dailyQuests Firestore:', err);
+      });
     }
   };
 
@@ -403,6 +445,21 @@ export const GamificationProvider: React.FC<{ children: ReactNode }> = ({ childr
           const resolvedXP = Math.max(Number(userProf?.currentXP || 0), Number((userProf as any)?.xp || 0));
           const progress = getProgressFromXP(resolvedXP);
 
+          // BUG-08 FIX: Với người dùng đăng nhập, Firestore là nguồn dữ liệu duy nhất (single source of truth).
+          // Tuyệt đối không fallback về localStorage khi Firestore là undefined hoặc mảng rỗng [] (sau khi reset).
+          const resolvedDiagA = userProf?.diagnosticTestA || undefined;
+          const resolvedDiagB = userProf?.diagnosticTestB || undefined;
+          const resolvedFallacies = Array.isArray(userProf?.evaluatedFallaciesHistory)
+            ? userProf.evaluatedFallaciesHistory
+            : [];
+
+          // Ghi đè lại localStorage bằng dữ liệu chuẩn từ Firestore để tránh dữ liệu cũ tồn đọng
+          saveLocalDiagData(user.uid, {
+            diagnosticTestA: resolvedDiagA,
+            diagnosticTestB: resolvedDiagB,
+            evaluatedFallaciesHistory: resolvedFallacies
+          });
+
           const sanitizedProfile: UserProfile = {
             ...GUEST_PROFILE,
             ...userProf,
@@ -416,24 +473,29 @@ export const GamificationProvider: React.FC<{ children: ReactNode }> = ({ childr
             nextLevelXP: progress.nextLevelXP,
             title: progress.title,
             streakCount: Math.max(1, Number(userProf?.streakCount || 1)),
+            lastActiveDate: userProf?.lastActiveDate || getTodayDateString(),
+            lastStreakRewardDate: userProf?.lastStreakRewardDate,
+            totalDebates: Number(userProf?.totalDebates ?? ((userProf?.debatesWon || 0) + ((userProf as any)?.debatesLost || 0))),
             debatesWon: Number(userProf?.debatesWon || 0),
             fallaciesIdentified: Number(userProf?.fallaciesIdentified || 0),
             unlockedBadgeIds: Array.isArray(userProf?.unlockedBadgeIds) ? userProf.unlockedBadgeIds : [],
             claimedQuestIds: Array.isArray(userProf?.claimedQuestIds) ? userProf.claimedQuestIds : [],
             lastQuestDate: userProf?.lastQuestDate,
-            diagnosticTestA: localDiag.diagnosticTestA || userProf?.diagnosticTestA,
-            diagnosticTestB: localDiag.diagnosticTestB || userProf?.diagnosticTestB,
-            evaluatedFallaciesHistory: localDiag.evaluatedFallaciesHistory || userProf?.evaluatedFallaciesHistory || []
+            dailyQuests: userProf?.dailyQuests,
+            diagnosticTestA: resolvedDiagA,
+            diagnosticTestB: resolvedDiagB,
+            evaluatedFallaciesHistory: resolvedFallacies
           };
           setProfile(sanitizedProfile);
 
-          // Fix Lỗi 3: Nạp và khôi phục trạng thái nhiệm vụ hàng ngày theo ngày
+          // Nạp và khôi phục trạng thái nhiệm vụ hàng ngày theo ngày ưu tiên Firestore
           const today = getTodayDateString();
-          const loadedQuests = loadLocalQuests(user.uid, today, userProf?.claimedQuestIds, userProf?.lastQuestDate);
+          const loadedQuests = loadQuests(user.uid, today, userProf?.dailyQuests, userProf?.claimedQuestIds, userProf?.lastQuestDate);
           setQuests(loadedQuests);
 
-          // Cập nhật huy hiệu đã mở khóa
-          const unlockedIds = new Set(sanitizedProfile.unlockedBadgeIds || []);
+          // Cập nhật ref và huy hiệu đã mở khóa
+          unlockedBadgeIdsRef.current = new Set(sanitizedProfile.unlockedBadgeIds || []);
+          const unlockedIds = unlockedBadgeIdsRef.current;
           setBadges(INITIAL_BADGES.map(b => ({
             ...b,
             isUnlocked: unlockedIds.has(b.id)
@@ -455,6 +517,7 @@ export const GamificationProvider: React.FC<{ children: ReactNode }> = ({ childr
         }
       } else {
         // Chế độ khách (Guest)
+        unlockedBadgeIdsRef.current = new Set();
         const localDiag = loadLocalDiagData('guest');
         setProfile({
           ...GUEST_PROFILE,
@@ -463,7 +526,7 @@ export const GamificationProvider: React.FC<{ children: ReactNode }> = ({ childr
           evaluatedFallaciesHistory: localDiag.evaluatedFallaciesHistory || []
         });
         const today = getTodayDateString();
-        const loadedQuests = loadLocalQuests('guest', today);
+        const loadedQuests = loadQuests('guest', today);
         setQuests(loadedQuests);
         setBadges(INITIAL_BADGES);
         setDebateHistory([]);
@@ -533,117 +596,172 @@ export const GamificationProvider: React.FC<{ children: ReactNode }> = ({ childr
   const openHandbook = useCallback(() => setIsHandbookOpen(true), []);
   const closeHandbook = useCallback(() => setIsHandbookOpen(false), []);
 
-  // Kiểm tra mở khóa huy hiệu
+  // Kiểm tra mở khóa huy hiệu (Độc lập, dùng ref đồng bộ, không gọi side effect trong callback setState)
   const checkBadgeUnlocks = useCallback((updatedProfile: UserProfile, lastScore?: number, debateHp?: number) => {
-    setBadges(prevBadges => {
-      let newlyUnlocked: Badge | null = null;
-      const updated = prevBadges.map(b => {
-        if (b.isUnlocked) return b;
+    const currentSet = unlockedBadgeIdsRef.current;
+    const newlyUnlockedBadges: Badge[] = [];
 
-        let shouldUnlock = false;
-        if (b.id === 'badge_first_blood' && updatedProfile.fallaciesIdentified >= 1) shouldUnlock = true;
-        else if (b.id === 'badge_fallacy_hunter' && updatedProfile.fallaciesIdentified >= 3) shouldUnlock = true;
-        else if (b.id === 'badge_iron_rebuttal' && (lastScore ?? 0) >= 85) shouldUnlock = true;
-        else if (b.id === 'badge_debate_warrior' && updatedProfile.debatesWon >= 1) shouldUnlock = true;
-        else if (b.id === 'badge_wsdc_master' && (debateHp ?? 0) >= 60) shouldUnlock = true;
-        else if (b.id === 'badge_critical_sage' && updatedProfile.level >= 4) shouldUnlock = true;
-        else if (b.id === 'badge_streak_3' && (updatedProfile.streakCount ?? 0) >= 3) shouldUnlock = true;
-        else if (b.id === 'badge_streak_7' && (updatedProfile.streakCount ?? 0) >= 7) shouldUnlock = true;
-        else if (b.id === 'badge_open_minded' && updatedProfile.debatesWon >= 1) shouldUnlock = true;
+    for (const b of INITIAL_BADGES) {
+      if (currentSet.has(b.id)) continue;
 
-        if (shouldUnlock) {
-          const unlockedBadge = { ...b, isUnlocked: true, unlockedAt: new Date().toLocaleDateString('vi-VN') };
-          if (!newlyUnlocked) newlyUnlocked = unlockedBadge;
-          return unlockedBadge;
-        }
-        return b;
-      });
+      let shouldUnlock = false;
+      if (b.id === 'badge_first_blood' && updatedProfile.fallaciesIdentified >= 1) shouldUnlock = true;
+      else if (b.id === 'badge_fallacy_hunter' && updatedProfile.fallaciesIdentified >= 3) shouldUnlock = true;
+      else if (b.id === 'badge_iron_rebuttal' && (lastScore ?? 0) >= 85) shouldUnlock = true;
+      else if (b.id === 'badge_debate_warrior' && updatedProfile.debatesWon >= 1) shouldUnlock = true;
+      else if (b.id === 'badge_wsdc_master' && (debateHp ?? 0) >= 60) shouldUnlock = true;
+      else if (b.id === 'badge_critical_sage' && updatedProfile.level >= 4) shouldUnlock = true;
+      else if (b.id === 'badge_streak_3' && (updatedProfile.streakCount ?? 0) >= 3) shouldUnlock = true;
+      else if (b.id === 'badge_streak_7' && (updatedProfile.streakCount ?? 0) >= 7) shouldUnlock = true;
 
-      if (newlyUnlocked) {
-        setNewUnlockedBadge(newlyUnlocked);
-        soundFX.playBadgeUnlock();
+      if (shouldUnlock) {
+        currentSet.add(b.id);
+        newlyUnlockedBadges.push({
+          ...b,
+          isUnlocked: true,
+          unlockedAt: new Date().toLocaleDateString('vi-VN')
+        });
       }
-      return updated;
-    });
-  }, []);
+    }
+
+    if (newlyUnlockedBadges.length > 0) {
+      const allIds = Array.from(currentSet);
+      setBadges(INITIAL_BADGES.map(b => ({
+        ...b,
+        isUnlocked: currentSet.has(b.id),
+        unlockedAt: currentSet.has(b.id) ? (b.unlockedAt || new Date().toLocaleDateString('vi-VN')) : undefined
+      })));
+
+      setProfile(prev => ({
+        ...prev,
+        unlockedBadgeIds: allIds
+      }));
+
+      setNewUnlockedBadge(newlyUnlockedBadges[0]);
+      soundFX.playBadgeUnlock();
+
+      if (currentUser) {
+        saveUnlockedBadgesInFirestore(currentUser.uid, allIds).catch(err => {
+          console.error('Lỗi lưu huy hiệu Firestore:', err);
+        });
+      }
+    }
+  }, [currentUser]);
 
   // Mở khóa trực tiếp huy hiệu cụ thể (ví dụ: Đổi ý có căn cứ sau bài Dựng Người Thép)
   const unlockBadge = useCallback((badgeId: string) => {
-    setBadges(prevBadges => {
-      let newlyUnlocked: Badge | null = null;
-      const updated = prevBadges.map(b => {
-        if (b.id === badgeId && !b.isUnlocked) {
-          const unlockedBadge = { ...b, isUnlocked: true, unlockedAt: new Date().toLocaleDateString('vi-VN') };
-          newlyUnlocked = unlockedBadge;
-          return unlockedBadge;
-        }
-        return b;
+    const currentSet = unlockedBadgeIdsRef.current;
+    if (currentSet.has(badgeId)) return;
+
+    currentSet.add(badgeId);
+    const targetBadge = INITIAL_BADGES.find(b => b.id === badgeId);
+    const unlockedItem: Badge = targetBadge
+      ? { ...targetBadge, isUnlocked: true, unlockedAt: new Date().toLocaleDateString('vi-VN') }
+      : {
+          id: badgeId,
+          title: 'Thành tựu mới',
+          description: 'Mở khóa thành tựu phản biện',
+          iconName: 'Sparkles',
+          tier: 'vang',
+          isUnlocked: true,
+          unlockedAt: new Date().toLocaleDateString('vi-VN'),
+          conditionDescription: ''
+        };
+
+    const allIds = Array.from(currentSet);
+
+    setBadges(INITIAL_BADGES.map(b => ({
+      ...b,
+      isUnlocked: currentSet.has(b.id),
+      unlockedAt: currentSet.has(b.id) ? (b.unlockedAt || new Date().toLocaleDateString('vi-VN')) : undefined
+    })));
+
+    setProfile(prev => ({
+      ...prev,
+      unlockedBadgeIds: allIds
+    }));
+
+    setNewUnlockedBadge(unlockedItem);
+    soundFX.playBadgeUnlock();
+
+    if (currentUser) {
+      saveUnlockedBadgesInFirestore(currentUser.uid, allIds).catch(err => {
+        console.error('Lỗi lưu unlocked badge Firestore:', err);
       });
+    }
+  }, [currentUser]);
 
-      if (newlyUnlocked) {
-        setNewUnlockedBadge(newlyUnlocked);
-        soundFX.playBadgeUnlock();
-      }
-      return updated;
-    });
-  }, []);
-
-  // Cập nhật chuỗi ngày rèn luyện bằng Transaction (P1)
+  // Cập nhật chuỗi ngày rèn luyện bằng Transaction (P1): Kiểm tra lastStreakRewardDate trước khi cộng XP
   const updateDailyStreak = useCallback(async () => {
     const today = getTodayDateString();
     const yesterday = getYesterdayDateString();
 
-    if (profile.lastActiveDate === today) return;
-
-    let newStreak = 1;
-    let bonusXP = 30;
-    let streakMsg = 'Khởi động ngọn lửa ngày 1!';
-
-    if (profile.lastActiveDate === yesterday) {
-      newStreak = (profile.streakCount || 0) + 1;
-      bonusXP = Math.min(100, 40 + newStreak * 10);
-      streakMsg = `Duy trì chuỗi ngọn lửa: ${newStreak} ngày liên tiếp!`;
-    }
-
-    soundFX.playStreakBonus();
-    const xpId = 'streak_' + Date.now();
-    setFloatingXps(fxp => [...fxp, { id: xpId, amount: bonusXP, reason: streakMsg }]);
-    setTimeout(() => {
-      setFloatingXps(fxp => fxp.filter(item => item.id !== xpId));
-    }, 1500);
+    // Nếu đã nhận thưởng streak hôm nay rồi thì không nhận thêm
+    if (profile.lastStreakRewardDate === today) return;
 
     if (currentUser) {
       try {
+        // BUG-10: Chuyển toàn bộ việc tính streak và thưởng XP vào Firestore transaction
         const progress = await awardXPInFirestore(currentUser.uid, {
-          rewardXP: bonusXP,
+          rewardXP: 0,
           streakBonus: {
-            streakCount: newStreak,
-            lastActiveDate: today
+            todayDate: today,
+            yesterdayDate: yesterday
           }
         });
 
-        // Sau khi transaction thành công mới cập nhật React state
-        setProfile(prev => {
-          const updated = {
-            ...prev,
-            currentXP: progress.currentXP,
-            xp: progress.xp,
-            level: progress.level,
-            nextLevelXP: progress.nextLevelXP,
-            title: progress.title,
-            streakCount: progress.streakCount ?? newStreak,
-            lastActiveDate: progress.lastActiveDate ?? today
-          };
-          setTimeout(() => checkBadgeUnlocks(updated), 200);
-          return updated;
-        });
-        refreshLeaderboard();
+        // Chỉ hiển thị thông báo và hiệu ứng XP sau khi transaction thành công và streak được trao thưởng
+        if (progress.streakAwarded) {
+          soundFX.playStreakBonus();
+          const xpId = 'streak_' + Date.now();
+          const reason = progress.streakMsg || (progress.streakCount === 1 ? 'Khởi động ngọn lửa ngày 1!' : `Duy trì chuỗi ngọn lửa: ${progress.streakCount} ngày liên tiếp!`);
+          setFloatingXps(fxp => [...fxp, { id: xpId, amount: progress.streakBonusXP || 30, reason }]);
+          setTimeout(() => {
+            setFloatingXps(fxp => fxp.filter(item => item.id !== xpId));
+          }, 1500);
+
+          setProfile(prev => {
+            const updated = {
+              ...prev,
+              currentXP: progress.currentXP,
+              xp: progress.xp,
+              level: progress.level,
+              nextLevelXP: progress.nextLevelXP,
+              title: progress.title,
+              streakCount: progress.streakCount ?? 1,
+              lastActiveDate: progress.lastActiveDate ?? today,
+              lastStreakRewardDate: progress.lastStreakRewardDate ?? today
+            };
+            setTimeout(() => checkBadgeUnlocks(updated), 200);
+            return updated;
+          });
+          refreshLeaderboard();
+        }
       } catch (err) {
         console.error('Lỗi cập nhật streak qua transaction:', err);
       }
     } else {
+      // Chế độ Guest
+      let guestStreak = 1;
+      let guestBonusXP = 30;
+      let guestStreakMsg = 'Khởi động ngọn lửa ngày 1!';
+
+      const prevDate = profile.lastStreakRewardDate || profile.lastActiveDate;
+      if (prevDate === yesterday) {
+        guestStreak = (profile.streakCount || 0) + 1;
+        guestBonusXP = Math.min(100, 40 + guestStreak * 10);
+        guestStreakMsg = `Duy trì chuỗi ngọn lửa: ${guestStreak} ngày liên tiếp!`;
+      }
+
+      soundFX.playStreakBonus();
+      const xpId = 'streak_' + Date.now();
+      setFloatingXps(fxp => [...fxp, { id: xpId, amount: guestBonusXP, reason: guestStreakMsg }]);
+      setTimeout(() => {
+        setFloatingXps(fxp => fxp.filter(item => item.id !== xpId));
+      }, 1500);
+
       setProfile(prev => {
-        const newTotalXP = prev.currentXP + bonusXP;
+        const newTotalXP = prev.currentXP + guestBonusXP;
         const progress = getProgressFromXP(newTotalXP);
         const updated = {
           ...prev,
@@ -652,35 +770,37 @@ export const GamificationProvider: React.FC<{ children: ReactNode }> = ({ childr
           level: progress.level,
           nextLevelXP: progress.nextLevelXP,
           title: progress.title,
-          streakCount: newStreak,
-          lastActiveDate: today
+          streakCount: guestStreak,
+          lastActiveDate: today,
+          lastStreakRewardDate: today
         };
         setTimeout(() => checkBadgeUnlocks(updated), 200);
         return updated;
       });
     }
-  }, [currentUser, profile.lastActiveDate, profile.streakCount, checkBadgeUnlocks, refreshLeaderboard]);
+  }, [currentUser, profile.lastStreakRewardDate, profile.lastActiveDate, profile.streakCount, checkBadgeUnlocks, refreshLeaderboard]);
 
-  // Thêm XP bằng Firestore Transaction, sau khi thành công mới cập nhật React State (Fix lỗi P1)
+  // Thêm XP bằng Firestore Transaction, CHỈ hiển thị thông báo nhận thưởng SAU KHI lưu Firestore thành công
   const addXP = useCallback(async (amount: number, reason: string) => {
     const safeAmount = Math.max(0, amount);
     if (safeAmount === 0) return;
 
-    const xpId = Date.now().toString() + Math.random().toString();
-    setFloatingXps(prev => [...prev, { id: xpId, amount: safeAmount, reason }]);
-    setTimeout(() => {
-      setFloatingXps(prev => prev.filter(item => item.id !== xpId));
-    }, 1500);
-
     if (currentUser) {
       try {
         const progress = await awardXPInFirestore(currentUser.uid, { rewardXP: safeAmount });
-        // Sau khi transaction thành công mới cập nhật React state
-        setProfile(prev => {
-          const didLevelUp = progress.level > prev.level;
-          if (didLevelUp) soundFX.playLevelUp();
-          else soundFX.playSuccess();
 
+        // CHỈ hiển thị thông báo thành công và cộng điểm sau khi Firestore xác nhận lưu thành công
+        const didLevelUp = progress.level > profile.level;
+        if (didLevelUp) soundFX.playLevelUp();
+        else soundFX.playSuccess();
+
+        const xpId = 'xp_' + Date.now().toString() + Math.random().toString();
+        setFloatingXps(prev => [...prev, { id: xpId, amount: safeAmount, reason }]);
+        setTimeout(() => {
+          setFloatingXps(prev => prev.filter(item => item.id !== xpId));
+        }, 1500);
+
+        setProfile(prev => {
           const updated = {
             ...prev,
             currentXP: progress.currentXP,
@@ -695,16 +815,23 @@ export const GamificationProvider: React.FC<{ children: ReactNode }> = ({ childr
         refreshLeaderboard();
       } catch (err) {
         console.error('Lỗi transaction awardXP:', err);
+        // Lưu thất bại: Không hiển thị floating XP sai lệch!
       }
     } else {
       // Chế độ Guest: tính toán qua getProgressFromXP
-      setProfile(prev => {
-        const newTotalXP = prev.currentXP + safeAmount;
-        const progress = getProgressFromXP(newTotalXP);
-        const didLevelUp = progress.level > prev.level;
-        if (didLevelUp) soundFX.playLevelUp();
-        else soundFX.playSuccess();
+      const newTotalXP = profile.currentXP + safeAmount;
+      const progress = getProgressFromXP(newTotalXP);
+      const didLevelUp = progress.level > profile.level;
+      if (didLevelUp) soundFX.playLevelUp();
+      else soundFX.playSuccess();
 
+      const xpId = 'guest_xp_' + Date.now().toString() + Math.random().toString();
+      setFloatingXps(prev => [...prev, { id: xpId, amount: safeAmount, reason }]);
+      setTimeout(() => {
+        setFloatingXps(prev => prev.filter(item => item.id !== xpId));
+      }, 1500);
+
+      setProfile(prev => {
         const updated = {
           ...prev,
           currentXP: progress.currentXP,
@@ -717,89 +844,197 @@ export const GamificationProvider: React.FC<{ children: ReactNode }> = ({ childr
         return updated;
       });
     }
-  }, [currentUser, checkBadgeUnlocks, refreshLeaderboard]);
+  }, [currentUser, profile.level, profile.currentXP, checkBadgeUnlocks, refreshLeaderboard]);
 
-  // Ghi nhận hoàn thành thử thách Vạch lá tìm sâu (Đồng bộ Firestore nếu đã đăng nhập)
-  const recordFallacyResult = useCallback((
+  // BUG-12: Ghi nhận hoàn thành thử thách Vạch lá tìm sâu bằng 1 TRANSACTION DUY NHẤT
+  // Gộp cộng XP luyện tập, cập nhật số lỗi ngụy biện VÀ kiểm tra thưởng streak vào cùng 1 transaction,
+  // dựa trên dữ liệu Firestore mới nhất (single source of truth), ngăn chặn hoàn toàn race condition hay mất điểm.
+  const recordFallacyResult = useCallback(async (
     isCorrect: boolean, 
     score: number,
-    details?: { scenarioId?: string; fallacyName?: string; logicScore?: number; identificationScore?: number }
+    details?: { scenarioId?: string; fallacyName?: string; logicScore?: number; identificationScore?: number },
+    customXpEarned?: number,
+    customReason?: string
   ) => {
-    updateDailyStreak();
+    if (isRecordingFallacyRef.current) return;
+    isRecordingFallacyRef.current = true;
 
-    setProfile(prev => {
-      const newCount = prev.fallaciesIdentified + (isCorrect ? 1 : 0);
-      const bonusXP = isCorrect ? Math.round(score * 1.2) : 20;
-      const newTotalXP = prev.currentXP + bonusXP;
+    try {
+      // 1. Xác định XP thưởng luyện tập dựa trên công thức hiện tại
+      const fallacyXP = customXpEarned !== undefined 
+        ? Math.max(0, customXpEarned) 
+        : (isCorrect ? Math.round(score * 1.2) : (score > 0 ? 20 : 0));
 
-      let newLevel = prev.level;
-      let currentCap = LEVEL_TITLES[newLevel]?.maxXP || 99999;
-      while (newTotalXP >= currentCap && newLevel < 10) {
-        newLevel += 1;
-        currentCap = LEVEL_TITLES[newLevel]?.maxXP || 99999;
-      }
+      const today = getTodayDateString();
+      const yesterday = getYesterdayDateString();
 
-      const newHistory = prev.evaluatedFallaciesHistory ? [...prev.evaluatedFallaciesHistory] : [];
-      if (details) {
-        newHistory.push({
-          scenarioId: details.scenarioId || `sc_${Date.now()}`,
-          fallacyName: details.fallacyName || 'Lập luận',
-          score,
-          logicScore: details.logicScore || Math.round(score * 0.4),
-          identificationScore: details.identificationScore || (isCorrect ? 30 : 0),
-          timestamp: new Date().toISOString()
+      const historyItem: EvaluatedFallacyRecord | undefined = details ? {
+        scenarioId: details.scenarioId || `sc_${Date.now()}`,
+        fallacyName: details.fallacyName || 'Lập luận',
+        score,
+        logicScore: details.logicScore || Math.round(score * 0.4),
+        identificationScore: details.identificationScore || (isCorrect ? 30 : 0),
+        timestamp: new Date().toISOString()
+      } : undefined;
+
+      if (currentUser) {
+        try {
+          const unlockedIds = Array.from(unlockedBadgeIdsRef.current);
+          const progress = await awardXPInFirestore(currentUser.uid, {
+            rewardXP: fallacyXP,
+            streakBonus: {
+              todayDate: today,
+              yesterdayDate: yesterday
+            },
+            fallacyRecord: {
+              isCorrect,
+              historyItem
+            },
+            unlockedBadgeIds: unlockedIds
+          });
+
+          // Chỉ hiển thị thông báo nhận thưởng SAU KHI transaction Firestore xác nhận thành công
+          if (fallacyXP > 0) {
+            const xpId = 'fallacy_' + Date.now();
+            const reason = customReason || (isCorrect ? `Phát hiện ngụy biện: ${details?.fallacyName || 'Chính xác'}` : 'Hoàn thành bài tập phản biện');
+            setFloatingXps(fxp => [...fxp, { id: xpId, amount: fallacyXP, reason }]);
+            setTimeout(() => {
+              setFloatingXps(fxp => fxp.filter(item => item.id !== xpId));
+            }, 1500);
+          }
+
+          if (progress.streakAwarded && progress.streakBonusXP) {
+            soundFX.playStreakBonus();
+            const streakXpId = 'streak_' + Date.now();
+            setFloatingXps(fxp => [...fxp, { id: streakXpId, amount: progress.streakBonusXP!, reason: progress.streakMsg || 'Điểm danh ngọn lửa!' }]);
+            setTimeout(() => {
+              setFloatingXps(fxp => fxp.filter(item => item.id !== streakXpId));
+            }, 1500);
+          }
+
+          setProfile(prev => {
+            const didLevelUp = progress.level > prev.level;
+            if (didLevelUp) soundFX.playLevelUp();
+            else if (score >= 60 || isCorrect) soundFX.playSuccess();
+
+            const updated: UserProfile = {
+              ...prev,
+              currentXP: progress.currentXP,
+              xp: progress.xp,
+              level: progress.level,
+              nextLevelXP: progress.nextLevelXP,
+              title: progress.title,
+              streakCount: progress.streakCount ?? prev.streakCount,
+              lastActiveDate: progress.lastActiveDate ?? prev.lastActiveDate,
+              lastStreakRewardDate: progress.lastStreakRewardDate ?? prev.lastStreakRewardDate,
+              fallaciesIdentified: progress.fallaciesIdentified ?? prev.fallaciesIdentified,
+              evaluatedFallaciesHistory: progress.evaluatedFallaciesHistory ?? prev.evaluatedFallaciesHistory
+            };
+
+            saveLocalDiagData(prev.id, {
+              diagnosticTestA: updated.diagnosticTestA,
+              diagnosticTestB: updated.diagnosticTestB,
+              evaluatedFallaciesHistory: updated.evaluatedFallaciesHistory
+            });
+
+            setTimeout(() => checkBadgeUnlocks(updated, score), 200);
+            return updated;
+          });
+
+          refreshLeaderboard();
+        } catch (err) {
+          console.error('Lỗi transaction recordFallacyResult:', err);
+        }
+      } else {
+        // Chế độ Guest
+        const guestStreakAwarded = profile.lastStreakRewardDate !== today;
+        let guestStreakBonus = 0;
+        let guestStreak = profile.streakCount || 1;
+        let guestStreakMsg = '';
+
+        if (guestStreakAwarded) {
+          const prevDate = profile.lastStreakRewardDate || profile.lastActiveDate;
+          if (prevDate === yesterday) {
+            guestStreak = (profile.streakCount || 0) + 1;
+            guestStreakBonus = Math.min(100, 40 + guestStreak * 10);
+            guestStreakMsg = `Duy trì chuỗi ngọn lửa: ${guestStreak} ngày liên tiếp!`;
+          } else {
+            guestStreak = 1;
+            guestStreakBonus = 30;
+            guestStreakMsg = 'Khởi động ngọn lửa ngày 1!';
+          }
+        }
+
+        const totalEarned = fallacyXP + guestStreakBonus;
+        const newTotalXP = profile.currentXP + totalEarned;
+        const progress = getProgressFromXP(newTotalXP);
+
+        if (fallacyXP > 0) {
+          const xpId = 'fallacy_' + Date.now();
+          setFloatingXps(fxp => [...fxp, { id: xpId, amount: fallacyXP, reason: customReason || 'Hoàn thành bài tập phản biện' }]);
+          setTimeout(() => {
+            setFloatingXps(fxp => fxp.filter(item => item.id !== xpId));
+          }, 1500);
+        }
+
+        if (guestStreakAwarded && guestStreakBonus > 0) {
+          soundFX.playStreakBonus();
+          const streakXpId = 'streak_' + Date.now();
+          setFloatingXps(fxp => [...fxp, { id: streakXpId, amount: guestStreakBonus, reason: guestStreakMsg }]);
+          setTimeout(() => {
+            setFloatingXps(fxp => fxp.filter(item => item.id !== streakXpId));
+          }, 1500);
+        }
+
+        setProfile(prev => {
+          const newHistory = prev.evaluatedFallaciesHistory ? [...prev.evaluatedFallaciesHistory] : [];
+          if (historyItem) newHistory.push(historyItem);
+
+          const updated: UserProfile = {
+            ...prev,
+            currentXP: progress.currentXP,
+            xp: progress.xp,
+            level: progress.level,
+            nextLevelXP: progress.nextLevelXP,
+            title: progress.title,
+            fallaciesIdentified: prev.fallaciesIdentified + (isCorrect ? 1 : 0),
+            evaluatedFallaciesHistory: newHistory,
+            streakCount: guestStreak,
+            lastActiveDate: today,
+            lastStreakRewardDate: today
+          };
+
+          saveLocalDiagData('guest', {
+            diagnosticTestA: updated.diagnosticTestA,
+            diagnosticTestB: updated.diagnosticTestB,
+            evaluatedFallaciesHistory: updated.evaluatedFallaciesHistory
+          });
+
+          setTimeout(() => checkBadgeUnlocks(updated, score), 200);
+          return updated;
         });
       }
 
-      const updated: UserProfile = {
-        ...prev,
-        currentXP: newTotalXP,
-        level: newLevel,
-        nextLevelXP: currentCap,
-        title: LEVEL_TITLES[newLevel]?.title || prev.title,
-        fallaciesIdentified: newCount,
-        evaluatedFallaciesHistory: newHistory
-      };
-
-      saveLocalDiagData(prev.id, {
-        diagnosticTestA: updated.diagnosticTestA,
-        diagnosticTestB: updated.diagnosticTestB,
-        evaluatedFallaciesHistory: updated.evaluatedFallaciesHistory
+      // Cập nhật tiến độ nhiệm vụ ngày
+      setQuests(prev => {
+        const nextQuests = prev.map(q => {
+          if (q.id === 'quest_1' && !q.isCompleted) {
+            const nextCount = q.currentCount + 1;
+            return { ...q, currentCount: nextCount, isCompleted: nextCount >= q.targetCount };
+          }
+          if (q.id === 'quest_3' && !q.isCompleted && score >= 80) {
+            return { ...q, currentCount: 1, isCompleted: true };
+          }
+          return q;
+        });
+        const activeUserId = currentUser ? currentUser.uid : 'guest';
+        saveQuestsState(activeUserId, getTodayDateString(), nextQuests, !!currentUser);
+        return nextQuests;
       });
-
-      if (currentUser) {
-        const unlockedIds = badges.filter(b => b.isUnlocked).map(b => b.id);
-        recordFallacyInFirestore(currentUser.uid, {
-          newXp: newTotalXP,
-          newLevel: newLevel,
-          newTitle: updated.title,
-          newFallaciesIdentified: newCount,
-          unlockedBadgeIds: unlockedIds,
-          streakCount: updated.streakCount,
-          lastActiveDate: updated.lastActiveDate
-        }).then(() => refreshLeaderboard()).catch(err => console.error('Lỗi lưu fallacy Firestore:', err));
-      }
-
-      setTimeout(() => checkBadgeUnlocks(updated, score), 200);
-      return updated;
-    });
-
-    setQuests(prev => {
-      const nextQuests = prev.map(q => {
-        if (q.id === 'quest_1' && !q.isCompleted) {
-          const nextCount = q.currentCount + 1;
-          return { ...q, currentCount: nextCount, isCompleted: nextCount >= q.targetCount };
-        }
-        if (q.id === 'quest_3' && !q.isCompleted && score >= 80) {
-          return { ...q, currentCount: 1, isCompleted: true };
-        }
-        return q;
-      });
-      const activeUserId = currentUser ? currentUser.uid : 'guest';
-      saveQuestsState(activeUserId, getTodayDateString(), nextQuests);
-      return nextQuests;
-    });
-  }, [currentUser, badges, updateDailyStreak, checkBadgeUnlocks, refreshLeaderboard]);
+    } finally {
+      isRecordingFallacyRef.current = false;
+    }
+  }, [currentUser, profile.level, profile.currentXP, profile.lastStreakRewardDate, profile.lastActiveDate, profile.streakCount, checkBadgeUnlocks, refreshLeaderboard]);
 
   // Quản lý Modal & Logic Bài kiểm tra chẩn đoán
   const openDiagnosticTest = useCallback((set?: 'A' | 'B') => {
@@ -817,26 +1052,48 @@ export const GamificationProvider: React.FC<{ children: ReactNode }> = ({ childr
   }, []);
 
   const recordDiagnosticTestResult = useCallback(async (testSet: 'A' | 'B', result: DiagnosticTestResult) => {
+    if (isRecordingDiagTestRef.current) return;
+    isRecordingDiagTestRef.current = true;
+
     const key = testSet === 'A' ? 'diagnosticTestA' : 'diagnosticTestB';
-    saveLocalDiagData(profile.id, {
-      [key]: result
-    });
+    const today = getTodayDateString();
+    const yesterday = getYesterdayDateString();
 
     if (currentUser) {
       try {
+        // Gộp test chẩn đoán (150 XP) và kiểm tra streak vào cùng 1 transaction duy nhất
         const progress = await awardXPInFirestore(currentUser.uid, {
           rewardXP: 150,
           testSetToRecord: {
             testSet,
             result
+          },
+          streakBonus: {
+            todayDate: today,
+            yesterdayDate: yesterday
           }
         });
+
+        // CHỈ hiển thị thông báo nhận thưởng sau khi transaction Firestore thành công
         soundFX.playSuccess();
-        const xpId = Date.now().toString() + Math.random().toString();
+        saveLocalDiagData(currentUser.uid, {
+          [key]: result
+        });
+
+        const xpId = 'diag_' + Date.now().toString() + Math.random().toString();
         setFloatingXps(prev => [...prev, { id: xpId, amount: 150, reason: `Hoàn thành bài kiểm tra chẩn đoán Bộ ${testSet}!` }]);
         setTimeout(() => {
           setFloatingXps(prev => prev.filter(item => item.id !== xpId));
         }, 1500);
+
+        if (progress.streakAwarded && progress.streakBonusXP) {
+          soundFX.playStreakBonus();
+          const streakXpId = 'streak_' + Date.now();
+          setFloatingXps(fxp => [...fxp, { id: streakXpId, amount: progress.streakBonusXP!, reason: progress.streakMsg || 'Điểm danh ngọn lửa!' }]);
+          setTimeout(() => {
+            setFloatingXps(fxp => fxp.filter(item => item.id !== streakXpId));
+          }, 1500);
+        }
 
         setProfile(prev => {
           const updated = {
@@ -846,7 +1103,10 @@ export const GamificationProvider: React.FC<{ children: ReactNode }> = ({ childr
             xp: progress.xp,
             level: progress.level,
             nextLevelXP: progress.nextLevelXP,
-            title: progress.title
+            title: progress.title,
+            streakCount: progress.streakCount ?? prev.streakCount,
+            lastActiveDate: progress.lastActiveDate ?? prev.lastActiveDate,
+            lastStreakRewardDate: progress.lastStreakRewardDate ?? prev.lastStreakRewardDate
           };
           setTimeout(() => checkBadgeUnlocks(updated), 200);
           return updated;
@@ -854,17 +1114,25 @@ export const GamificationProvider: React.FC<{ children: ReactNode }> = ({ childr
         refreshLeaderboard();
       } catch (err) {
         console.error('Lỗi lưu kết quả test chẩn đoán qua transaction:', err);
+      } finally {
+        isRecordingDiagTestRef.current = false;
       }
     } else {
-      setProfile(prev => ({
-        ...prev,
-        [key]: result
-      }));
-      addXP(150, `Hoàn thành bài kiểm tra chẩn đoán Bộ ${testSet}!`);
+      try {
+        saveLocalDiagData('guest', {
+          [key]: result
+        });
+        setProfile(prev => ({
+          ...prev,
+          [key]: result
+        }));
+        await addXP(150, `Hoàn thành bài kiểm tra chẩn đoán Bộ ${testSet}!`);
+        await updateDailyStreak();
+      } finally {
+        isRecordingDiagTestRef.current = false;
+      }
     }
-
-    updateDailyStreak();
-  }, [currentUser, profile.id, addXP, updateDailyStreak, checkBadgeUnlocks, refreshLeaderboard]);
+  }, [currentUser, addXP, updateDailyStreak, checkBadgeUnlocks, refreshLeaderboard]);
 
   // Tính số ngày kể từ Bài kiểm tra A để nhắc làm Bài kiểm tra B sau 4 tuần (28 ngày)
   const testACompletedAt = profile.diagnosticTestA?.completedAt;
@@ -1000,11 +1268,13 @@ export const GamificationProvider: React.FC<{ children: ReactNode }> = ({ childr
       };
 
       if (currentUser) {
-        const unlockedIds = badges.filter(b => b.isUnlocked).map(b => b.id);
+        const unlockedIds = Array.from(unlockedBadgeIdsRef.current);
         recordDebateMatchInFirestore(currentUser.uid, newMatch, {
           newXp: newTotalXP,
           newLevel: newLevel,
           newTitle: updated.title,
+          nextLevelXP: currentCap,
+          newTotalDebates: newTotalDebates,
           newDebatesWon: newWon,
           unlockedBadgeIds: unlockedIds,
           streakCount: updated.streakCount,
@@ -1029,65 +1299,80 @@ export const GamificationProvider: React.FC<{ children: ReactNode }> = ({ childr
         return q;
       });
       const activeUserId = currentUser ? currentUser.uid : 'guest';
-      saveQuestsState(activeUserId, getTodayDateString(), nextQuests);
+      saveQuestsState(activeUserId, getTodayDateString(), nextQuests, !!currentUser);
       return nextQuests;
     });
   }, [currentUser, badges, updateDailyStreak, checkBadgeUnlocks, refreshLeaderboard]);
 
   const claimQuest = useCallback(async (questId: string) => {
     const quest = quests.find(q => q.id === questId);
-    // Fix Lỗi 3 & P1: Ngăn chặn nhận thưởng nhiều lần bằng Transaction
+    // Fix Lỗi 3 & P1: Ngăn chặn nhận thưởng nhiều lần bằng Transaction và in-flight lock
     if (!quest || !quest.isCompleted || quest.isClaimed) return;
+    if (claimingQuestIdsRef.current.has(questId)) return;
+    claimingQuestIdsRef.current.add(questId);
 
     const today = getTodayDateString();
 
-    if (currentUser) {
-      try {
-        const progress = await awardXPInFirestore(currentUser.uid, {
-          rewardXP: quest.rewardXP,
-          questIdToClaim: questId,
-          todayDate: today
-        });
+    try {
+      if (currentUser) {
+        try {
+          const updatedQuests = quests.map(q => q.id === questId ? { ...q, isClaimed: true } : q);
+          const progress = await awardXPInFirestore(currentUser.uid, {
+            rewardXP: quest.rewardXP,
+            questIdToClaim: questId,
+            todayDate: today,
+            dailyQuestsToUpdate: {
+              date: today,
+              quests: updatedQuests.map(q => ({
+                id: q.id,
+                currentCount: q.currentCount,
+                isCompleted: q.isCompleted,
+                isClaimed: q.isClaimed
+              }))
+            }
+          });
 
-        // Sau khi transaction thành công mới cập nhật React state
-        soundFX.playSuccess();
+          // CHỈ hiển thị thông báo thành công và cập nhật UI sau khi transaction thành công
+          soundFX.playSuccess();
+          setQuests(updatedQuests);
+          saveQuestsState(currentUser.uid, today, updatedQuests, false);
+
+          const xpId = 'quest_' + Date.now().toString() + Math.random().toString();
+          setFloatingXps(prev => [...prev, { id: xpId, amount: quest.rewardXP, reason: `Nhiệm vụ: ${quest.title}` }]);
+          setTimeout(() => {
+            setFloatingXps(prev => prev.filter(item => item.id !== xpId));
+          }, 1500);
+
+          setProfile(prev => {
+            const updated = {
+              ...prev,
+              currentXP: progress.currentXP,
+              xp: progress.xp,
+              level: progress.level,
+              nextLevelXP: progress.nextLevelXP,
+              title: progress.title,
+              claimedQuestIds: progress.claimedQuestIds,
+              lastQuestDate: progress.lastQuestDate
+            };
+            setTimeout(() => checkBadgeUnlocks(updated), 200);
+            return updated;
+          });
+          refreshLeaderboard();
+        } catch (err) {
+          console.error('Lỗi nhận thưởng nhiệm vụ qua transaction:', err);
+        }
+      } else {
+        // Chế độ Guest
         const updatedQuests = quests.map(q => q.id === questId ? { ...q, isClaimed: true } : q);
         setQuests(updatedQuests);
-        saveQuestsState(currentUser.uid, today, updatedQuests);
-
-        const xpId = Date.now().toString() + Math.random().toString();
-        setFloatingXps(prev => [...prev, { id: xpId, amount: quest.rewardXP, reason: `Nhiệm vụ: ${quest.title}` }]);
-        setTimeout(() => {
-          setFloatingXps(prev => prev.filter(item => item.id !== xpId));
-        }, 1500);
-
-        setProfile(prev => {
-          const updated = {
-            ...prev,
-            currentXP: progress.currentXP,
-            xp: progress.xp,
-            level: progress.level,
-            nextLevelXP: progress.nextLevelXP,
-            title: progress.title,
-            claimedQuestIds: progress.claimedQuestIds,
-            lastQuestDate: progress.lastQuestDate
-          };
-          setTimeout(() => checkBadgeUnlocks(updated), 200);
-          return updated;
-        });
-        refreshLeaderboard();
-      } catch (err) {
-        console.error('Lỗi nhận thưởng nhiệm vụ qua transaction:', err);
+        saveQuestsState('guest', today, updatedQuests);
+        await addXP(quest.rewardXP, `Nhiệm vụ: ${quest.title}`);
       }
-    } else {
-      // Chế độ Guest
-      const updatedQuests = quests.map(q => q.id === questId ? { ...q, isClaimed: true } : q);
-      setQuests(updatedQuests);
-      saveQuestsState('guest', today, updatedQuests);
-      addXP(quest.rewardXP, `Nhiệm vụ: ${quest.title}`);
-    }
 
-    updateDailyStreak();
+      await updateDailyStreak();
+    } finally {
+      claimingQuestIdsRef.current.delete(questId);
+    }
   }, [quests, currentUser, addXP, updateDailyStreak, checkBadgeUnlocks, refreshLeaderboard]);
 
   const toggleSound = useCallback(() => {
@@ -1149,8 +1434,19 @@ export const GamificationProvider: React.FC<{ children: ReactNode }> = ({ childr
       }
     }
 
-    setProfile(GUEST_PROFILE);
-    setBadges(INITIAL_BADGES);
+    unlockedBadgeIdsRef.current = new Set();
+    setProfile(prev => ({
+      ...GUEST_PROFILE,
+      id: currentUser ? currentUser.uid : 'guest',
+      name: prev.name,
+      school: prev.school,
+      email: prev.email,
+      avatarSeed: prev.avatarSeed,
+      diagnosticTestA: undefined,
+      diagnosticTestB: undefined,
+      evaluatedFallaciesHistory: []
+    }));
+    setBadges(INITIAL_BADGES.map(b => ({ ...b, isUnlocked: false })));
     setQuests(INITIAL_QUESTS);
     setDebateHistory([]);
   }, [currentUser, refreshLeaderboard]);

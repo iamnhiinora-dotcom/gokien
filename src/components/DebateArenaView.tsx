@@ -277,7 +277,6 @@ export const DebateArenaView: React.FC<DebateArenaViewProps> = ({
     if (!reflectionOpponentPoint.trim() && !reflectionOpeningIdea.trim()) return;
     soundFX.playSuccess();
     setIsReflectionSaved(true);
-    addXP(25, 'Phản tư tự nhìn lại mình sau trận đấu');
     recordDebateEnd({
       topicMotion: isCustomMode && customMotion.trim() ? customMotion.trim() : selectedTopic.motion,
       studentSide,

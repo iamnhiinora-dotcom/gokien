@@ -409,9 +409,19 @@ export interface UserProfile {
   aiEngineMode: 'gemini_cloud' | 'intelligent_fallback';
   streakCount: number;         // Số ngày duy trì streak liên tục
   lastActiveDate: string;      // Ngày hoạt động gần nhất định dạng YYYY-MM-DD
+  lastStreakRewardDate?: string; // Ngày gần nhất nhận thưởng ngọn lửa streak (YYYY-MM-DD)
   // Quản lý nhiệm vụ hàng ngày bền vững tránh nhận thưởng lặp lại
   claimedQuestIds?: string[];
   lastQuestDate?: string;
+  dailyQuests?: {
+    date: string;
+    quests: {
+      id: string;
+      currentCount: number;
+      isCompleted: boolean;
+      isClaimed: boolean;
+    }[];
+  };
   // Dữ liệu kiểm tra thực tế & đánh giá AI
   diagnosticTestA?: DiagnosticTestResult;
   diagnosticTestB?: DiagnosticTestResult;

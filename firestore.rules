@@ -49,13 +49,16 @@ service cloud.firestore {
         && (!('unlockedBadgeIds' in data) || data.unlockedBadgeIds is list)
         && (!('streakCount' in data) || (data.streakCount is int && data.streakCount >= 0))
         && (!('lastActiveDate' in data) || (data.lastActiveDate is string && data.lastActiveDate.size() <= 10))
+        && (!('lastStreakRewardDate' in data) || (data.lastStreakRewardDate is string && data.lastStreakRewardDate.size() <= 10))
         && (!('claimedQuestIds' in data) || data.claimedQuestIds is list)
         && (!('lastQuestDate' in data) || (data.lastQuestDate is string && data.lastQuestDate.size() <= 10))
         && (!('soundEnabled' in data) || data.soundEnabled is bool)
         && (!('screenShakeEnabled' in data) || data.screenShakeEnabled is bool)
         && (!('lastMatchId' in data) || (data.lastMatchId is string && data.lastMatchId.size() <= 128))
         && (!('diagnosticTestA' in data) || data.diagnosticTestA is map)
-        && (!('diagnosticTestB' in data) || data.diagnosticTestB is map);
+        && (!('diagnosticTestB' in data) || data.diagnosticTestB is map)
+        && (!('dailyQuests' in data) || data.dailyQuests is map)
+        && (!('evaluatedFallaciesHistory' in data) || data.evaluatedFallaciesHistory is list);
     }
 
     // Validation for LeaderboardUser
@@ -129,7 +132,8 @@ service cloud.firestore {
               'soundEnabled',
               'screenShakeEnabled',
               'lastActiveDate',
-              'streakCount'
+              'streakCount',
+              'unlockedBadgeIds'
             ])
           )
           ||
@@ -139,27 +143,29 @@ service cloud.firestore {
             && isValidId(incoming().lastMatchId)
             && existsAfter(/databases/$(database)/documents/users/$(userId)/matches/$(incoming().lastMatchId))
             && incoming().xp >= existing().xp
-            && incoming().xp <= existing().xp + 250
+            && incoming().xp <= existing().xp + 350
             && incoming().diff(existing()).affectedKeys().hasOnly([
               'xp',
               'currentXP',
               'level',
               'nextLevelXP',
               'title',
+              'totalDebates',
               'debatesWon',
               'unlockedBadgeIds',
               'lastActiveDate',
               'streakCount',
+              'lastStreakRewardDate',
               'lastMatchId'
             ])
           )
           ||
-          // Branch 3: Fallacy Result Reward (XP tăng tối đa 150 sau khi AI chấm điểm)
+          // Branch 3: Fallacy Result Reward & Daily Streak (XP tăng tối đa 300 sau khi AI chấm điểm và cộng streak)
           (
             incoming().fallaciesIdentified >= existing().fallaciesIdentified
             && incoming().fallaciesIdentified <= existing().fallaciesIdentified + 1
             && incoming().xp >= existing().xp
-            && incoming().xp <= existing().xp + 150
+            && incoming().xp <= existing().xp + 300
             && incoming().diff(existing()).affectedKeys().hasOnly([
               'xp',
               'currentXP',
@@ -167,9 +173,11 @@ service cloud.firestore {
               'nextLevelXP',
               'title',
               'fallaciesIdentified',
+              'evaluatedFallaciesHistory',
               'unlockedBadgeIds',
               'lastActiveDate',
-              'streakCount'
+              'streakCount',
+              'lastStreakRewardDate'
             ])
           )
           ||
@@ -188,8 +196,10 @@ service cloud.firestore {
               'title',
               'streakCount',
               'lastActiveDate',
+              'lastStreakRewardDate',
               'claimedQuestIds',
               'lastQuestDate',
+              'dailyQuests',
               'unlockedBadgeIds',
               'diagnosticTestA',
               'diagnosticTestB'
@@ -215,11 +225,27 @@ service cloud.firestore {
               'unlockedBadgeIds',
               'streakCount',
               'lastActiveDate',
+              'lastStreakRewardDate',
               'claimedQuestIds',
               'lastQuestDate',
+              'dailyQuests',
+              'evaluatedFallaciesHistory',
               'diagnosticTestA',
               'diagnosticTestB'
             ])
+          )
+          ||
+          // Branch 6: Cập nhật tiến độ nhiệm vụ thời gian thực (không thay đổi XP)
+          (
+            incoming().xp == existing().xp
+            && incoming().level == existing().level
+            && incoming().debatesWon == existing().debatesWon
+            && incoming().fallaciesIdentified == existing().fallaciesIdentified
+            && (
+              incoming().diff(existing()).affectedKeys().hasOnly(['dailyQuests'])
+              ||
+              incoming().diff(existing()).affectedKeys().hasOnly(['dailyQuests', 'lastActiveDate'])
+            )
           )
         );
 

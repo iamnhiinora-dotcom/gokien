@@ -29,10 +29,12 @@ import {
   getDocFromServer,
   writeBatch,
   runTransaction,
-  deleteDoc
+  deleteDoc,
+  deleteField,
+  arrayUnion
 } from 'firebase/firestore';
 import firebaseConfig from '../../firebase-applet-config.json';
-import { UserProfile, LeaderboardUser, DebateMatchRecord, DiagnosticTestResult } from '../types';
+import { UserProfile, LeaderboardUser, DebateMatchRecord, DiagnosticTestResult, DailyQuest, EvaluatedFallacyRecord } from '../types';
 import { getProgressFromXP } from '../utils/levelSystem';
 
 // Khởi tạo Firebase App và Firestore kết nối đúng database ID
@@ -148,8 +150,10 @@ export async function fetchUserProfile(userId: string): Promise<UserProfile | nu
         aiEngineMode: raw.aiEngineMode || 'gemini_cloud',
         streakCount: Math.max(1, Number(raw.streakCount || 1)),
         lastActiveDate: raw.lastActiveDate || new Date().toISOString().slice(0, 10),
+        lastStreakRewardDate: raw.lastStreakRewardDate || undefined,
         claimedQuestIds: Array.isArray(raw.claimedQuestIds) ? raw.claimedQuestIds : [],
         lastQuestDate: raw.lastQuestDate || undefined,
+        dailyQuests: raw.dailyQuests,
         diagnosticTestA: raw.diagnosticTestA,
         diagnosticTestB: raw.diagnosticTestB,
         evaluatedFallaciesHistory: Array.isArray(raw.evaluatedFallaciesHistory) ? raw.evaluatedFallaciesHistory : []
@@ -191,7 +195,8 @@ export async function createInitialUserProfile(
     geminiApiKey: '',
     aiEngineMode: 'gemini_cloud',
     streakCount: 1,
-    lastActiveDate: new Date().toISOString().slice(0, 10)
+    lastActiveDate: new Date().toISOString().slice(0, 10),
+    lastStreakRewardDate: new Date().toISOString().slice(0, 10)
   };
 
   try {
@@ -215,6 +220,7 @@ export async function createInitialUserProfile(
       unlockedBadgeIds: [],
       streakCount: 1,
       lastActiveDate: newProfile.lastActiveDate,
+      lastStreakRewardDate: newProfile.lastStreakRewardDate,
       soundEnabled: true,
       screenShakeEnabled: true
     });
@@ -293,6 +299,8 @@ export async function recordDebateMatchInFirestore(
     newXp: number;
     newLevel: number;
     newTitle: string;
+    nextLevelXP?: number;
+    newTotalDebates?: number;
     newDebatesWon: number;
     unlockedBadgeIds: string[];
     streakCount: number;
@@ -326,17 +334,26 @@ export async function recordDebateMatchInFirestore(
 
     // 2. Cập nhật hồ sơ người dùng kèm lastMatchId để thỏa mãn rules atomicity
     const userRef = doc(db, 'users', userId);
-    batch.update(userRef, {
+    const userUpdates: Record<string, any> = {
       xp: updatedProfileData.newXp,
       currentXP: updatedProfileData.newXp, // Đồng bộ tuyệt đối cả xp và currentXP
       level: updatedProfileData.newLevel,
       title: updatedProfileData.newTitle,
       debatesWon: updatedProfileData.newDebatesWon,
-      unlockedBadgeIds: updatedProfileData.unlockedBadgeIds,
+      ...(Array.isArray(updatedProfileData.unlockedBadgeIds) && updatedProfileData.unlockedBadgeIds.length > 0
+        ? { unlockedBadgeIds: arrayUnion(...updatedProfileData.unlockedBadgeIds) }
+        : {}),
       streakCount: updatedProfileData.streakCount,
       lastActiveDate: updatedProfileData.lastActiveDate,
       lastMatchId: match.id
-    });
+    };
+    if (updatedProfileData.nextLevelXP !== undefined) {
+      userUpdates.nextLevelXP = updatedProfileData.nextLevelXP;
+    }
+    if (updatedProfileData.newTotalDebates !== undefined) {
+      userUpdates.totalDebates = updatedProfileData.newTotalDebates;
+    }
+    batch.update(userRef, userUpdates);
 
     // 3. Cập nhật Leaderboard công khai
     const lbRef = doc(db, 'leaderboard', userId);
@@ -360,7 +377,9 @@ export async function recordFallacyInFirestore(
     newXp: number;
     newLevel: number;
     newTitle: string;
+    nextLevelXP?: number;
     newFallaciesIdentified: number;
+    evaluatedFallaciesHistory?: EvaluatedFallacyRecord[];
     unlockedBadgeIds: string[];
     streakCount: number;
     lastActiveDate: string;
@@ -370,16 +389,25 @@ export async function recordFallacyInFirestore(
   try {
     const batch = writeBatch(db);
     const userRef = doc(db, 'users', userId);
-    batch.update(userRef, {
+    const userUpdates: Record<string, any> = {
       xp: updatedData.newXp,
       currentXP: updatedData.newXp, // Đồng bộ tuyệt đối cả xp và currentXP
       level: updatedData.newLevel,
       title: updatedData.newTitle,
       fallaciesIdentified: updatedData.newFallaciesIdentified,
-      unlockedBadgeIds: updatedData.unlockedBadgeIds,
+      ...(Array.isArray(updatedData.unlockedBadgeIds) && updatedData.unlockedBadgeIds.length > 0
+        ? { unlockedBadgeIds: arrayUnion(...updatedData.unlockedBadgeIds) }
+        : {}),
       streakCount: updatedData.streakCount,
       lastActiveDate: updatedData.lastActiveDate
-    });
+    };
+    if (updatedData.nextLevelXP !== undefined) {
+      userUpdates.nextLevelXP = updatedData.nextLevelXP;
+    }
+    if (updatedData.evaluatedFallaciesHistory !== undefined) {
+      userUpdates.evaluatedFallaciesHistory = updatedData.evaluatedFallaciesHistory;
+    }
+    batch.update(userRef, userUpdates);
 
     const lbRef = doc(db, 'leaderboard', userId);
     batch.update(lbRef, {
@@ -450,21 +478,36 @@ export interface AwardXPOptions {
   rewardXP: number;
   questIdToClaim?: string;
   todayDate?: string;
+  dailyQuestsToUpdate?: {
+    date: string;
+    quests: {
+      id: string;
+      currentCount: number;
+      isCompleted: boolean;
+      isClaimed: boolean;
+    }[];
+  };
   testSetToRecord?: {
     testSet: 'A' | 'B';
     result: DiagnosticTestResult;
   };
   streakBonus?: {
-    streakCount: number;
-    lastActiveDate: string;
+    streakCount?: number;
+    todayDate?: string;
+    yesterdayDate?: string;
+    lastActiveDate?: string;
   };
   unlockedBadgeIds?: string[];
+  fallacyRecord?: {
+    isCorrect: boolean;
+    historyItem?: EvaluatedFallacyRecord;
+  };
 }
 
 /**
  * 9. Cộng điểm XP và cập nhật tiến trình bằng Firestore Transaction
  * Đọc XP mới nhất từ server, ngăn chặn mất điểm khi thao tác liên tiếp
- * và bảo đảm chống nhận thưởng 2 lần cho nhiệm vụ/bài kiểm tra/streak.
+ * và bảo đảm chống nhận thưởng 2 lần cho nhiệm vụ/bài kiểm tra/streak/bài tập ngụy biện.
  */
 export async function awardXPInFirestore(
   userId: string,
@@ -475,13 +518,28 @@ export async function awardXPInFirestore(
   level: number;
   nextLevelXP: number;
   title: string;
+  streakAwarded?: boolean;
+  streakBonusXP?: number;
+  streakMsg?: string;
+  lastStreakRewardDate?: string;
   claimedQuestIds?: string[];
   lastQuestDate?: string;
+  dailyQuests?: {
+    date: string;
+    quests: {
+      id: string;
+      currentCount: number;
+      isCompleted: boolean;
+      isClaimed: boolean;
+    }[];
+  };
   streakCount?: number;
   lastActiveDate?: string;
   unlockedBadgeIds?: string[];
   diagnosticTestA?: DiagnosticTestResult;
   diagnosticTestB?: DiagnosticTestResult;
+  fallaciesIdentified?: number;
+  evaluatedFallaciesHistory?: EvaluatedFallacyRecord[];
 }> {
   const path = `users/${userId}`;
   try {
@@ -515,17 +573,71 @@ export async function awardXPInFirestore(
         }
       }
 
-      // Kiểm tra streak không cộng 2 lần trong ngày
-      let updatedStreakCount = userData.streakCount;
+      // BUG-10 & BUG-12: Chuyển toàn bộ việc xác định ngày nhận thưởng, tính chuỗi ngày liên tiếp và số XP thưởng VÀO TRANSACTION
+      let streakAwarded = false;
+      let streakBonusXP = 0;
+      let streakMsg = '';
+      let updatedStreakCount = Number(userData.streakCount) || 1;
       let updatedLastActiveDate = userData.lastActiveDate;
+      let updatedLastStreakRewardDate = userData.lastStreakRewardDate;
+
       if (options.streakBonus) {
-        updatedStreakCount = options.streakBonus.streakCount;
-        updatedLastActiveDate = options.streakBonus.lastActiveDate;
+        const streakToday = options.streakBonus.todayDate || options.streakBonus.lastActiveDate || options.todayDate || new Date().toISOString().slice(0, 10);
+
+        // 1. Kiểm tra ngày đã nhận thưởng ngay trong transaction đọc từ Firestore
+        if (userData.lastStreakRewardDate === streakToday) {
+          // Đã nhận thưởng streak hôm nay rồi -> không cộng lại
+          streakAwarded = false;
+          streakBonusXP = 0;
+        } else {
+          streakAwarded = true;
+          // Tính chuỗi ngày liên tiếp hoàn toàn dựa trên dữ liệu mới nhất từ Firestore
+          let computedYesterday = options.streakBonus.yesterdayDate;
+          if (!computedYesterday) {
+            const d = new Date(streakToday);
+            d.setDate(d.getDate() - 1);
+            computedYesterday = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+          }
+
+          const prevDate = userData.lastStreakRewardDate || userData.lastActiveDate;
+          const currentStreak = Math.max(0, Number(userData.streakCount || 0));
+
+          if (prevDate === computedYesterday) {
+            updatedStreakCount = currentStreak + 1;
+            streakBonusXP = Math.min(100, 40 + updatedStreakCount * 10);
+            streakMsg = `Duy trì chuỗi ngọn lửa: ${updatedStreakCount} ngày liên tiếp!`;
+          } else {
+            updatedStreakCount = 1;
+            streakBonusXP = 30;
+            streakMsg = 'Khởi động ngọn lửa ngày 1!';
+          }
+
+          updatedLastActiveDate = streakToday;
+          updatedLastStreakRewardDate = streakToday;
+        }
+      }
+
+      // BUG-12: Xử lý cập nhật số lỗi ngụy biện và lịch sử luyện tập ngay trong cùng transaction
+      let updatedFallaciesIdentified = Number(userData.fallaciesIdentified) || 0;
+      let updatedFallaciesHistory = Array.isArray(userData.evaluatedFallaciesHistory)
+        ? [...userData.evaluatedFallaciesHistory]
+        : [];
+
+      if (options.fallacyRecord) {
+        if (options.fallacyRecord.isCorrect) {
+          updatedFallaciesIdentified += 1;
+        }
+        if (options.fallacyRecord.historyItem) {
+          updatedFallaciesHistory.push(options.fallacyRecord.historyItem);
+        }
       }
 
       // Đọc XP mới nhất từ Firestore transaction
       const currentXP = Math.max(Number(userData.xp || 0), Number(userData.currentXP || 0));
-      const newXP = currentXP + Math.max(0, options.rewardXP);
+      // Base XP từ bài tập ngụy biện / nhiệm vụ / kiểm tra chẩn đoán
+      const baseRewardXP = Math.max(0, options.rewardXP || 0);
+      const totalRewardXP = baseRewardXP + (streakAwarded ? streakBonusXP : 0);
+      const newXP = currentXP + totalRewardXP;
       const progress = getProgressFromXP(newXP);
 
       const userUpdates: Record<string, any> = {
@@ -536,18 +648,31 @@ export async function awardXPInFirestore(
         title: progress.title
       };
 
+      if (options.fallacyRecord) {
+        userUpdates.fallaciesIdentified = updatedFallaciesIdentified;
+        userUpdates.evaluatedFallaciesHistory = updatedFallaciesHistory;
+      }
+
       if (options.questIdToClaim) {
         userUpdates.claimedQuestIds = updatedClaimedIds;
         userUpdates.lastQuestDate = updatedLastQuestDate;
       }
 
-      if (options.streakBonus) {
-        userUpdates.streakCount = updatedStreakCount;
-        userUpdates.lastActiveDate = updatedLastActiveDate;
+      if (options.dailyQuestsToUpdate) {
+        userUpdates.dailyQuests = options.dailyQuestsToUpdate;
       }
 
-      if (options.unlockedBadgeIds) {
-        userUpdates.unlockedBadgeIds = options.unlockedBadgeIds;
+      if (options.streakBonus) {
+        userUpdates.lastActiveDate = updatedLastActiveDate;
+        if (streakAwarded) {
+          userUpdates.streakCount = updatedStreakCount;
+          userUpdates.lastStreakRewardDate = updatedLastStreakRewardDate;
+        }
+      }
+
+      // Sử dụng arrayUnion để không bao giờ ghi đè danh sách huy hiệu
+      if (options.unlockedBadgeIds && options.unlockedBadgeIds.length > 0) {
+        userUpdates.unlockedBadgeIds = arrayUnion(...options.unlockedBadgeIds);
       }
 
       let diagA = userData.diagnosticTestA;
@@ -564,21 +689,32 @@ export async function awardXPInFirestore(
 
       tx.update(userRef, userUpdates);
 
-      tx.update(leaderboardRef, {
+      const lbUpdates: Record<string, any> = {
         xp: newXP,
         level: progress.level,
         title: progress.title
-      });
+      };
+      if (options.fallacyRecord) {
+        lbUpdates.fallaciesFound = updatedFallaciesIdentified;
+      }
+      tx.update(leaderboardRef, lbUpdates);
 
       return {
         ...progress,
+        streakAwarded,
+        streakBonusXP,
+        streakMsg,
+        lastStreakRewardDate: userUpdates.lastStreakRewardDate || userData.lastStreakRewardDate,
         claimedQuestIds: userUpdates.claimedQuestIds,
         lastQuestDate: userUpdates.lastQuestDate,
-        streakCount: userUpdates.streakCount,
-        lastActiveDate: userUpdates.lastActiveDate,
+        dailyQuests: userUpdates.dailyQuests || userData.dailyQuests,
+        streakCount: userUpdates.streakCount ?? userData.streakCount,
+        lastActiveDate: userUpdates.lastActiveDate ?? userData.lastActiveDate,
         unlockedBadgeIds: userUpdates.unlockedBadgeIds,
         diagnosticTestA: diagA,
-        diagnosticTestB: diagB
+        diagnosticTestB: diagB,
+        fallaciesIdentified: options.fallacyRecord ? updatedFallaciesIdentified : userData.fallaciesIdentified,
+        evaluatedFallaciesHistory: options.fallacyRecord ? updatedFallaciesHistory : userData.evaluatedFallaciesHistory
       };
     });
   } catch (error) {
@@ -588,8 +724,55 @@ export async function awardXPInFirestore(
 }
 
 /**
- * 10. Đặt lại toàn bộ tiến độ cá nhân của học sinh (Reset Progress)
- * Cập nhật users, leaderboard về Level 1 / 0 XP, xóa lịch sử trận đấu.
+ * 10. Lưu tiến độ nhiệm vụ hàng ngày lên Firestore
+ * KHÔNG tự ý cập nhật lastActiveDate để bảo toàn logic kiểm tra Streak
+ */
+export async function saveDailyQuestsInFirestore(
+  userId: string,
+  quests: DailyQuest[],
+  date: string
+): Promise<void> {
+  const path = `users/${userId}`;
+  try {
+    const userRef = doc(db, 'users', userId);
+    await updateDoc(userRef, {
+      dailyQuests: {
+        date,
+        quests: quests.map(q => ({
+          id: q.id,
+          currentCount: q.currentCount,
+          isCompleted: q.isCompleted,
+          isClaimed: q.isClaimed
+        }))
+      }
+    });
+  } catch (error) {
+    handleFirestoreError(error, OperationType.UPDATE, path);
+  }
+}
+
+/**
+ * 11. Lưu danh sách huy hiệu đã mở khóa vào Firestore
+ */
+export async function saveUnlockedBadgesInFirestore(
+  userId: string,
+  badgeIds: string[]
+): Promise<void> {
+  const path = `users/${userId}`;
+  try {
+    if (!badgeIds || badgeIds.length === 0) return;
+    const userRef = doc(db, 'users', userId);
+    await updateDoc(userRef, {
+      unlockedBadgeIds: arrayUnion(...badgeIds)
+    });
+  } catch (error) {
+    handleFirestoreError(error, OperationType.UPDATE, path);
+  }
+}
+
+/**
+ * 12. Đặt lại toàn bộ tiến độ cá nhân của học sinh (Reset Progress)
+ * Cập nhật users, leaderboard về Level 1 / 0 XP, xóa lịch sử trận đấu và xóa bài kiểm tra diagnosticTestA/B.
  */
 export async function resetUserProfileInFirestore(userId: string): Promise<void> {
   const path = `users/${userId}`;
@@ -597,7 +780,7 @@ export async function resetUserProfileInFirestore(userId: string): Promise<void>
     const today = new Date().toISOString().slice(0, 10);
     const batch = writeBatch(db);
 
-    // 1. Reset tài liệu users
+    // 1. Reset tài liệu users bao gồm xóa diagnosticTestA và diagnosticTestB
     const userRef = doc(db, 'users', userId);
     batch.update(userRef, {
       xp: 0,
@@ -611,8 +794,13 @@ export async function resetUserProfileInFirestore(userId: string): Promise<void>
       unlockedBadgeIds: [],
       streakCount: 1,
       lastActiveDate: today,
+      lastStreakRewardDate: today,
       claimedQuestIds: [],
-      lastQuestDate: today
+      lastQuestDate: today,
+      dailyQuests: { date: today, quests: [] },
+      evaluatedFallaciesHistory: [],
+      diagnosticTestA: deleteField(),
+      diagnosticTestB: deleteField()
     });
 
     // 2. Reset tài liệu leaderboard

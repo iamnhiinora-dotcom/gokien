@@ -1016,9 +1016,11 @@ async function startServer() {
     app.use(vite.middlewares);
   } else {
     // 1-year immutable cache for hashed assets in /assets (JS, CSS)
+    // fallthrough: false bảo đảm nếu file asset không tồn tại thì trả về 404 thay vì fallback về index.html
     app.use('/assets', express.static(path.resolve(__dirname, 'dist', 'assets'), {
       maxAge: '1y',
-      immutable: true
+      immutable: true,
+      fallthrough: false
     }));
     // Static files with 1h cache; index.html always validated
     app.use(express.static(path.resolve(__dirname, 'dist'), {

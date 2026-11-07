@@ -57,6 +57,7 @@ export const GamificationHubView: React.FC<GamificationHubViewProps> = ({ onNavi
   // Tính phần trăm XP
   const xpCurrentLevelFloor = LEVEL_TITLES[profile.level]?.minXP || 0;
   const xpCurrentLevelCeiling = LEVEL_TITLES[profile.level]?.maxXP || 300;
+  const nextLevelXP = LEVEL_TITLES[profile.level]?.maxXP ?? 99999;
   const levelProgressPercent = Math.min(
     100,
     Math.max(
@@ -230,7 +231,7 @@ export const GamificationHubView: React.FC<GamificationHubViewProps> = ({ onNavi
             <div className="flex items-center justify-between font-mono">
               <span className="text-[#4A5263]">Tiến trình Level {profile.level}:</span>
               <span className="font-semibold text-[#1E2433]">
-                {profile.currentXP} / {profile.nextLevelXP} XP
+                {profile.currentXP} / {nextLevelXP} XP
               </span>
             </div>
             <div className="w-full h-2 bg-[#F2EFE8] rounded border border-[#E5E1D8] overflow-hidden">
@@ -240,7 +241,7 @@ export const GamificationHubView: React.FC<GamificationHubViewProps> = ({ onNavi
               />
             </div>
             <div className="text-[11px] text-[#6B7280] text-right font-mono">
-              Còn {Math.max(0, profile.nextLevelXP - profile.currentXP)} XP để lên cấp
+              Còn {Math.max(0, nextLevelXP - profile.currentXP)} XP để lên cấp
             </div>
           </div>
 

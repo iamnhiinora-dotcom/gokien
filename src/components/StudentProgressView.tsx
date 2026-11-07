@@ -65,7 +65,7 @@ export const StudentProgressView: React.FC<StudentProgressViewProps> = ({
   // Tính phần trăm XP trong cấp hiện tại
   const xpCurrentLevelFloor = LEVEL_TITLES[studentLevel]?.minXP || 0;
   const xpCurrentLevelCeiling = LEVEL_TITLES[studentLevel]?.maxXP || 300;
-  const nextLevelXP = Number(profile?.nextLevelXP || xpCurrentLevelCeiling);
+  const nextLevelXP = LEVEL_TITLES[studentLevel]?.maxXP ?? 99999;
   const levelProgressPercent = Math.min(
     100,
     Math.max(
