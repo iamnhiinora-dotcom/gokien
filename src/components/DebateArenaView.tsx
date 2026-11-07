@@ -91,6 +91,7 @@ export const DebateArenaView: React.FC<DebateArenaViewProps> = ({
   const [steelmanResult, setSteelmanResult] = useState<SteelmanEvaluation | null>(null);
   const [steelmanError, setSteelmanError] = useState<string | null>(null);
   const [steelmanScore, setSteelmanScore] = useState<number | null>(null);
+  const hasAwardedSteelmanXp = useRef<boolean>(false);
 
   // ĐIỂM CÔNG TÂM (CONCESSION BONUS) TRONG TRẬN
   const [concessionCount, setConcessionCount] = useState<number>(0);
@@ -225,7 +226,21 @@ export const DebateArenaView: React.FC<DebateArenaViewProps> = ({
     setSteelmanText('');
     setSteelmanResult(null);
     setSteelmanError(null);
+    setSteelmanScore(null);
+    hasAwardedSteelmanXp.current = false;
     setShowSteelmanModal(true);
+  };
+
+  // Thay đổi nội dung Người Thép - hủy kết quả cũ nếu học sinh sửa bài
+  const handleSteelmanTextChange = (text: string) => {
+    setSteelmanText(text);
+    if (steelmanResult !== null || steelmanScore !== null) {
+      setSteelmanResult(null);
+      setSteelmanScore(null);
+    }
+    if (steelmanError !== null) {
+      setSteelmanError(null);
+    }
   };
 
   // Thẩm định bài Dựng Người Thép qua AI (thang điểm 0 - 10)
@@ -248,18 +263,27 @@ export const DebateArenaView: React.FC<DebateArenaViewProps> = ({
       : selectedTopic;
 
     try {
-      const evaluation = await AiDebateService.evaluateSteelman(topicToUse, studentSide, steelmanText.trim());
+      const evaluation = await AiDebateService.evaluateSteelman(
+        topicToUse,
+        studentSide,
+        steelmanText.trim(),
+        profile.geminiApiKey
+      );
       setSteelmanResult(evaluation);
       setSteelmanScore(evaluation.score);
 
       if (evaluation.isPassed) {
         soundFX.playSuccess();
-        addXP(30, 'Đạt chuẩn bài tập Dựng Người Thép');
-        unlockBadge('badge_open_minded');
+        if (!hasAwardedSteelmanXp.current) {
+          hasAwardedSteelmanXp.current = true;
+          addXP(30, 'Đạt chuẩn bài tập Dựng Người Thép');
+          unlockBadge('badge_open_minded');
+        }
       } else {
         soundFX.playHPDamage();
       }
     } catch (err: any) {
+      // Giữ nguyên steelmanText để học sinh bấm thử lại mà không mất công viết lại
       setSteelmanError(err?.message || 'Chưa thể thẩm định bài Dựng Người Thép. Bấm Thử lại');
     } finally {
       setIsEvaluatingSteelman(false);
@@ -1947,7 +1971,7 @@ export const DebateArenaView: React.FC<DebateArenaViewProps> = ({
                 <textarea
                   rows={4}
                   value={steelmanText}
-                  onChange={(e) => setSteelmanText(e.target.value)}
+                  onChange={(e) => handleSteelmanTextChange(e.target.value)}
                   placeholder={`Ví dụ: "Chúng tôi hiểu rằng ${studentSide === 'pro' ? 'phe phản đối' : 'phe ủng hộ'} bảo vệ một giá trị rất chính đáng. Nỗi lo lớn nhất của họ là... Cơ chế thực tế chỉ ra rằng... Do đó, việc thận trọng là có căn cứ."`}
                   className="w-full p-3 rounded bg-[#F2EFE8] border border-[#E5E1D8] text-sm text-[#1E2433] placeholder-[#6B7280] focus:outline-none focus:border-[#A16207] leading-relaxed"
                 />

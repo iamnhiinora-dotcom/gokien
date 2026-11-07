@@ -213,15 +213,17 @@ YÊU CẦU BẮT BUỘC TUÂN THỦ:
 
 // API Thẩm định bài tập "Dựng Người Thép" (Steelman Argument) trước trận đấu
 app.post('/api/evaluate-steelman', async (req, res) => {
+  const startTime = Date.now();
   try {
     const { topic, studentSide, steelmanText } = req.body;
-    if (!topic || !steelmanText) {
+    if (!topic || !steelmanText || typeof steelmanText !== 'string' || !steelmanText.trim()) {
       return res.status(400).json({ error: 'Thiếu thông tin chủ đề hoặc bài viết người thép' });
     }
 
-    const apiKey = process.env.GEMINI_API_KEY;
+    const apiKey = process.env.GEMINI_API_KEY || req.headers['x-gemini-api-key'];
     if (!apiKey) {
-      return res.status(503).json({ error: 'GEMINI_API_KEY chưa được cấu hình' });
+      console.error('[Steelman API Error]: GEMINI_API_KEY chưa được cấu hình trên server');
+      return res.status(503).json({ error: 'GEMINI_API_KEY chưa được cấu hình. Bấm Thử lại' });
     }
 
     const opposingSideLabel = studentSide === 'pro' 
@@ -238,7 +240,7 @@ BÀI TẬP BẮT BUỘC TRƯỚC TRẬN: "DỰNG NGƯỜI THÉP" (STEELMAN ARGUM
 Thay vì tạo ra "người rơm" dễ dãi để công kích, học sinh phải nhập vai ${opposingSideLabel} và viết ra LUẬN ĐIỂM MẠNH NHẤT, CÔNG BẰNG NHẤT, THUYẾT PHỤC NHẤT của phe đối lập trong 3–5 câu.
 
 BÀI VIẾT CỦA HỌC SINH:
-"""${steelmanText}"""
+"""${steelmanText.trim()}"""
 
 HÃY THẨM ĐỊNH VÀ CHẤM ĐIỂM TRÊN THANG 0 ĐẾN 10:
 - Tiêu chí 1: Tính công bằng và thiện chí (Fairness): Liệu phe đối lập khi nghe xong có gật đầu thừa nhận: "Đúng, đây là cách diễn giải công tâm, tôn trọng những giá trị cốt lõi nhất mà chúng tôi bảo vệ"?
@@ -253,40 +255,90 @@ QUY TẮC ĐIỂM SỐ:
 ĐIỀU KIỆN VÀO TRẬN: isPassed = true NẾU VÀ CHỈ NẾU score >= 6.
 `;
 
-    const ai = new GoogleGenAI({ apiKey: String(apiKey) });
-    const content = await ai.models.generateContent({
-      model: 'gemini-3.8-flash',
-      contents: prompt,
-      config: {
-        responseMimeType: 'application/json',
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            score: { type: Type.INTEGER, description: 'Điểm số từ 0 đến 10' },
-            isPassed: { type: Type.BOOLEAN, description: 'True nếu score >= 6' },
-            fairnessAppraisal: { type: Type.STRING, description: 'Phe đối lập có thấy đây là cách nói công bằng và thiện chí không?' },
-            feedback: { type: Type.STRING, description: '2-3 câu nhận xét đánh giá thiện chí và chiều sâu tư duy' },
-            suggestedImprovement: { type: Type.STRING, description: 'Gợi ý nâng cấp nếu chưa đạt hoặc cần mài giũa thêm' }
-          },
-          required: ['score', 'isPassed', 'fairnessAppraisal', 'feedback']
-        },
-        maxOutputTokens: 1024,
-        temperature: 0.2
+    const ai = new GoogleGenAI({
+      apiKey: String(apiKey),
+      httpOptions: {
+        headers: {
+          'User-Agent': 'aistudio-build'
+        }
       }
     });
 
-    const parsed = JSON.parse(content.text?.trim() || '{}');
-    const score = Math.max(0, Math.min(10, Number(parsed.score) || 0));
+    const callSteelmanWithTimeout = (model: string, timeoutMs: number) => {
+      const call = ai.models.generateContent({
+        model,
+        contents: prompt,
+        config: {
+          responseMimeType: 'application/json',
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              score: { type: Type.INTEGER, description: 'Điểm số từ 0 đến 10' },
+              isPassed: { type: Type.BOOLEAN, description: 'True nếu score >= 6' },
+              fairnessAppraisal: { type: Type.STRING, description: 'Phe đối lập có thấy đây là cách nói công bằng và thiện chí không?' },
+              feedback: { type: Type.STRING, description: '2-3 câu nhận xét đánh giá thiện chí và chiều sâu tư duy' },
+              suggestedImprovement: { type: Type.STRING, description: 'Gợi ý nâng cấp nếu chưa đạt hoặc cần mài giũa thêm' }
+            },
+            required: ['score', 'isPassed', 'fairnessAppraisal', 'feedback']
+          },
+          maxOutputTokens: 1024
+        }
+      });
+
+      const timer = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error(`Timeout on ${model} after ${timeoutMs}ms`)), timeoutMs)
+      );
+
+      return Promise.race([call, timer]);
+    };
+
+    const candidateModels = [
+      { name: 'gemini-3.8-flash', timeout: 5000 },
+      { name: 'gemini-3.5-flash', timeout: 6000 },
+      { name: 'gemini-3.1-flash-lite', timeout: 6000 }
+    ];
+
+    let response: any;
+    let lastError: any;
+    let successfulModel = '';
+
+    for (const { name: model, timeout } of candidateModels) {
+      const modelStart = Date.now();
+      try {
+        response = await callSteelmanWithTimeout(model, timeout);
+        if (response?.text) {
+          successfulModel = model;
+          console.log(`[Steelman API] Thành công với model ${model} trong ${Date.now() - modelStart}ms`);
+          break;
+        }
+      } catch (err: any) {
+        lastError = err;
+        console.warn(`[Steelman API] Model ${model} thất bại sau ${Date.now() - modelStart}ms:`, err?.message || err);
+      }
+    }
+
+    if (!response?.text) {
+      console.error(`[Steelman API Error]: Tất cả candidate models đều thất bại trong ${Date.now() - startTime}ms.`, lastError?.message || lastError);
+      return res.status(503).json({ error: 'Chưa thể thẩm định bài Dựng Người Thép. Bấm Thử lại' });
+    }
+
+    const responseText = response.text?.trim() || '';
+    const cleaned = responseText.replace(/^```json\s*|\s*```$/g, '').trim();
+    const parsed = JSON.parse(cleaned);
+    const score = Math.max(0, Math.min(10, Math.round(Number(parsed.score) || 0)));
+
+    console.log(`[Steelman API Result] Model: ${successfulModel}, Score: ${score}/10, Passed: ${score >= 6}, Total: ${Date.now() - startTime}ms`);
+
     return res.json({
       score,
       isPassed: score >= 6,
       fairnessAppraisal: parsed.fairnessAppraisal || 'Phe đối lập thấy bạn đã có thiện chí diễn giải góc nhìn của họ.',
-      feedback: parsed.feedback || 'Nhận xét từ Thầy Giám Khảo.',
+      feedback: parsed.feedback || 'Nhận xét từ Ban Giám khảo.',
       suggestedImprovement: parsed.suggestedImprovement || undefined
     });
   } catch (err: any) {
-    console.error('Steelman API Error:', err);
-    return res.status(500).json({ error: 'Lỗi thẩm định bài Dựng Người Thép' });
+    console.error(`[Steelman API Final Catch Error] sau ${Date.now() - startTime}ms:`, err?.message || err);
+    return res.status(503).json({ error: 'Chưa thể thẩm định bài Dựng Người Thép. Bấm Thử lại' });
   }
 });
 

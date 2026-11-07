@@ -185,17 +185,23 @@ export class AiDebateService {
   public static async evaluateSteelman(
     topic: DebateTopic,
     studentSide: DebateSide,
-    steelmanText: string
+    steelmanText: string,
+    apiKey?: string
   ): Promise<SteelmanEvaluation> {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 20000);
 
     try {
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json'
+      };
+      if (apiKey) {
+        headers['x-gemini-api-key'] = apiKey;
+      }
+
       const response = await fetch('/api/evaluate-steelman', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers,
         body: JSON.stringify({
           topic,
           studentSide,
@@ -205,13 +211,25 @@ export class AiDebateService {
       });
 
       if (!response.ok) {
-        throw new Error('Chưa thể thẩm định bài Dựng Người Thép. Bấm Thử lại');
+        let errorMsg = 'Chưa thể thẩm định bài Dựng Người Thép. Bấm Thử lại';
+        try {
+          const errData = await response.json();
+          if (errData?.error) {
+            errorMsg = errData.error;
+          }
+        } catch {
+          // ignore parsing error for non-json responses
+        }
+        throw new Error(errorMsg);
       }
 
       const result = await response.json();
       return result as SteelmanEvaluation;
-    } catch {
-      throw new Error('Chưa thể thẩm định bài Dựng Người Thép. Bấm Thử lại');
+    } catch (err: any) {
+      if (err?.name === 'AbortError') {
+        throw new Error('Hết thời gian chờ phản hồi từ giám khảo (timeout 20s). Bấm Thử lại');
+      }
+      throw new Error(err?.message || 'Chưa thể thẩm định bài Dựng Người Thép. Bấm Thử lại');
     } finally {
       clearTimeout(timeoutId);
     }
