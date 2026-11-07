@@ -12,7 +12,7 @@
  * - Nút chính #FACC15 chữ #1E2433, badge vàng #FEF3C7 chữ #92400E.
  */
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { 
   DIAGNOSTIC_SET_A, 
   DIAGNOSTIC_SET_B, 
@@ -62,17 +62,91 @@ export const DiagnosticTestModal: React.FC<DiagnosticTestModalProps> = ({
   const [showReview, setShowReview] = useState<boolean>(false);
   const [testResult, setTestResult] = useState<DiagnosticTestResult | null>(null);
 
+  // TC-17 FIX: Sử dụng Refs để tránh lỗi stale closure khi bộ đếm thời gian hết giờ
+  const selectedAnswersRef = useRef<Record<string, number>>({});
+  const secondsRemainingRef = useRef<number>(15 * 60);
+
+  useEffect(() => {
+    selectedAnswersRef.current = selectedAnswers;
+  }, [selectedAnswers]);
+
+  useEffect(() => {
+    secondsRemainingRef.current = secondsRemaining;
+  }, [secondsRemaining]);
+
   // Khởi động lại khi mở modal
   useEffect(() => {
     if (isOpen) {
       setCurrentIndex(0);
       setSelectedAnswers({});
+      selectedAnswersRef.current = {};
       setSecondsRemaining(15 * 60);
+      secondsRemainingRef.current = 15 * 60;
       setIsSubmitted(false);
       setShowReview(false);
       setTestResult(null);
     }
   }, [isOpen, testSet]);
+
+  // Nộp bài và tính điểm
+  const handleSubmitTest = useCallback(() => {
+    soundFX.playSuccess();
+
+    // TC-17: Đọc đáp án mới nhất từ ref để luôn tính đúng toàn bộ câu đã chọn kể cả khi hết giờ
+    const currentAnswers = selectedAnswersRef.current;
+    const currentSecondsRemaining = secondsRemainingRef.current;
+
+    // 1. Tính số câu đúng và điểm từng nhóm năng lực
+    let correct = 0;
+    const groupCorrectCounts: Record<DiagnosticSkillGroupKey, number> = {
+      implicit_assumptions: 0,
+      logical_validity: 0,
+      evidence_strength: 0,
+      fallacy_recognition: 0,
+      fact_vs_opinion: 0
+    };
+
+    questions.forEach(q => {
+      const selected = currentAnswers[q.id];
+      if (selected === q.correctIndex) {
+        correct += 1;
+        groupCorrectCounts[q.groupKey] += 1;
+      }
+    });
+
+    // Mỗi nhóm có 4 câu (100% = 4 câu đúng -> mỗi câu 25đ trong nhóm)
+    const groupScores: Record<DiagnosticSkillGroupKey, number> = {
+      implicit_assumptions: Math.round((groupCorrectCounts.implicit_assumptions / 4) * 100),
+      logical_validity: Math.round((groupCorrectCounts.logical_validity / 4) * 100),
+      evidence_strength: Math.round((groupCorrectCounts.evidence_strength / 4) * 100),
+      fallacy_recognition: Math.round((groupCorrectCounts.fallacy_recognition / 4) * 100),
+      fact_vs_opinion: Math.round((groupCorrectCounts.fact_vs_opinion / 4) * 100)
+    };
+
+    const totalScore = Math.round((correct / questions.length) * 100);
+    const timeSpent = Math.max(0, 15 * 60 - currentSecondsRemaining);
+
+    const result: DiagnosticTestResult = {
+      testSet,
+      completedAt: new Date().toISOString(),
+      timeSpentSeconds: timeSpent,
+      totalQuestions: questions.length,
+      correctCount: correct,
+      totalScore,
+      groupScores,
+      answers: currentAnswers
+    };
+
+    setTestResult(result);
+    setIsSubmitted(true);
+    onSaveResult(testSet, result);
+  }, [questions, testSet, onSaveResult]);
+
+  // Ref giữ hàm submit mới nhất cho setInterval
+  const handleSubmitTestRef = useRef(handleSubmitTest);
+  useEffect(() => {
+    handleSubmitTestRef.current = handleSubmitTest;
+  }, [handleSubmitTest]);
 
   // Bộ đếm thời gian 15 phút
   useEffect(() => {
@@ -82,7 +156,8 @@ export const DiagnosticTestModal: React.FC<DiagnosticTestModalProps> = ({
       setSecondsRemaining(prev => {
         if (prev <= 1) {
           clearInterval(timer);
-          handleSubmitTest();
+          // TC-17: Gọi submit qua ref để đảm bảo luôn nộp với dữ liệu mới nhất
+          handleSubmitTestRef.current();
           return 0;
         }
         return prev - 1;
@@ -109,56 +184,6 @@ export const DiagnosticTestModal: React.FC<DiagnosticTestModalProps> = ({
       [currentQ.id]: optionIndex
     }));
   };
-
-  // Nộp bài và tính điểm
-  const handleSubmitTest = useCallback(() => {
-    soundFX.playSuccess();
-
-    // 1. Tính số câu đúng và điểm từng nhóm năng lực
-    let correct = 0;
-    const groupCorrectCounts: Record<DiagnosticSkillGroupKey, number> = {
-      implicit_assumptions: 0,
-      logical_validity: 0,
-      evidence_strength: 0,
-      fallacy_recognition: 0,
-      fact_vs_opinion: 0
-    };
-
-    questions.forEach(q => {
-      const selected = selectedAnswers[q.id];
-      if (selected === q.correctIndex) {
-        correct += 1;
-        groupCorrectCounts[q.groupKey] += 1;
-      }
-    });
-
-    // Mỗi nhóm có 4 câu (100% = 4 câu đúng -> mỗi câu 25đ trong nhóm)
-    const groupScores: Record<DiagnosticSkillGroupKey, number> = {
-      implicit_assumptions: Math.round((groupCorrectCounts.implicit_assumptions / 4) * 100),
-      logical_validity: Math.round((groupCorrectCounts.logical_validity / 4) * 100),
-      evidence_strength: Math.round((groupCorrectCounts.evidence_strength / 4) * 100),
-      fallacy_recognition: Math.round((groupCorrectCounts.fallacy_recognition / 4) * 100),
-      fact_vs_opinion: Math.round((groupCorrectCounts.fact_vs_opinion / 4) * 100)
-    };
-
-    const totalScore = Math.round((correct / questions.length) * 100);
-    const timeSpent = 15 * 60 - secondsRemaining;
-
-    const result: DiagnosticTestResult = {
-      testSet,
-      completedAt: new Date().toISOString(),
-      timeSpentSeconds: timeSpent,
-      totalQuestions: questions.length,
-      correctCount: correct,
-      totalScore,
-      groupScores,
-      answers: selectedAnswers
-    };
-
-    setTestResult(result);
-    setIsSubmitted(true);
-    onSaveResult(testSet, result);
-  }, [questions, selectedAnswers, secondsRemaining, testSet, onSaveResult]);
 
   if (!isOpen) return null;
 

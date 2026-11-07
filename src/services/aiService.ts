@@ -224,6 +224,9 @@ export class AiDebateService {
       }
 
       const result = await response.json();
+      if (!result || typeof result.score !== 'number' || typeof result.isPassed !== 'boolean') {
+        throw new Error('Dữ liệu thẩm định không đúng cấu trúc. Bấm Thử lại');
+      }
       return result as SteelmanEvaluation;
     } catch (err: any) {
       if (err?.name === 'AbortError') {

@@ -324,17 +324,46 @@ QUY TẮC ĐIỂM SỐ:
 
     const responseText = response.text?.trim() || '';
     const cleaned = responseText.replace(/^```json\s*|\s*```$/g, '').trim();
-    const parsed = JSON.parse(cleaned);
-    const score = Math.max(0, Math.min(10, Math.round(Number(parsed.score) || 0)));
 
-    console.log(`[Steelman API Result] Model: ${successfulModel}, Score: ${score}/10, Passed: ${score >= 6}, Total: ${Date.now() - startTime}ms`);
+    let parsed: any;
+    try {
+      parsed = JSON.parse(cleaned);
+    } catch (parseErr) {
+      console.error(`[Steelman API Parse Error]: Không thể phân tích cú pháp JSON (${successfulModel}):`, responseText);
+      return res.status(502).json({ error: 'Phản hồi từ AI không đúng định dạng. Bấm Thử lại' });
+    }
+
+    if (!parsed || typeof parsed !== 'object' || typeof parsed.score === 'undefined') {
+      console.error(`[Steelman API Schema Error]: Phản hồi AI thiếu trường bắt buộc:`, parsed);
+      return res.status(502).json({ error: 'Dữ liệu thẩm định từ AI không hợp lệ. Bấm Thử lại' });
+    }
+
+    const rawScore = Number(parsed.score);
+    if (isNaN(rawScore)) {
+      console.error(`[Steelman API Score Error]: Điểm số không phải là số hợp lệ:`, parsed.score);
+      return res.status(502).json({ error: 'Điểm số thẩm định không hợp lệ. Bấm Thử lại' });
+    }
+
+    const score = Math.max(0, Math.min(10, Math.round(rawScore)));
+    const isPassed = score >= 6;
+    const fairnessAppraisal = typeof parsed.fairnessAppraisal === 'string' && parsed.fairnessAppraisal.trim()
+      ? parsed.fairnessAppraisal.trim()
+      : 'Phe đối lập thấy bạn đã có thiện chí diễn giải góc nhìn của họ.';
+    const feedback = typeof parsed.feedback === 'string' && parsed.feedback.trim()
+      ? parsed.feedback.trim()
+      : 'Nhận xét từ Ban Giám khảo.';
+    const suggestedImprovement = typeof parsed.suggestedImprovement === 'string' && parsed.suggestedImprovement.trim()
+      ? parsed.suggestedImprovement.trim()
+      : undefined;
+
+    console.log(`[Steelman API Result] Model: ${successfulModel}, Score: ${score}/10, Passed: ${isPassed}, Total: ${Date.now() - startTime}ms`);
 
     return res.json({
       score,
-      isPassed: score >= 6,
-      fairnessAppraisal: parsed.fairnessAppraisal || 'Phe đối lập thấy bạn đã có thiện chí diễn giải góc nhìn của họ.',
-      feedback: parsed.feedback || 'Nhận xét từ Ban Giám khảo.',
-      suggestedImprovement: parsed.suggestedImprovement || undefined
+      isPassed,
+      fairnessAppraisal,
+      feedback,
+      suggestedImprovement
     });
   } catch (err: any) {
     console.error(`[Steelman API Final Catch Error] sau ${Date.now() - startTime}ms:`, err?.message || err);

@@ -2024,7 +2024,7 @@ export const DebateArenaView: React.FC<DebateArenaViewProps> = ({
                           : 'Chưa đạt (Cần ≥ 6 điểm)'}
                       </span>
                     </div>
-                    {steelmanResult.isPassed && (
+                    {steelmanResult.isPassed && steelmanResult.score >= 6 && (
                       <span className="text-[11px] text-[#15803D] font-bold">
                         +30 XP · Huy hiệu "Đổi ý có căn cứ"
                       </span>
@@ -2046,7 +2046,7 @@ export const DebateArenaView: React.FC<DebateArenaViewProps> = ({
                   </div>
 
                   {/* Nút vào trận khi đã đạt */}
-                  {steelmanResult.isPassed && (
+                  {steelmanResult.isPassed && steelmanResult.score >= 6 && (
                     <div className="pt-1">
                       <button
                         type="button"
