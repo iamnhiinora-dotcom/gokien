@@ -227,7 +227,7 @@ interface GamificationContextType {
   closeHandbook: () => void;
   loginWithGooglePopup: () => Promise<void>;
   logout: () => Promise<void>;
-  addXP: (amount: number, reason: string) => Promise<void> | void;
+  addXP: (amount: number, reason: string) => Promise<boolean>;
   recordFallacyResult: (
     isCorrect: boolean, 
     score: number,
@@ -783,7 +783,7 @@ export const GamificationProvider: React.FC<{ children: ReactNode }> = ({ childr
   // Thêm XP bằng Firestore Transaction, CHỈ hiển thị thông báo nhận thưởng SAU KHI lưu Firestore thành công
   const addXP = useCallback(async (amount: number, reason: string) => {
     const safeAmount = Math.max(0, amount);
-    if (safeAmount === 0) return;
+    if (safeAmount === 0) return false;
 
     if (currentUser) {
       try {
@@ -813,9 +813,11 @@ export const GamificationProvider: React.FC<{ children: ReactNode }> = ({ childr
           return updated;
         });
         refreshLeaderboard();
+        return true;
       } catch (err) {
         console.error('Lỗi transaction awardXP:', err);
         // Lưu thất bại: Không hiển thị floating XP sai lệch!
+        return false;
       }
     } else {
       // Chế độ Guest: tính toán qua getProgressFromXP
@@ -843,6 +845,7 @@ export const GamificationProvider: React.FC<{ children: ReactNode }> = ({ childr
         setTimeout(() => checkBadgeUnlocks(updated), 200);
         return updated;
       });
+      return true;
     }
   }, [currentUser, profile.level, profile.currentXP, checkBadgeUnlocks, refreshLeaderboard]);
 
