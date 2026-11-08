@@ -142,7 +142,7 @@ export class AiDebateService {
     };
   }> {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 25000);
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
 
     try {
       const response = await fetch('/api/debate', {
@@ -161,7 +161,14 @@ export class AiDebateService {
       });
 
       if (!response.ok) {
-        throw new Error('Đối thủ mất kết nối. Bấm Thử lại');
+        let message = 'Giám khảo AI chưa phản hồi. Bấm Thử lại';
+        try {
+          const data = await response.json();
+          if (typeof data?.error === 'string') message = data.error;
+        } catch {
+          // Keep generic message for non-JSON errors.
+        }
+        throw new Error(message);
       }
 
       const cloudData = await response.json();
@@ -170,8 +177,11 @@ export class AiDebateService {
       }
 
       return cloudData;
-    } catch {
-      throw new Error('Đối thủ mất kết nối. Bấm Thử lại');
+    } catch (err: any) {
+      if (err?.name === 'AbortError') {
+        throw new Error('Giám khảo AI phản hồi quá chậm (30 giây). Bấm Thử lại');
+      }
+      throw new Error(err?.message || 'Giám khảo AI chưa phản hồi. Bấm Thử lại');
     } finally {
       clearTimeout(timeoutId);
     }

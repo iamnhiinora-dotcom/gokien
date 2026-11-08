@@ -128,52 +128,107 @@ YÊU CẦU BẮT BUỘC TUÂN THỦ:
       required: ['aiDebaterReply', 'studentHpDeduction', 'aiHpDeduction', 'mentorEvaluation']
     };
 
-    const callDebateWithTimeout = (model: string, timeoutMs: number) => {
-      const call = ai.models.generateContent({
-        model,
-        contents: prompt,
-        config: {
-          responseMimeType: 'application/json',
-          responseSchema: debateSchema,
-          maxOutputTokens: 2048,
-          temperature: 0.3
-        }
-      });
-      const timer = new Promise<never>((_, reject) => 
-        setTimeout(() => reject(new Error(`Timeout ${timeoutMs}ms on ${model}`)), timeoutMs)
-      );
-      return Promise.race([call, timer]);
-    };
+    // One overall budget for the complete debate request.
+    // Keep this shorter than the browser timeout.
+    const deadline = Date.now() + 22000;
 
     const candidateModels = [
-      { name: 'gemini-3.8-flash', timeout: 6000 },
-      { name: 'gemini-3.5-flash', timeout: 12000 },
-      { name: 'gemini-3.1-flash-lite', timeout: 10000 }
+      { name: 'gemini-3.8-flash', timeout: 5000 },
+      { name: 'gemini-3.5-flash', timeout: 8000 },
+      { name: 'gemini-3.1-flash-lite', timeout: 8000 }
     ];
 
-    let response: any;
-    let lastError: any;
+    let result: any = null;
+    let sawQuotaError = false;
+    let lastError: any = null;
+
     for (const { name: model, timeout } of candidateModels) {
+      const remaining = deadline - Date.now();
+      if (remaining <= 500) break;
+
+      const controller = new AbortController();
+      let timer: ReturnType<typeof setTimeout> | undefined;
+
       try {
-        response = await callDebateWithTimeout(model, timeout);
-        if (response?.text) {
-          console.log(`[Debate API] Thành công với model ${model}`);
-          break;
+        const timeoutMs = Math.min(timeout, remaining);
+
+        const timeoutPromise = new Promise<never>((_, reject) => {
+          timer = setTimeout(() => {
+            controller.abort();
+            reject(new Error(`Timeout ${model}`));
+          }, timeoutMs);
+        });
+
+        const response: any = await Promise.race([
+          ai.models.generateContent({
+            model,
+            contents: prompt,
+            config: {
+              abortSignal: controller.signal,
+              responseMimeType: 'application/json',
+              responseSchema: debateSchema,
+              maxOutputTokens: 2048,
+              temperature: 0.3
+            }
+          }),
+          timeoutPromise
+        ]);
+
+        const raw = response?.text?.trim();
+        if (!raw) throw new Error(`Empty response from ${model}`);
+
+        const cleaned = raw
+          .replace(/^```(?:json)?\\s*|\\s*```$/g, '')
+          .trim();
+
+        const parsed = JSON.parse(cleaned);
+
+        if (
+          !parsed ||
+          typeof parsed.aiDebaterReply !== 'string' ||
+          !parsed.aiDebaterReply.trim() ||
+          !Number.isFinite(parsed.studentHpDeduction) ||
+          !Number.isFinite(parsed.aiHpDeduction) ||
+          !parsed.mentorEvaluation ||
+          typeof parsed.mentorEvaluation.text !== 'string' ||
+          !Number.isFinite(parsed.mentorEvaluation.logicScore) ||
+          !Number.isFinite(parsed.mentorEvaluation.persuasionScore)
+        ) {
+          throw new Error(`Invalid debate response from ${model}`);
         }
+
+        result = parsed;
+        console.log(`[Debate API] Success: ${model}`);
+        break;
+
       } catch (err: any) {
         lastError = err;
-        console.error(`[Debate API Error on model ${model}]:`, err?.message || err);
+        const message = String(err?.message || err);
+
+        if (/429|RESOURCE_EXHAUSTED|quota|rate.limit/i.test(message)) {
+          sawQuotaError = true;
+        }
+
+        console.warn(`[Debate API] ${model}: ${message}`);
+
+      } finally {
+        if (timer) clearTimeout(timer);
+        controller.abort();
       }
     }
 
-    if (!response?.text) {
-      console.error('[Debate API Final Error]: Tất cả candidate models đều thất bại.', lastError);
-      return res.status(503).json({ error: 'Đối thủ mất kết nối. Bấm Thử lại' });
-    }
+    if (!result) {
+      console.error(
+        '[Debate API] All attempts failed:',
+        lastError?.message || lastError
+      );
 
-    const responseText = response.text?.trim() || '';
-    const cleaned = responseText.replace(/^```json\s*|\s*```$/g, '').trim();
-    const result = JSON.parse(cleaned);
+      return res.status(sawQuotaError ? 429 : 503).json({
+        error: sawQuotaError
+          ? 'Gemini đang bị giới hạn quota. Bài viết đã được giữ lại, vui lòng thử sau.'
+          : 'Giám khảo AI chưa phản hồi. Bài viết đã được giữ lại, bấm Thử lại.'
+      });
+    }
 
     // Đảm bảo câu trả lời của đối thủ trích lại ý học sinh
     let aiDebaterReply = String(result.aiDebaterReply || '').trim();
