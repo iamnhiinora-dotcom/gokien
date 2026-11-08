@@ -142,7 +142,7 @@ export class AiDebateService {
     };
   }> {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000);
+    const timeoutId = setTimeout(() => controller.abort(), 25000);
 
     try {
       const response = await fetch('/api/debate', {
@@ -161,14 +161,7 @@ export class AiDebateService {
       });
 
       if (!response.ok) {
-        let message = 'Giám khảo AI chưa phản hồi. Bấm Thử lại';
-        try {
-          const data = await response.json();
-          if (typeof data?.error === 'string') message = data.error;
-        } catch {
-          // Keep generic message for non-JSON errors.
-        }
-        throw new Error(message);
+        throw new Error('Đối thủ mất kết nối. Bấm Thử lại');
       }
 
       const cloudData = await response.json();
@@ -177,11 +170,8 @@ export class AiDebateService {
       }
 
       return cloudData;
-    } catch (err: any) {
-      if (err?.name === 'AbortError') {
-        throw new Error('Giám khảo AI phản hồi quá chậm (30 giây). Bấm Thử lại');
-      }
-      throw new Error(err?.message || 'Giám khảo AI chưa phản hồi. Bấm Thử lại');
+    } catch {
+      throw new Error('Đối thủ mất kết nối. Bấm Thử lại');
     } finally {
       clearTimeout(timeoutId);
     }
@@ -199,7 +189,7 @@ export class AiDebateService {
     apiKey?: string
   ): Promise<SteelmanEvaluation> {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 20000);
+    const timeoutId = setTimeout(() => controller.abort(), 33000);
 
     try {
       const headers: Record<string, string> = {
@@ -240,7 +230,7 @@ export class AiDebateService {
       return result as SteelmanEvaluation;
     } catch (err: any) {
       if (err?.name === 'AbortError') {
-        throw new Error('Hết thời gian chờ phản hồi từ giám khảo (timeout 20s). Bấm Thử lại');
+        throw new Error('Hết thời gian chờ phản hồi từ giám khảo (timeout 33s). Bấm Thử lại');
       }
       throw new Error(err?.message || 'Chưa thể thẩm định bài Dựng Người Thép. Bấm Thử lại');
     } finally {

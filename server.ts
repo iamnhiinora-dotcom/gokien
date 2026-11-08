@@ -128,107 +128,52 @@ YÊU CẦU BẮT BUỘC TUÂN THỦ:
       required: ['aiDebaterReply', 'studentHpDeduction', 'aiHpDeduction', 'mentorEvaluation']
     };
 
-    // One overall budget for the complete debate request.
-    // Keep this shorter than the browser timeout.
-    const deadline = Date.now() + 22000;
+    const callDebateWithTimeout = (model: string, timeoutMs: number) => {
+      const call = ai.models.generateContent({
+        model,
+        contents: prompt,
+        config: {
+          responseMimeType: 'application/json',
+          responseSchema: debateSchema,
+          maxOutputTokens: 2048,
+          temperature: 0.3
+        }
+      });
+      const timer = new Promise<never>((_, reject) => 
+        setTimeout(() => reject(new Error(`Timeout ${timeoutMs}ms on ${model}`)), timeoutMs)
+      );
+      return Promise.race([call, timer]);
+    };
 
     const candidateModels = [
-      { name: 'gemini-3.8-flash', timeout: 5000 },
-      { name: 'gemini-3.5-flash', timeout: 8000 },
-      { name: 'gemini-3.1-flash-lite', timeout: 8000 }
+      { name: 'gemini-3.8-flash', timeout: 6000 },
+      { name: 'gemini-3.5-flash', timeout: 12000 },
+      { name: 'gemini-3.1-flash-lite', timeout: 10000 }
     ];
 
-    let result: any = null;
-    let sawQuotaError = false;
-    let lastError: any = null;
-
+    let response: any;
+    let lastError: any;
     for (const { name: model, timeout } of candidateModels) {
-      const remaining = deadline - Date.now();
-      if (remaining <= 500) break;
-
-      const controller = new AbortController();
-      let timer: ReturnType<typeof setTimeout> | undefined;
-
       try {
-        const timeoutMs = Math.min(timeout, remaining);
-
-        const timeoutPromise = new Promise<never>((_, reject) => {
-          timer = setTimeout(() => {
-            controller.abort();
-            reject(new Error(`Timeout ${model}`));
-          }, timeoutMs);
-        });
-
-        const response: any = await Promise.race([
-          ai.models.generateContent({
-            model,
-            contents: prompt,
-            config: {
-              abortSignal: controller.signal,
-              responseMimeType: 'application/json',
-              responseSchema: debateSchema,
-              maxOutputTokens: 2048,
-              temperature: 0.3
-            }
-          }),
-          timeoutPromise
-        ]);
-
-        const raw = response?.text?.trim();
-        if (!raw) throw new Error(`Empty response from ${model}`);
-
-        const cleaned = raw
-          .replace(/^```(?:json)?\\s*|\\s*```$/g, '')
-          .trim();
-
-        const parsed = JSON.parse(cleaned);
-
-        if (
-          !parsed ||
-          typeof parsed.aiDebaterReply !== 'string' ||
-          !parsed.aiDebaterReply.trim() ||
-          !Number.isFinite(parsed.studentHpDeduction) ||
-          !Number.isFinite(parsed.aiHpDeduction) ||
-          !parsed.mentorEvaluation ||
-          typeof parsed.mentorEvaluation.text !== 'string' ||
-          !Number.isFinite(parsed.mentorEvaluation.logicScore) ||
-          !Number.isFinite(parsed.mentorEvaluation.persuasionScore)
-        ) {
-          throw new Error(`Invalid debate response from ${model}`);
+        response = await callDebateWithTimeout(model, timeout);
+        if (response?.text) {
+          console.log(`[Debate API] Thành công với model ${model}`);
+          break;
         }
-
-        result = parsed;
-        console.log(`[Debate API] Success: ${model}`);
-        break;
-
       } catch (err: any) {
         lastError = err;
-        const message = String(err?.message || err);
-
-        if (/429|RESOURCE_EXHAUSTED|quota|rate.limit/i.test(message)) {
-          sawQuotaError = true;
-        }
-
-        console.warn(`[Debate API] ${model}: ${message}`);
-
-      } finally {
-        if (timer) clearTimeout(timer);
-        controller.abort();
+        console.error(`[Debate API Error on model ${model}]:`, err?.message || err);
       }
     }
 
-    if (!result) {
-      console.error(
-        '[Debate API] All attempts failed:',
-        lastError?.message || lastError
-      );
-
-      return res.status(sawQuotaError ? 429 : 503).json({
-        error: sawQuotaError
-          ? 'Gemini đang bị giới hạn quota. Bài viết đã được giữ lại, vui lòng thử sau.'
-          : 'Giám khảo AI chưa phản hồi. Bài viết đã được giữ lại, bấm Thử lại.'
-      });
+    if (!response?.text) {
+      console.error('[Debate API Final Error]: Tất cả candidate models đều thất bại.', lastError);
+      return res.status(503).json({ error: 'Đối thủ mất kết nối. Bấm Thử lại' });
     }
+
+    const responseText = response.text?.trim() || '';
+    const cleaned = responseText.replace(/^```json\s*|\s*```$/g, '').trim();
+    const result = JSON.parse(cleaned);
 
     // Đảm bảo câu trả lời của đối thủ trích lại ý học sinh
     let aiDebaterReply = String(result.aiDebaterReply || '').trim();
@@ -319,106 +264,106 @@ QUY TẮC ĐIỂM SỐ:
       }
     });
 
-    const callSteelmanWithTimeout = (model: string, timeoutMs: number) => {
-      const call = ai.models.generateContent({
-        model,
-        contents: prompt,
-        config: {
-          responseMimeType: 'application/json',
-          responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-              score: { type: Type.INTEGER, description: 'Điểm số từ 0 đến 10' },
-              isPassed: { type: Type.BOOLEAN, description: 'True nếu score >= 6' },
-              fairnessAppraisal: { type: Type.STRING, description: 'Phe đối lập có thấy đây là cách nói công bằng và thiện chí không?' },
-              feedback: { type: Type.STRING, description: '2-3 câu nhận xét đánh giá thiện chí và chiều sâu tư duy' },
-              suggestedImprovement: { type: Type.STRING, description: 'Gợi ý nâng cấp nếu chưa đạt hoặc cần mài giũa thêm' }
-            },
-            required: ['score', 'isPassed', 'fairnessAppraisal', 'feedback']
-          },
-          maxOutputTokens: 1024
-        }
-      });
-
-      const timer = new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error(`Timeout on ${model} after ${timeoutMs}ms`)), timeoutMs)
-      );
-
-      return Promise.race([call, timer]);
-    };
-
     const candidateModels = [
-      { name: 'gemini-3.8-flash', timeout: 5000 },
-      { name: 'gemini-3.5-flash', timeout: 6000 },
-      { name: 'gemini-3.1-flash-lite', timeout: 6000 }
+      { name: 'gemini-3.8-flash', timeout: 8500 },
+      { name: 'gemini-3.5-flash-lite', timeout: 8500 },
+      { name: 'gemini-3.1-flash-lite', timeout: 8500 }
     ];
 
-    let response: any;
-    let lastError: any;
-    let successfulModel = '';
+    const schema = {
+      type: Type.OBJECT,
+      properties: {
+        score: { type: Type.INTEGER },
+        isPassed: { type: Type.BOOLEAN },
+        fairnessAppraisal: { type: Type.STRING },
+        feedback: { type: Type.STRING },
+        suggestedImprovement: { type: Type.STRING }
+      },
+      required: ['score', 'isPassed', 'fairnessAppraisal', 'feedback']
+    };
+
+    let lastError: any = null;
+    let sawRateLimit = false;
 
     for (const { name: model, timeout } of candidateModels) {
-      const modelStart = Date.now();
+      const controller = new AbortController();
+      let timer: ReturnType<typeof setTimeout> | undefined;
+
       try {
-        response = await callSteelmanWithTimeout(model, timeout);
-        if (response?.text) {
-          successfulModel = model;
-          console.log(`[Steelman API] Thành công với model ${model} trong ${Date.now() - modelStart}ms`);
-          break;
+        const timeoutPromise = new Promise<never>((_, reject) => {
+          timer = setTimeout(() => {
+            controller.abort();
+            reject(new Error(`Timeout ${model}`));
+          }, timeout);
+        });
+
+        const response: any = await Promise.race([
+          ai.models.generateContent({
+            model,
+            contents: prompt,
+            config: {
+              abortSignal: controller.signal,
+              responseMimeType: 'application/json',
+              responseSchema: schema,
+              maxOutputTokens: 1024
+            }
+          }),
+          timeoutPromise
+        ]);
+
+        const raw = response?.text?.trim();
+        if (!raw) throw new Error(`Empty response ${model}`);
+
+        const cleaned = raw.replace(/^```(?:json)?\\s*|\\s*```$/g, '').trim();
+        const parsed = JSON.parse(cleaned);
+
+        if (!parsed || typeof parsed !== 'object' ||
+            typeof parsed.score !== 'number' ||
+            !Number.isFinite(parsed.score) ||
+            parsed.score < 0 || parsed.score > 10 ||
+            typeof parsed.fairnessAppraisal !== 'string' ||
+            !parsed.fairnessAppraisal.trim() ||
+            typeof parsed.feedback !== 'string' ||
+            !parsed.feedback.trim()) {
+          throw new Error(`Invalid Steelman schema from ${model}`);
         }
+
+        const score = Math.round(parsed.score);
+        console.log(
+          `[Steelman API] ${model}: ${score}/10, ${Date.now() - startTime}ms`
+        );
+
+        return res.json({
+          score,
+          isPassed: score >= 6,
+          fairnessAppraisal: parsed.fairnessAppraisal.trim(),
+          feedback: parsed.feedback.trim(),
+          suggestedImprovement:
+            typeof parsed.suggestedImprovement === 'string'
+              ? parsed.suggestedImprovement.trim()
+              : undefined
+        });
       } catch (err: any) {
         lastError = err;
-        console.warn(`[Steelman API] Model ${model} thất bại sau ${Date.now() - modelStart}ms:`, err?.message || err);
+        const msg = String(err?.message || err);
+        if (/429|RESOURCE_EXHAUSTED|quota|rate.limit/i.test(msg)) {
+          sawRateLimit = true;
+        }
+        console.warn(`[Steelman API] ${model} failed:`, msg);
+      } finally {
+        if (timer) clearTimeout(timer);
+        controller.abort();
       }
     }
 
-    if (!response?.text) {
-      console.error(`[Steelman API Error]: Tất cả candidate models đều thất bại trong ${Date.now() - startTime}ms.`, lastError?.message || lastError);
-      return res.status(503).json({ error: 'Chưa thể thẩm định bài Dựng Người Thép. Bấm Thử lại' });
-    }
-
-    const responseText = response.text?.trim() || '';
-    const cleaned = responseText.replace(/^```json\s*|\s*```$/g, '').trim();
-
-    let parsed: any;
-    try {
-      parsed = JSON.parse(cleaned);
-    } catch (parseErr) {
-      console.error(`[Steelman API Parse Error]: Không thể phân tích cú pháp JSON (${successfulModel}):`, responseText);
-      return res.status(502).json({ error: 'Phản hồi từ AI không đúng định dạng. Bấm Thử lại' });
-    }
-
-    if (!parsed || typeof parsed !== 'object' || typeof parsed.score === 'undefined') {
-      console.error(`[Steelman API Schema Error]: Phản hồi AI thiếu trường bắt buộc:`, parsed);
-      return res.status(502).json({ error: 'Dữ liệu thẩm định từ AI không hợp lệ. Bấm Thử lại' });
-    }
-
-    const rawScore = Number(parsed.score);
-    if (isNaN(rawScore)) {
-      console.error(`[Steelman API Score Error]: Điểm số không phải là số hợp lệ:`, parsed.score);
-      return res.status(502).json({ error: 'Điểm số thẩm định không hợp lệ. Bấm Thử lại' });
-    }
-
-    const score = Math.max(0, Math.min(10, Math.round(rawScore)));
-    const isPassed = score >= 6;
-    const fairnessAppraisal = typeof parsed.fairnessAppraisal === 'string' && parsed.fairnessAppraisal.trim()
-      ? parsed.fairnessAppraisal.trim()
-      : 'Phe đối lập thấy bạn đã có thiện chí diễn giải góc nhìn của họ.';
-    const feedback = typeof parsed.feedback === 'string' && parsed.feedback.trim()
-      ? parsed.feedback.trim()
-      : 'Nhận xét từ Ban Giám khảo.';
-    const suggestedImprovement = typeof parsed.suggestedImprovement === 'string' && parsed.suggestedImprovement.trim()
-      ? parsed.suggestedImprovement.trim()
-      : undefined;
-
-    console.log(`[Steelman API Result] Model: ${successfulModel}, Score: ${score}/10, Passed: ${isPassed}, Total: ${Date.now() - startTime}ms`);
-
-    return res.json({
-      score,
-      isPassed,
-      fairnessAppraisal,
-      feedback,
-      suggestedImprovement
+    console.error(
+      `[Steelman API] All models failed in ${Date.now() - startTime}ms:`,
+      lastError?.message || lastError
+    );
+    return res.status(sawRateLimit ? 429 : 503).json({
+      error: sawRateLimit
+        ? 'Giám khảo AI đang bị giới hạn lượt sử dụng. Vui lòng thử lại sau.'
+        : 'Giám khảo AI chưa phản hồi hợp lệ. Vui lòng thử lại.'
     });
   } catch (err: any) {
     console.error(`[Steelman API Final Catch Error] sau ${Date.now() - startTime}ms:`, err?.message || err);
