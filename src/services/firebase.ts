@@ -426,27 +426,123 @@ export async function recordDebateMatchInFirestore(
   }
 }
 
+export interface SaveReflectionResult {
+  claimedReward: boolean;
+  xpEarned: number;
+  newXP: number;
+  level: number;
+  nextLevelXP: number;
+  title: string;
+}
+
 /**
- * 6b. Cập nhật phản tư sau trận đấu vào tài liệu match trên Firestore
- * Lưu ý: Với Firestore Rules hiện tại (allow update: if false), client sẽ nhận PERMISSION_DENIED.
- * Hàm này bọc try/catch an toàn, không ném exception làm crash ứng dụng, trả về boolean chỉ thị thành công.
+ * 6b. Lưu phản tư sau trận đấu và nhận thưởng 25 XP nguyên tử qua Transaction (BUG-16)
+ * - Đọc matchRef, userRef, lbRef trước
+ * - Kiểm tra match thuộc đúng user
+ * - Kiểm tra reflectionRewardClaimed
+ * - Nếu chưa nhận: tx.update(matchRef), tx.update(userRef, +25 XP), tx.update(lbRef, +25 XP)
+ * - Nếu đã nhận: chỉ tx.update(matchRef, { reflection }), không cộng XP
+ */
+export async function saveReflectionAndRewardInFirestore(
+  userId: string,
+  matchId: string,
+  reflection: PostMatchReflection
+): Promise<SaveReflectionResult> {
+  const matchPath = `users/${userId}/matches/${matchId}`;
+  try {
+    return await runTransaction(db, async (tx) => {
+      const matchRef = doc(db, 'users', userId, 'matches', matchId);
+      const userRef = doc(db, 'users', userId);
+      const lbRef = doc(db, 'leaderboard', userId);
+
+      // 1. ĐỌC DỮ LIỆU TRƯỚC (READS FIRST)
+      const matchSnap = await tx.get(matchRef);
+      if (!matchSnap.exists()) {
+        throw new Error('Không tìm thấy bản ghi trận đấu.');
+      }
+
+      const userSnap = await tx.get(userRef);
+      if (!userSnap.exists()) {
+        throw new Error('Không tìm thấy hồ sơ người dùng.');
+      }
+
+      const matchData = matchSnap.data();
+      const userData = userSnap.data();
+
+      // Xác thực quyền sở hữu
+      if (matchData.userId && matchData.userId !== userId) {
+        throw new Error('Bạn không có quyền cập nhật phản tư cho trận đấu này.');
+      }
+
+      const alreadyClaimed = matchData.reflectionRewardClaimed === true;
+      const currentServerXP = Math.max(Number(userData.xp || 0), Number(userData.currentXP || 0));
+
+      let newXP = currentServerXP;
+      let xpEarned = 0;
+      let claimedReward = false;
+
+      if (!alreadyClaimed) {
+        xpEarned = 25;
+        newXP = currentServerXP + 25;
+        claimedReward = true;
+      }
+
+      const progress = getProgressFromXP(newXP);
+
+      // 2. GHI NGUYÊN TỬ (WRITES)
+      if (claimedReward) {
+        tx.update(matchRef, {
+          reflection,
+          reflectionRewardClaimed: true
+        });
+
+        tx.update(userRef, {
+          xp: newXP,
+          currentXP: newXP,
+          level: progress.level,
+          nextLevelXP: progress.nextLevelXP,
+          title: progress.title
+        });
+
+        tx.update(lbRef, {
+          xp: newXP,
+          level: progress.level,
+          title: progress.title
+        });
+      } else {
+        // Đã nhận thưởng trước đó: chỉ cập nhật nội dung reflection, không đổi XP
+        tx.update(matchRef, {
+          reflection
+        });
+      }
+
+      return {
+        claimedReward,
+        xpEarned,
+        newXP,
+        level: progress.level,
+        nextLevelXP: progress.nextLevelXP,
+        title: progress.title
+      };
+    });
+  } catch (error) {
+    handleFirestoreError(error, OperationType.WRITE, matchPath);
+    throw error;
+  }
+}
+
+/**
+ * Cập nhật phản tư sau trận đấu vào tài liệu match trên Firestore (Wrapper tương thích)
  */
 export async function updateDebateMatchReflectionInFirestore(
   userId: string,
   matchId: string,
   reflection: PostMatchReflection
 ): Promise<boolean> {
-  const matchPath = `users/${userId}/matches/${matchId}`;
   try {
-    const matchRef = doc(db, 'users', userId, 'matches', matchId);
-    await updateDoc(matchRef, {
-      reflection,
-      reflectionRewardClaimed: true
-    });
+    await saveReflectionAndRewardInFirestore(userId, matchId, reflection);
     return true;
-  } catch (error) {
-    // Không crash app nếu rules hiện tại chặn update doc matches
-    console.warn(`[updateDebateMatchReflectionInFirestore] Matches subcollection update bị rules chặn hoặc lỗi mạng: ${matchPath}. React state và điểm XP vẫn bảo toàn.`);
+  } catch {
     return false;
   }
 }

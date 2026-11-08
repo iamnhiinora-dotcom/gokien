@@ -75,6 +75,13 @@ service cloud.firestore {
         && data.fallaciesFound is int && data.fallaciesFound >= 0;
     }
 
+    // Validation for PostMatchReflection (BUG-16)
+    function isValidReflection(data) {
+      return data is map
+        && (!('opponentThoughtProvokingPoint' in data) || (data.opponentThoughtProvokingPoint is string && data.opponentThoughtProvokingPoint.size() <= 1000))
+        && (!('oppositeSideOpeningIdea' in data) || (data.oppositeSideOpeningIdea is string && data.oppositeSideOpeningIdea.size() <= 1000));
+    }
+
     // Validation for DebateMatchRecord
     function isValidDebateMatch(data) {
       return data.id is string && data.id.size() <= 128
@@ -88,7 +95,9 @@ service cloud.firestore {
         && (!('roundsCompleted' in data) || (data.roundsCompleted is int && data.roundsCompleted >= 1 && data.roundsCompleted <= 10))
         && (!('personaName' in data) || (data.personaName is string && data.personaName.size() <= 100))
         && (!('date' in data) || (data.date is string && data.date.size() <= 30))
-        && (!('timestamp' in data) || (data.timestamp is string && data.timestamp.size() <= 20));
+        && (!('timestamp' in data) || (data.timestamp is string && data.timestamp.size() <= 20))
+        && (!('reflection' in data) || isValidReflection(data.reflection))
+        && (!('reflectionRewardClaimed' in data) || data.reflectionRewardClaimed is bool);
     }
 
     // 2. USERS COLLECTION: Lưu trữ hồ sơ học sinh
@@ -262,9 +271,42 @@ service cloud.firestore {
           && incoming().id == matchId
           && incoming().userId == userId;
 
-        // Cho phép xóa trận đấu khi đặt lại tiến trình
-        allow delete: if isOwner(userId) && isValidId(userId) && isValidId(matchId);
-        allow update: if false;
+        // Cập nhật phản tư sau trận đấu (BUG-16): Chỉ cho phép cập nhật reflection và reflectionRewardClaimed
+        allow update: if isOwner(userId)
+          && isValidId(userId)
+          && isValidId(matchId)
+          && incoming().id == existing().id
+          && incoming().userId == existing().userId
+          && incoming().outcome == existing().outcome
+          && incoming().xpEarned == existing().xpEarned
+          && incoming().studentHp == existing().studentHp
+          && incoming().aiHp == existing().aiHp
+          && incoming().topicMotion == existing().topicMotion
+          && incoming().studentSide == existing().studentSide
+          && (!('date' in existing()) || incoming().date == existing().date)
+          && incoming().diff(existing()).affectedKeys().hasOnly(['reflection', 'reflectionRewardClaimed'])
+          && (!('reflection' in incoming()) || isValidReflection(incoming().reflection))
+          && (
+            // Không được chuyển reflectionRewardClaimed từ true về false
+            (!('reflectionRewardClaimed' in existing()) || existing().reflectionRewardClaimed == false || incoming().reflectionRewardClaimed == true)
+          )
+          && (
+            // TH1: Nhận thưởng lần đầu (false/chưa có -> true): Bắt buộc transaction phải kèm theo cộng đúng 25 XP trên user document
+            (
+              (!('reflectionRewardClaimed' in existing()) || existing().reflectionRewardClaimed == false)
+              && ('reflectionRewardClaimed' in incoming() && incoming().reflectionRewardClaimed == true)
+              && getAfter(/databases/$(database)/documents/users/$(userId)).data.xp == get(/databases/$(database)/documents/users/$(userId)).data.xp + 25
+            )
+            ||
+            // TH2: Đã nhận thưởng rồi hoặc không nhận thưởng (chỉ cập nhật nội dung phản tư): XP không được thay đổi
+            (
+              (
+                ('reflectionRewardClaimed' in existing() && existing().reflectionRewardClaimed == true && incoming().reflectionRewardClaimed == true)
+                || (!('reflectionRewardClaimed' in incoming()) || incoming().reflectionRewardClaimed == false)
+              )
+              && getAfter(/databases/$(database)/documents/users/$(userId)).data.xp == get(/databases/$(database)/documents/users/$(userId)).data.xp
+            )
+          );
       }
     }
 

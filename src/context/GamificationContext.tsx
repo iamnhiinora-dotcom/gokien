@@ -29,6 +29,7 @@ import {
   createInitialUserProfile,
   updateUserSettings,
   recordDebateMatchInFirestore,
+  saveReflectionAndRewardInFirestore,
   updateDebateMatchReflectionInFirestore,
   recordFallacyInFirestore,
   syncUserProgressToFirestore,
@@ -1397,8 +1398,7 @@ export const GamificationProvider: React.FC<{ children: ReactNode }> = ({ childr
     }
   }, [currentUser, badges, updateDailyStreak, checkBadgeUnlocks, refreshLeaderboard]);
 
-  // Lưu phản tư sau trận đấu (BUG-16): Cập nhật trường reflection vào bản ghi trận đấu đã có
-  // Chỉ cộng 25 XP đúng 1 lần duy nhất cho mỗi trận đấu (Idempotent & Atomic)
+  // Lưu phản tư sau trận đấu (BUG-16: Nguyên tử hóa qua Transaction, chống trùng XP, chống lưu ảo)
   const saveDebateReflection = useCallback(async (
     matchId: string,
     reflection: PostMatchReflection
@@ -1409,65 +1409,91 @@ export const GamificationProvider: React.FC<{ children: ReactNode }> = ({ childr
     if (reflectionRewardInFlightRef.current[matchId]) {
       return false;
     }
-
-    const claimStorageKey = `gokien_reflection_claimed_${currentUser ? currentUser.uid : 'guest'}_${matchId}`;
-    let isAlreadyClaimedLocally = false;
-    try {
-      isAlreadyClaimedLocally = localStorage.getItem(claimStorageKey) === '1';
-    } catch {}
-    const isAlreadyClaimed = isAlreadyClaimedLocally || claimedReflectionMatchIdsRef.current.has(matchId);
-
-    // Kiểm tra trong debateHistory
-    const targetMatch = debateHistory.find(m => m.id === matchId);
-    if (targetMatch?.reflectionRewardClaimed || isAlreadyClaimed) {
-      // Đã nhận thưởng rồi -> Chỉ cập nhật nội dung phản tư, không cộng XP lần 2
-      setDebateHistory(prev => prev.map(m => 
-        m.id === matchId ? { ...m, reflection, reflectionRewardClaimed: true } : m
-      ));
-      if (currentUser) {
-        updateDebateMatchReflectionInFirestore(currentUser.uid, matchId, reflection).catch(() => {});
-      }
-      return true;
-    }
-
     reflectionRewardInFlightRef.current[matchId] = true;
 
     try {
-      const REFLECTION_XP = 25;
-
-      // Cộng 25 XP qua addXP (Đã có transaction Firestore an toàn và cập nhật leaderboard)
-      const success = await addXP(REFLECTION_XP, 'Hoàn thành phản tư sau trận đấu (+25 XP)');
-      if (!success) {
-        // Lưu thất bại: không đánh dấu thành công
-        return false;
-      }
-
-      // Đánh dấu đã nhận thưởng
-      claimedReflectionMatchIdsRef.current.add(matchId);
-      try {
-        localStorage.setItem(claimStorageKey, '1');
-      } catch {}
-
-      // Cập nhật reflection và cờ reflectionRewardClaimed vào state debateHistory
-      setDebateHistory(prev => prev.map(m => 
-        m.id === matchId ? { ...m, reflection, reflectionRewardClaimed: true } : m
-      ));
-
-      // Thử cập nhật tài liệu match trên Firestore (graceful fallback nếu rules chặn)
       if (currentUser) {
-        updateDebateMatchReflectionInFirestore(currentUser.uid, matchId, reflection).catch(err => {
-          console.warn('[GamificationContext] Ghi chú: Không thể cập nhật trực tiếp subcollection matches trên Firestore do rules hiện tại (allow update: if false). Dữ liệu phản tư và 25 XP đã được bảo toàn an toàn trong user doc và session state:', err);
-        });
-      }
+        // NGƯỜI DÙNG ĐĂNG NHẬP:
+        // Thực hiện Transaction nguyên tử đọc & ghi trên Firestore (server-authoritative)
+        // Không dùng addXP(25) riêng, không dựa vào localStorage để quyết định
+        const result = await saveReflectionAndRewardInFirestore(
+          currentUser.uid,
+          matchId,
+          reflection
+        );
 
-      return true;
+        // Chỉ khi transaction commit thành công mới cập nhật React state:
+        if (result.claimedReward) {
+          // Cập nhật profile state từ XP server mới nhất
+          setProfile(prev => ({
+            ...prev,
+            currentXP: result.newXP,
+            xp: result.newXP,
+            level: result.level,
+            nextLevelXP: result.nextLevelXP,
+            title: result.title
+          }));
+
+          claimedReflectionMatchIdsRef.current.add(matchId);
+
+          // Hiển thị floating XP đúng 1 lần
+          const xpId = 'reflection_xp_' + Date.now();
+          setFloatingXps(prev => [...prev, { id: xpId, amount: 25, reason: 'Hoàn thành phản tư sau trận đấu (+25 XP)' }]);
+          setTimeout(() => {
+            setFloatingXps(prev => prev.filter(item => item.id !== xpId));
+          }, 1500);
+
+          await refreshLeaderboard();
+        }
+
+        // Cập nhật reflection vào debateHistory state
+        setDebateHistory(prev => prev.map(m =>
+          m.id === matchId ? { ...m, reflection, reflectionRewardClaimed: true } : m
+        ));
+
+        return true;
+      } else {
+        // CHẾ ĐỘ KHÁCH (GUEST MODE):
+        const targetMatch = debateHistory.find(m => m.id === matchId);
+        const alreadyClaimed = targetMatch?.reflectionRewardClaimed || claimedReflectionMatchIdsRef.current.has(matchId);
+
+        if (!alreadyClaimed) {
+          claimedReflectionMatchIdsRef.current.add(matchId);
+
+          setProfile(prev => {
+            const newTotalXP = prev.currentXP + 25;
+            const progress = getProgressFromXP(newTotalXP);
+            return {
+              ...prev,
+              currentXP: progress.currentXP,
+              xp: progress.xp,
+              level: progress.level,
+              nextLevelXP: progress.nextLevelXP,
+              title: progress.title
+            };
+          });
+
+          const xpId = 'guest_reflection_xp_' + Date.now();
+          setFloatingXps(prev => [...prev, { id: xpId, amount: 25, reason: 'Hoàn thành phản tư sau trận đấu (+25 XP)' }]);
+          setTimeout(() => {
+            setFloatingXps(prev => prev.filter(item => item.id !== xpId));
+          }, 1500);
+        }
+
+        setDebateHistory(prev => prev.map(m =>
+          m.id === matchId ? { ...m, reflection, reflectionRewardClaimed: true } : m
+        ));
+
+        return true;
+      }
     } catch (err) {
-      console.error('[GamificationContext] Lỗi khi lưu phản tư:', err);
+      console.error('[GamificationContext] Lỗi khi lưu phản tư qua transaction:', err);
+      // Ném lỗi hoặc trả về false để giao diện biết thất bại, không báo thành công ảo, giữ nguyên ô nhập
       return false;
     } finally {
       delete reflectionRewardInFlightRef.current[matchId];
     }
-  }, [currentUser, debateHistory, addXP]);
+  }, [currentUser, debateHistory, refreshLeaderboard]);
 
   const claimQuest = useCallback(async (questId: string) => {
     const quest = quests.find(q => q.id === questId);
