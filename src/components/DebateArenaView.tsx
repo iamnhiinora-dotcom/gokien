@@ -92,13 +92,6 @@ export const DebateArenaView: React.FC<DebateArenaViewProps> = ({
   const [steelmanError, setSteelmanError] = useState<string | null>(null);
   const [steelmanScore, setSteelmanScore] = useState<number | null>(null);
   const hasAwardedSteelmanXp = useRef<boolean>(false);
-  const steelmanRewardInFlightRef = useRef(false);
-  const steelmanRequestSeqRef = useRef(0);
-
-  // A reward belongs to the current debate attempt, not each modal opening.
-  const steelmanRewardKey = () =>
-    `gokien_steelman_reward_pending_${profile.id || 'guest'}`;
-
 
   // ĐIỂM CÔNG TÂM (CONCESSION BONUS) TRONG TRẬN
   const [concessionCount, setConcessionCount] = useState<number>(0);
@@ -234,11 +227,7 @@ export const DebateArenaView: React.FC<DebateArenaViewProps> = ({
     setSteelmanResult(null);
     setSteelmanError(null);
     setSteelmanScore(null);
-    steelmanRequestSeqRef.current++;
-    steelmanRewardInFlightRef.current = false;
-    hasAwardedSteelmanXp.current =
-      localStorage.getItem(steelmanRewardKey()) === '1';
-    setIsEvaluatingSteelman(false);
+    hasAwardedSteelmanXp.current = false;
     setShowSteelmanModal(true);
   };
 
@@ -256,10 +245,7 @@ export const DebateArenaView: React.FC<DebateArenaViewProps> = ({
 
   // Thẩm định bài Dựng Người Thép qua AI (thang điểm 0 - 10)
   const handleEvaluateSteelman = async () => {
-    if (!steelmanText.trim() || isEvaluatingSteelman ||
-        steelmanRewardInFlightRef.current) return;
-    const requestSeq = ++steelmanRequestSeqRef.current;
-    steelmanRewardInFlightRef.current = true;
+    if (!steelmanText.trim() || isEvaluatingSteelman) return;
     setIsEvaluatingSteelman(true);
     setSteelmanError(null);
     soundFX.playClick();
@@ -283,46 +269,24 @@ export const DebateArenaView: React.FC<DebateArenaViewProps> = ({
         steelmanText.trim(),
         profile.geminiApiKey
       );
-      if (requestSeq !== steelmanRequestSeqRef.current) return;
-
       setSteelmanResult(evaluation);
       setSteelmanScore(evaluation.score);
 
       if (evaluation.isPassed) {
         soundFX.playSuccess();
         if (!hasAwardedSteelmanXp.current) {
-          // Reserve the reward before starting an asynchronous Firestore write.
           hasAwardedSteelmanXp.current = true;
-          const awarded = await addXP(
-            30, 'Đạt chuẩn bài tập Dựng Người Thép'
-          );
-
-          if (awarded === true) {
-            localStorage.setItem(steelmanRewardKey(), '1');
-            unlockBadge('badge_open_minded');
-          } else {
-            hasAwardedSteelmanXp.current = false;
-            if (requestSeq === steelmanRequestSeqRef.current) {
-              setSteelmanError(
-                'Bài đã đạt nhưng chưa lưu được 30 XP. Hãy thử lại khi kết nối ổn định.'
-              );
-            }
-          }
+          addXP(30, 'Đạt chuẩn bài tập Dựng Người Thép');
+          unlockBadge('badge_open_minded');
         }
       } else {
         soundFX.playHPDamage();
       }
     } catch (err: any) {
-      if (requestSeq === steelmanRequestSeqRef.current) {
-        setSteelmanError(
-          err?.message || 'Chưa thể thẩm định bài Dựng Người Thép. Bấm Thử lại'
-        );
-      }
+      // Giữ nguyên steelmanText để học sinh bấm thử lại mà không mất công viết lại
+      setSteelmanError(err?.message || 'Chưa thể thẩm định bài Dựng Người Thép. Bấm Thử lại');
     } finally {
-      if (requestSeq === steelmanRequestSeqRef.current) {
-        steelmanRewardInFlightRef.current = false;
-        setIsEvaluatingSteelman(false);
-      }
+      setIsEvaluatingSteelman(false);
     }
   };
 
@@ -493,8 +457,6 @@ export const DebateArenaView: React.FC<DebateArenaViewProps> = ({
 
   const triggerEndMatch = (outcome: 'victory' | 'defeat', remainingHp: number, opponentHp: number) => {
     setMatchResult(outcome);
-    localStorage.removeItem(steelmanRewardKey());
-    hasAwardedSteelmanXp.current = false;
     const won = outcome === 'victory';
     const xp = won ? 180 : 60;
 
@@ -1972,12 +1934,7 @@ export const DebateArenaView: React.FC<DebateArenaViewProps> = ({
 
               <button
                 type="button"
-                onClick={() => {
-                  steelmanRequestSeqRef.current++;
-                  steelmanRewardInFlightRef.current = false;
-                  setIsEvaluatingSteelman(false);
-                  setShowSteelmanModal(false);
-                }}
+                onClick={() => setShowSteelmanModal(false)}
                 className="p-1 rounded text-[#6B7280] hover:text-[#1E2433] cursor-pointer"
               >
                 <X className="w-4 h-4" />
@@ -2069,9 +2026,7 @@ export const DebateArenaView: React.FC<DebateArenaViewProps> = ({
                     </div>
                     {steelmanResult.isPassed && steelmanResult.score >= 6 && (
                       <span className="text-[11px] text-[#15803D] font-bold">
-                        {hasAwardedSteelmanXp.current
-                          ? 'Đã xử lý thưởng Steelman cho lượt này'
-                          : 'Đã đạt yêu cầu Steelman'}
+                        +30 XP · Huy hiệu "Đổi ý có căn cứ"
                       </span>
                     )}
                   </div>

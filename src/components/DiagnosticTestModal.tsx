@@ -65,7 +65,6 @@ export const DiagnosticTestModal: React.FC<DiagnosticTestModalProps> = ({
   // TC-17 FIX: Sử dụng Refs để tránh lỗi stale closure khi bộ đếm thời gian hết giờ
   const selectedAnswersRef = useRef<Record<string, number>>({});
   const secondsRemainingRef = useRef<number>(15 * 60);
-  const submissionLockRef = useRef(false);
 
   useEffect(() => {
     selectedAnswersRef.current = selectedAnswers;
@@ -83,7 +82,6 @@ export const DiagnosticTestModal: React.FC<DiagnosticTestModalProps> = ({
       selectedAnswersRef.current = {};
       setSecondsRemaining(15 * 60);
       secondsRemainingRef.current = 15 * 60;
-      submissionLockRef.current = false;
       setIsSubmitted(false);
       setShowReview(false);
       setTestResult(null);
@@ -92,8 +90,6 @@ export const DiagnosticTestModal: React.FC<DiagnosticTestModalProps> = ({
 
   // Nộp bài và tính điểm
   const handleSubmitTest = useCallback(() => {
-    if (submissionLockRef.current) return;
-    submissionLockRef.current = true;
     soundFX.playSuccess();
 
     // TC-17: Đọc đáp án mới nhất từ ref để luôn tính đúng toàn bộ câu đã chọn kể cả khi hết giờ
@@ -157,14 +153,15 @@ export const DiagnosticTestModal: React.FC<DiagnosticTestModalProps> = ({
     if (!isOpen || isSubmitted) return;
 
     const timer = setInterval(() => {
-      const nextSeconds = Math.max(0, secondsRemainingRef.current - 1);
-      secondsRemainingRef.current = nextSeconds;
-      setSecondsRemaining(nextSeconds);
-
-      if (nextSeconds === 0) {
-        clearInterval(timer);
-        handleSubmitTestRef.current();
-      }
+      setSecondsRemaining(prev => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          // TC-17: Gọi submit qua ref để đảm bảo luôn nộp với dữ liệu mới nhất
+          handleSubmitTestRef.current();
+          return 0;
+        }
+        return prev - 1;
+      });
     }, 1000);
 
     return () => clearInterval(timer);
@@ -182,12 +179,10 @@ export const DiagnosticTestModal: React.FC<DiagnosticTestModalProps> = ({
 
   const handleSelectOption = (optionIndex: number) => {
     soundFX.playClick();
-    const nextAnswers = {
-      ...selectedAnswersRef.current,
+    setSelectedAnswers(prev => ({
+      ...prev,
       [currentQ.id]: optionIndex
-    };
-    selectedAnswersRef.current = nextAnswers;
-    setSelectedAnswers(nextAnswers);
+    }));
   };
 
   if (!isOpen) return null;

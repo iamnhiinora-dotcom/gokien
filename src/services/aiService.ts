@@ -189,7 +189,7 @@ export class AiDebateService {
     apiKey?: string
   ): Promise<SteelmanEvaluation> {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 33000);
+    const timeoutId = setTimeout(() => controller.abort(), 20000);
 
     try {
       const headers: Record<string, string> = {
@@ -230,7 +230,7 @@ export class AiDebateService {
       return result as SteelmanEvaluation;
     } catch (err: any) {
       if (err?.name === 'AbortError') {
-        throw new Error('Hết thời gian chờ phản hồi từ giám khảo (timeout 33s). Bấm Thử lại');
+        throw new Error('Hết thời gian chờ phản hồi từ giám khảo (timeout 20s). Bấm Thử lại');
       }
       throw new Error(err?.message || 'Chưa thể thẩm định bài Dựng Người Thép. Bấm Thử lại');
     } finally {
