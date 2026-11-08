@@ -107,6 +107,7 @@ export const DebateArenaView: React.FC<DebateArenaViewProps> = ({
   // PHẢN TƯ SAU TRẬN ĐẤU (POST-MATCH REFLECTION - BUG-16)
   const [currentMatchId, setCurrentMatchId] = useState<string | null>(null);
   const currentMatchIdRef = useRef<string | null>(null);
+  const hasEndedMatchRef = useRef<boolean>(false);
   const [reflectionOpponentPoint, setReflectionOpponentPoint] = useState<string>('');
   const [reflectionOpeningIdea, setReflectionOpeningIdea] = useState<string>('');
   const [isReflectionSaved, setIsReflectionSaved] = useState<boolean>(false);
@@ -224,6 +225,7 @@ export const DebateArenaView: React.FC<DebateArenaViewProps> = ({
     setCurrentMatchId(null);
     currentMatchIdRef.current = null;
     isSavingReflectionRef.current = false;
+    hasEndedMatchRef.current = false;
 
     const personaInfo = DEBATER_PERSONAS.find(p => p.id === selectedPersona) || DEBATER_PERSONAS[0];
     const welcomeMsg: DebateMessage = {
@@ -512,7 +514,10 @@ export const DebateArenaView: React.FC<DebateArenaViewProps> = ({
     }
   };
 
-  const triggerEndMatch = (outcome: 'victory' | 'defeat', remainingHp: number, opponentHp: number) => {
+  const triggerEndMatch = async (outcome: 'victory' | 'defeat', remainingHp: number, opponentHp: number) => {
+    if (hasEndedMatchRef.current) return;
+    hasEndedMatchRef.current = true;
+
     setMatchResult(outcome);
     localStorage.removeItem(steelmanRewardKey());
     hasAwardedSteelmanXp.current = false;
@@ -556,7 +561,13 @@ export const DebateArenaView: React.FC<DebateArenaViewProps> = ({
       strict_prosecutor: 'Công tố viên nghiêm khắc'
     };
 
-    const recordedId = recordDebateEnd({
+    // Khởi tạo matchId duy nhất và ổn định cho trận đấu (BUG-13)
+    const matchId = currentMatchIdRef.current || `match_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+    currentMatchIdRef.current = matchId;
+    setCurrentMatchId(matchId);
+
+    const recordedId = await recordDebateEnd({
+      id: matchId,
       topicMotion: isCustomMode && customMotion.trim() ? customMotion.trim() : selectedTopic.motion,
       studentSide,
       outcome,
@@ -570,8 +581,10 @@ export const DebateArenaView: React.FC<DebateArenaViewProps> = ({
       concessionCount
     });
 
-    currentMatchIdRef.current = recordedId;
-    setCurrentMatchId(recordedId);
+    if (recordedId) {
+      currentMatchIdRef.current = recordedId;
+      setCurrentMatchId(recordedId);
+    }
 
     if (won) {
       soundFX.playSuccess();

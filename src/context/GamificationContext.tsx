@@ -241,7 +241,7 @@ interface GamificationContextType {
     outcomeOrWon: boolean | 'victory' | 'defeat' | Partial<DebateMatchRecord>,
     remainingHp?: number,
     additionalDetails?: Partial<DebateMatchRecord>
-  ) => string;
+  ) => Promise<string>;
   saveDebateReflection: (
     matchId: string,
     reflection: PostMatchReflection
@@ -286,6 +286,8 @@ export const GamificationProvider: React.FC<{ children: ReactNode }> = ({ childr
   const isRecordingFallacyRef = useRef<boolean>(false);
   const claimedReflectionMatchIdsRef = useRef<Set<string>>(new Set());
   const reflectionRewardInFlightRef = useRef<Record<string, boolean>>({});
+  const recordedMatchIdsRef = useRef<Set<string>>(new Set());
+  const recordingMatchInFlightRef = useRef<Record<string, boolean>>({});
   const [quests, setQuests] = useState<DailyQuest[]>(INITIAL_QUESTS);
   const [debateHistory, setDebateHistory] = useState<DebateMatchRecord[]>([]);
 
@@ -1175,14 +1177,12 @@ export const GamificationProvider: React.FC<{ children: ReactNode }> = ({ childr
     soundFX.playSuccess();
   }, []);
 
-  // Ghi nhận kết quả trận đấu trong Đấu trường tranh biện
-  const recordDebateEnd = useCallback((
+  // Ghi nhận kết quả trận đấu trong Đấu trường tranh biện (BUG-13: Chống trùng XP, chống race condition, atomic transaction)
+  const recordDebateEnd = useCallback(async (
     outcomeOrWon: boolean | 'victory' | 'defeat' | Partial<DebateMatchRecord>,
     remainingHp?: number,
     additionalDetails?: Partial<DebateMatchRecord>
-  ) => {
-    updateDailyStreak();
-
+  ): Promise<string> => {
     let outcome: 'victory' | 'defeat' = 'defeat';
     let won = false;
     let studentHp = remainingHp ?? 0;
@@ -1192,6 +1192,7 @@ export const GamificationProvider: React.FC<{ children: ReactNode }> = ({ childr
     let studentSide: DebateSide = 'pro';
     let roundsCompleted = 4;
     let personaName = 'Đại kiện tướng WSDC';
+    let passedId: string | undefined = undefined;
 
     if (typeof outcomeOrWon === 'boolean') {
       won = outcomeOrWon;
@@ -1203,6 +1204,7 @@ export const GamificationProvider: React.FC<{ children: ReactNode }> = ({ childr
         roundsCompleted = additionalDetails.roundsCompleted || roundsCompleted;
         personaName = additionalDetails.personaName || personaName;
         aiHp = additionalDetails.aiHp || 0;
+        passedId = additionalDetails.id;
       }
     } else if (typeof outcomeOrWon === 'string') {
       outcome = outcomeOrWon === 'victory' ? 'victory' : 'defeat';
@@ -1214,6 +1216,7 @@ export const GamificationProvider: React.FC<{ children: ReactNode }> = ({ childr
         roundsCompleted = additionalDetails.roundsCompleted || roundsCompleted;
         personaName = additionalDetails.personaName || personaName;
         aiHp = additionalDetails.aiHp || 0;
+        passedId = additionalDetails.id;
       }
     } else if (typeof outcomeOrWon === 'object') {
       outcome = outcomeOrWon.outcome === 'victory' ? 'victory' : 'defeat';
@@ -1225,6 +1228,7 @@ export const GamificationProvider: React.FC<{ children: ReactNode }> = ({ childr
       studentSide = outcomeOrWon.studentSide || studentSide;
       roundsCompleted = outcomeOrWon.roundsCompleted || roundsCompleted;
       personaName = outcomeOrWon.personaName || personaName;
+      passedId = outcomeOrWon.id;
     }
 
     const reflection = typeof outcomeOrWon === 'object' ? outcomeOrWon.reflection : additionalDetails?.reflection;
@@ -1232,9 +1236,14 @@ export const GamificationProvider: React.FC<{ children: ReactNode }> = ({ childr
     const concessionCount = typeof outcomeOrWon === 'object' ? outcomeOrWon.concessionCount : additionalDetails?.concessionCount;
     const wsdcScore = typeof outcomeOrWon === 'object' ? outcomeOrWon.wsdcScore : additionalDetails?.wsdcScore;
 
-    const matchId = (typeof outcomeOrWon === 'object' && outcomeOrWon.id)
-      ? outcomeOrWon.id
-      : `match_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+    const matchId = passedId || `match_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+
+    // 1. Kiểm tra tính lũy đọng (Idempotency): Tránh ghi đúp khi gọi nhiều lần với cùng matchId
+    if (recordedMatchIdsRef.current.has(matchId) || recordingMatchInFlightRef.current[matchId]) {
+      console.warn(`[recordDebateEnd] Match ${matchId} đã được ghi nhận hoặc đang trong tiến trình xử lý. Bỏ qua ghi đúp.`);
+      return matchId;
+    }
+    recordingMatchInFlightRef.current[matchId] = true;
 
     const newMatch: DebateMatchRecord = {
       id: matchId,
@@ -1255,71 +1264,137 @@ export const GamificationProvider: React.FC<{ children: ReactNode }> = ({ childr
       wsdcScore
     };
 
-    setDebateHistory(prev => [newMatch, ...prev]);
-
     if ((steelmanScore !== undefined && steelmanScore >= 6) || (concessionCount !== undefined && concessionCount > 0)) {
       unlockBadge('badge_open_minded');
     }
 
-    setProfile(prev => {
-      const newWon = prev.debatesWon + (won ? 1 : 0);
-      const newTotalDebates = prev.totalDebates + 1;
-      const newTotalXP = prev.currentXP + xpEarned;
-
-      let newLevel = prev.level;
-      let currentCap = LEVEL_TITLES[newLevel]?.maxXP || 99999;
-      while (newTotalXP >= currentCap && newLevel < 10) {
-        newLevel += 1;
-        currentCap = LEVEL_TITLES[newLevel]?.maxXP || 99999;
-      }
-
-      const updated = {
-        ...prev,
-        currentXP: newTotalXP,
-        level: newLevel,
-        nextLevelXP: currentCap,
-        title: LEVEL_TITLES[newLevel]?.title || prev.title,
-        totalDebates: newTotalDebates,
-        debatesWon: newWon
-      };
-
+    try {
       if (currentUser) {
+        // Ghi Firestore TRƯỚC qua Transaction (Server-authoritative, không ghi trong React state updater)
         const unlockedIds = Array.from(unlockedBadgeIdsRef.current);
-        recordDebateMatchInFirestore(currentUser.uid, newMatch, {
-          newXp: newTotalXP,
-          newLevel: newLevel,
-          newTitle: updated.title,
-          nextLevelXP: currentCap,
-          newTotalDebates: newTotalDebates,
-          newDebatesWon: newWon,
-          unlockedBadgeIds: unlockedIds,
-          streakCount: updated.streakCount,
-          lastActiveDate: updated.lastActiveDate,
-          name: updated.name,
-          schoolClass: updated.school,
-          avatarSeed: updated.avatarSeed || 'Hero',
-          fallaciesFound: updated.fallaciesIdentified
-        }).then(() => refreshLeaderboard()).catch(err => console.error('Lỗi lưu match Firestore:', err));
-      }
+        const result = await recordDebateMatchInFirestore(currentUser.uid, newMatch, {
+          unlockedBadgeIds: unlockedIds
+        });
 
-      setTimeout(() => checkBadgeUnlocks(updated, undefined, won ? studentHp : 0), 200);
-      return updated;
-    });
+        // Đánh dấu match đã ghi nhận
+        recordedMatchIdsRef.current.add(matchId);
 
-    setQuests(prev => {
-      const nextQuests = prev.map(q => {
-        if (q.id === 'quest_2' && !q.isCompleted) {
-          const nextCount = q.currentCount + 1;
-          return { ...q, currentCount: nextCount, isCompleted: nextCount >= q.targetCount };
+        // Cập nhật debateHistory
+        setDebateHistory(prev => [newMatch, ...prev.filter(m => m.id !== matchId)]);
+
+        // Cập nhật profile từ dữ liệu server snapshot mới nhất
+        let updatedProfile: UserProfile | null = null;
+        setProfile(prev => {
+          const updated = {
+            ...prev,
+            currentXP: result.currentXP,
+            xp: result.xp,
+            level: result.level,
+            nextLevelXP: result.nextLevelXP,
+            title: result.title,
+            totalDebates: result.totalDebates,
+            debatesWon: result.debatesWon,
+            streakCount: result.streakCount,
+            lastActiveDate: result.lastActiveDate
+          };
+          updatedProfile = updated;
+          return updated;
+        });
+
+        if (updatedProfile) {
+          setTimeout(() => checkBadgeUnlocks(updatedProfile!, undefined, won ? studentHp : 0), 200);
         }
-        return q;
-      });
-      const activeUserId = currentUser ? currentUser.uid : 'guest';
-      saveQuestsState(activeUserId, getTodayDateString(), nextQuests, !!currentUser);
-      return nextQuests;
-    });
 
-    return matchId;
+        // Cập nhật nhiệm vụ hàng ngày (Quest 2)
+        setQuests(prev => {
+          const nextQuests = prev.map(q => {
+            if (q.id === 'quest_2' && !q.isCompleted) {
+              const nextCount = q.currentCount + 1;
+              return { ...q, currentCount: nextCount, isCompleted: nextCount >= q.targetCount };
+            }
+            return q;
+          });
+          saveQuestsState(currentUser.uid, getTodayDateString(), nextQuests, true);
+          return nextQuests;
+        });
+
+        // Hiển thị floating XP cho trận đấu (+180 hoặc +60)
+        const xpId = 'match_xp_' + Date.now();
+        const reason = won ? 'Thắng trận tranh biện (+180 XP)' : 'Hoàn thành trận tranh biện (+60 XP)';
+        setFloatingXps(prev => [...prev, { id: xpId, amount: xpEarned, reason }]);
+        setTimeout(() => {
+          setFloatingXps(prev => prev.filter(item => item.id !== xpId));
+        }, 1500);
+
+        await refreshLeaderboard();
+
+        // Cập nhật daily streak tuần tự sau khi match đã lưu thành công
+        try {
+          await updateDailyStreak();
+        } catch (e) {
+          console.warn('[recordDebateEnd] Lỗi cập nhật streak tuần tự:', e);
+        }
+
+        return matchId;
+      } else {
+        // Chế độ Guest
+        recordedMatchIdsRef.current.add(matchId);
+        setDebateHistory(prev => [newMatch, ...prev.filter(m => m.id !== matchId)]);
+
+        let updatedProfile: UserProfile | null = null;
+        setProfile(prev => {
+          const newTotalXP = prev.currentXP + xpEarned;
+          const progress = getProgressFromXP(newTotalXP);
+          const newTotalDebates = prev.totalDebates + 1;
+          const newDebatesWon = prev.debatesWon + (won ? 1 : 0);
+          const updated = {
+            ...prev,
+            currentXP: progress.currentXP,
+            xp: progress.xp,
+            level: progress.level,
+            nextLevelXP: progress.nextLevelXP,
+            title: progress.title,
+            totalDebates: newTotalDebates,
+            debatesWon: newDebatesWon
+          };
+          updatedProfile = updated;
+          return updated;
+        });
+
+        if (updatedProfile) {
+          setTimeout(() => checkBadgeUnlocks(updatedProfile!, undefined, won ? studentHp : 0), 200);
+        }
+
+        setQuests(prev => {
+          const nextQuests = prev.map(q => {
+            if (q.id === 'quest_2' && !q.isCompleted) {
+              const nextCount = q.currentCount + 1;
+              return { ...q, currentCount: nextCount, isCompleted: nextCount >= q.targetCount };
+            }
+            return q;
+          });
+          saveQuestsState('guest', getTodayDateString(), nextQuests, false);
+          return nextQuests;
+        });
+
+        const xpId = 'guest_match_xp_' + Date.now();
+        const reason = won ? 'Thắng trận tranh biện (+180 XP)' : 'Hoàn thành trận tranh biện (+60 XP)';
+        setFloatingXps(prev => [...prev, { id: xpId, amount: xpEarned, reason }]);
+        setTimeout(() => {
+          setFloatingXps(prev => prev.filter(item => item.id !== xpId));
+        }, 1500);
+
+        try {
+          await updateDailyStreak();
+        } catch (e) {
+          console.warn('[recordDebateEnd] Guest streak update error:', e);
+        }
+
+        return matchId;
+      }
+    } finally {
+      delete recordingMatchInFlightRef.current[matchId];
+    }
   }, [currentUser, badges, updateDailyStreak, checkBadgeUnlocks, refreshLeaderboard]);
 
   // Lưu phản tư sau trận đấu (BUG-16): Cập nhật trường reflection vào bản ghi trận đấu đã có

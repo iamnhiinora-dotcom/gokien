@@ -291,89 +291,138 @@ export async function updateUserSettings(
   }
 }
 
-// 6. Ghi nhận kết quả trận đấu nguyên tử (Atomic Batch Write)
+export interface RecordDebateMatchResult {
+  currentXP: number;
+  xp: number;
+  level: number;
+  nextLevelXP: number;
+  title: string;
+  totalDebates: number;
+  debatesWon: number;
+  streakCount: number;
+  lastActiveDate: string;
+  unlockedBadgeIds?: string[];
+}
+
+// 6. Ghi nhận kết quả trận đấu nguyên tử qua Firestore Transaction
 export async function recordDebateMatchInFirestore(
   userId: string,
   match: DebateMatchRecord,
-  updatedProfileData: {
-    newXp: number;
-    newLevel: number;
-    newTitle: string;
-    nextLevelXP?: number;
-    newTotalDebates?: number;
-    newDebatesWon: number;
-    unlockedBadgeIds: string[];
-    streakCount: number;
-    lastActiveDate: string;
-    name: string;
-    schoolClass: string;
-    avatarSeed: string;
-    fallaciesFound: number;
+  options?: {
+    unlockedBadgeIds?: string[];
   }
-): Promise<void> {
+): Promise<RecordDebateMatchResult> {
   const matchPath = `users/${userId}/matches/${match.id}`;
   try {
-    const batch = writeBatch(db);
+    return await runTransaction(db, async (tx) => {
+      const userRef = doc(db, 'users', userId);
+      const matchRef = doc(db, 'users', userId, 'matches', match.id);
+      const lbRef = doc(db, 'leaderboard', userId);
 
-    // 1. Tạo bản ghi trận đấu
-    const matchRef = doc(db, 'users', userId, 'matches', match.id);
-    const matchData: Record<string, any> = {
-      id: match.id,
-      userId: userId,
-      topicMotion: match.topicMotion.slice(0, 500),
-      studentSide: match.studentSide,
-      outcome: match.outcome,
-      studentHp: match.studentHp,
-      aiHp: match.aiHp,
-      xpEarned: match.xpEarned,
-      roundsCompleted: match.roundsCompleted,
-      personaName: match.personaName || 'AI Debater',
-      date: match.date,
-      timestamp: match.timestamp
-    };
-    if (match.reflection) {
-      matchData.reflection = match.reflection;
-    }
-    if (match.reflectionRewardClaimed !== undefined) {
-      matchData.reflectionRewardClaimed = match.reflectionRewardClaimed;
-    }
-    batch.set(matchRef, matchData);
+      // 1. Đọc dữ liệu mới nhất từ Firestore transaction trước khi ghi
+      const userSnap = await tx.get(userRef);
+      if (!userSnap.exists()) {
+        throw new Error('User document not found in Firestore');
+      }
+      const matchSnap = await tx.get(matchRef);
+      const userData = userSnap.data();
 
-    // 2. Cập nhật hồ sơ người dùng kèm lastMatchId để thỏa mãn rules atomicity
-    const userRef = doc(db, 'users', userId);
-    const userUpdates: Record<string, any> = {
-      xp: updatedProfileData.newXp,
-      currentXP: updatedProfileData.newXp, // Đồng bộ tuyệt đối cả xp và currentXP
-      level: updatedProfileData.newLevel,
-      title: updatedProfileData.newTitle,
-      debatesWon: updatedProfileData.newDebatesWon,
-      ...(Array.isArray(updatedProfileData.unlockedBadgeIds) && updatedProfileData.unlockedBadgeIds.length > 0
-        ? { unlockedBadgeIds: arrayUnion(...updatedProfileData.unlockedBadgeIds) }
-        : {}),
-      streakCount: updatedProfileData.streakCount,
-      lastActiveDate: updatedProfileData.lastActiveDate,
-      lastMatchId: match.id
-    };
-    if (updatedProfileData.nextLevelXP !== undefined) {
-      userUpdates.nextLevelXP = updatedProfileData.nextLevelXP;
-    }
-    if (updatedProfileData.newTotalDebates !== undefined) {
-      userUpdates.totalDebates = updatedProfileData.newTotalDebates;
-    }
-    batch.update(userRef, userUpdates);
+      // Kiểm tra tính lũy đọng (Idempotency): Tránh ghi đúp trận đấu nếu matchId đã tồn tại
+      if (matchSnap.exists() || userData.lastMatchId === match.id) {
+        console.warn(`[recordDebateMatchInFirestore] Match ${match.id} đã được ghi nhận trước đó. Bỏ qua ghi đúp.`);
+        const currentXP = Math.max(Number(userData.xp || 0), Number(userData.currentXP || 0));
+        const progress = getProgressFromXP(currentXP);
+        return {
+          ...progress,
+          totalDebates: Number(userData.totalDebates || 0),
+          debatesWon: Number(userData.debatesWon || 0),
+          streakCount: Number(userData.streakCount || 1),
+          lastActiveDate: userData.lastActiveDate || new Date().toISOString().slice(0, 10),
+          unlockedBadgeIds: userData.unlockedBadgeIds || []
+        };
+      }
 
-    // 3. Cập nhật Leaderboard công khai
-    const lbRef = doc(db, 'leaderboard', userId);
-    batch.update(lbRef, {
-      xp: updatedProfileData.newXp,
-      level: updatedProfileData.newLevel,
-      title: updatedProfileData.newTitle,
-      debatesWon: updatedProfileData.newDebatesWon
+      // 2. Đọc XP mới nhất từ server - Ngăn chặn dữ liệu React state cũ ghi đè
+      const currentServerXP = Math.max(Number(userData.xp || 0), Number(userData.currentXP || 0));
+      const xpEarned = Math.max(0, match.xpEarned || 0);
+      const newXp = currentServerXP + xpEarned;
+      const progress = getProgressFromXP(newXp);
+
+      const currentTotalDebates = Number(userData.totalDebates || 0);
+      const currentDebatesWon = Number(userData.debatesWon || 0);
+      const won = match.outcome === 'victory';
+      const newTotalDebates = currentTotalDebates + 1;
+      const newDebatesWon = currentDebatesWon + (won ? 1 : 0);
+
+      const today = new Date().toISOString().slice(0, 10);
+      const streakCount = Number(userData.streakCount || 1);
+
+      // 3. Chuẩn bị bản ghi trận đấu
+      const matchData: Record<string, any> = {
+        id: match.id,
+        userId: userId,
+        topicMotion: (match.topicMotion || 'Tranh biện học đường').slice(0, 500),
+        studentSide: match.studentSide || 'pro',
+        outcome: match.outcome,
+        studentHp: Number(match.studentHp ?? 0),
+        aiHp: Number(match.aiHp ?? 0),
+        xpEarned: xpEarned,
+        roundsCompleted: Math.min(10, Math.max(1, Number(match.roundsCompleted || 4))),
+        personaName: (match.personaName || 'AI Debater').slice(0, 100),
+        date: match.date || today,
+        timestamp: match.timestamp || new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
+      };
+      if (match.reflection) {
+        matchData.reflection = match.reflection;
+      }
+      if (match.reflectionRewardClaimed !== undefined) {
+        matchData.reflectionRewardClaimed = match.reflectionRewardClaimed;
+      }
+
+      // 4. Chuẩn bị cập nhật hồ sơ người dùng (tuân thủ nghiêm ngặt Branch 2 affectedKeys trong firestore.rules)
+      const userUpdates: Record<string, any> = {
+        xp: newXp,
+        currentXP: newXp,
+        level: progress.level,
+        nextLevelXP: progress.nextLevelXP,
+        title: progress.title,
+        totalDebates: newTotalDebates,
+        debatesWon: newDebatesWon,
+        streakCount: streakCount,
+        lastActiveDate: today,
+        lastMatchId: match.id
+      };
+      if (userData.lastStreakRewardDate) {
+        userUpdates.lastStreakRewardDate = userData.lastStreakRewardDate;
+      }
+      if (options?.unlockedBadgeIds && options.unlockedBadgeIds.length > 0) {
+        userUpdates.unlockedBadgeIds = arrayUnion(...options.unlockedBadgeIds);
+      }
+
+      // 5. Ghi nhận nguyên tử: match record + user profile + leaderboard
+      tx.set(matchRef, matchData);
+      tx.update(userRef, userUpdates);
+
+      const lbUpdates: Record<string, any> = {
+        xp: newXp,
+        level: progress.level,
+        title: progress.title,
+        debatesWon: newDebatesWon
+      };
+      tx.update(lbRef, lbUpdates);
+
+      return {
+        ...progress,
+        totalDebates: newTotalDebates,
+        debatesWon: newDebatesWon,
+        streakCount: streakCount,
+        lastActiveDate: today,
+        unlockedBadgeIds: options?.unlockedBadgeIds
+      };
     });
-
-    await batch.commit();
   } catch (error) {
     handleFirestoreError(error, OperationType.WRITE, matchPath);
+    throw error;
   }
 }
 
