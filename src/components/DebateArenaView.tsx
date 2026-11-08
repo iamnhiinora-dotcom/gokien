@@ -68,7 +68,7 @@ export const DebateArenaView: React.FC<DebateArenaViewProps> = ({
   initialSubmode = '1v1',
   onNavigateToWsdc 
 }) => {
-  const { profile, addXP, recordDebateEnd, unlockBadge } = useGamification();
+  const { profile, addXP, recordDebateEnd, saveDebateReflection, unlockBadge } = useGamification();
 
   // CHẾ ĐỘ ĐẤU TRƯỜNG: 1v1 với AI (mặc định) hoặc WSDC 3v3
   const [arenaMode, setArenaMode] = useState<'1v1' | 'wsdc'>(initialSubmode || '1v1');
@@ -104,10 +104,15 @@ export const DebateArenaView: React.FC<DebateArenaViewProps> = ({
   const [concessionCount, setConcessionCount] = useState<number>(0);
   const [concessionToast, setConcessionToast] = useState<string | null>(null);
 
-  // PHẢN TƯ SAU TRẬN ĐẤU (POST-MATCH REFLECTION)
+  // PHẢN TƯ SAU TRẬN ĐẤU (POST-MATCH REFLECTION - BUG-16)
+  const [currentMatchId, setCurrentMatchId] = useState<string | null>(null);
+  const currentMatchIdRef = useRef<string | null>(null);
   const [reflectionOpponentPoint, setReflectionOpponentPoint] = useState<string>('');
   const [reflectionOpeningIdea, setReflectionOpeningIdea] = useState<string>('');
   const [isReflectionSaved, setIsReflectionSaved] = useState<boolean>(false);
+  const [isSavingReflection, setIsSavingReflection] = useState<boolean>(false);
+  const [reflectionError, setReflectionError] = useState<string | null>(null);
+  const isSavingReflectionRef = useRef<boolean>(false);
 
   // Trạng thái chuẩn bị trận đấu hay đang thi đấu
   const [isMatchActive, setIsMatchActive] = useState<boolean>(false);
@@ -214,6 +219,11 @@ export const DebateArenaView: React.FC<DebateArenaViewProps> = ({
     setReflectionOpponentPoint('');
     setReflectionOpeningIdea('');
     setIsReflectionSaved(false);
+    setIsSavingReflection(false);
+    setReflectionError(null);
+    setCurrentMatchId(null);
+    currentMatchIdRef.current = null;
+    isSavingReflectionRef.current = false;
 
     const personaInfo = DEBATER_PERSONAS.find(p => p.id === selectedPersona) || DEBATER_PERSONAS[0];
     const welcomeMsg: DebateMessage = {
@@ -332,28 +342,39 @@ export const DebateArenaView: React.FC<DebateArenaViewProps> = ({
     handleStartMatch();
   };
 
-  // Lưu phản tư sau trận đấu vào nhật ký
-  const handleSaveReflection = () => {
+  // Lưu phản tư sau trận đấu vào nhật ký (BUG-16: Không tạo trận mới, không cộng trùng XP trận đấu)
+  const handleSaveReflection = async () => {
     if (!reflectionOpponentPoint.trim() && !reflectionOpeningIdea.trim()) return;
-    soundFX.playSuccess();
-    setIsReflectionSaved(true);
-    recordDebateEnd({
-      topicMotion: isCustomMode && customMotion.trim() ? customMotion.trim() : selectedTopic.motion,
-      studentSide,
-      outcome: matchResult || 'victory',
-      studentHp,
-      aiHp,
-      xpEarned: (matchResult === 'victory' ? 180 : 60) + 25,
-      roundsCompleted: Math.min(maxRounds, currentRound),
-      personaName: DEBATER_PERSONAS.find(p => p.id === selectedPersona)?.name || 'AI Opponent',
-      wsdcScore: wsdcEvaluation?.totalScore,
-      steelmanScore: steelmanScore ?? undefined,
-      concessionCount,
-      reflection: {
-        opponentThoughtProvokingPoint: reflectionOpponentPoint.trim() || 'Đã ghi nhận góc nhìn đa chiều từ đối thủ.',
-        oppositeSideOpeningIdea: reflectionOpeningIdea.trim() || 'Mở đầu bằng việc đặt câu hỏi về gánh nặng thực tế.'
+    if (isSavingReflectionRef.current || isReflectionSaved) return;
+
+    const matchId = currentMatchIdRef.current || currentMatchId;
+    if (!matchId) {
+      setReflectionError('Không tìm thấy thông tin trận đấu để lưu phản tư.');
+      return;
+    }
+
+    isSavingReflectionRef.current = true;
+    setIsSavingReflection(true);
+    setReflectionError(null);
+
+    const reflectionData = {
+      opponentThoughtProvokingPoint: reflectionOpponentPoint.trim() || 'Đã ghi nhận góc nhìn đa chiều từ đối thủ.',
+      oppositeSideOpeningIdea: reflectionOpeningIdea.trim() || 'Mở đầu bằng việc đặt câu hỏi về gánh nặng thực tế.'
+    };
+
+    try {
+      const success = await saveDebateReflection(matchId, reflectionData);
+      if (success) {
+        setIsReflectionSaved(true);
+      } else {
+        setReflectionError('Chưa thể lưu phản tư lên máy chủ. Bạn hãy bấm Thử lại nhé.');
       }
-    });
+    } catch (err: any) {
+      setReflectionError(err?.message || 'Có lỗi khi lưu phản tư. Hãy bấm Thử lại.');
+    } finally {
+      isSavingReflectionRef.current = false;
+      setIsSavingReflection(false);
+    }
   };
 
   // Gửi lượt nói của học sinh
@@ -535,7 +556,7 @@ export const DebateArenaView: React.FC<DebateArenaViewProps> = ({
       strict_prosecutor: 'Công tố viên nghiêm khắc'
     };
 
-    recordDebateEnd({
+    const recordedId = recordDebateEnd({
       topicMotion: isCustomMode && customMotion.trim() ? customMotion.trim() : selectedTopic.motion,
       studentSide,
       outcome,
@@ -549,12 +570,13 @@ export const DebateArenaView: React.FC<DebateArenaViewProps> = ({
       concessionCount
     });
 
+    currentMatchIdRef.current = recordedId;
+    setCurrentMatchId(recordedId);
+
     if (won) {
       soundFX.playSuccess();
-      addXP(180, 'Thắng trận tranh biện WSDC');
     } else {
       soundFX.playHPDamage();
-      addXP(60, 'Hoàn thành trận tranh biện WSDC');
     }
   };
 
@@ -1897,7 +1919,7 @@ export const DebateArenaView: React.FC<DebateArenaViewProps> = ({
                     value={reflectionOpponentPoint}
                     onChange={(e) => setReflectionOpponentPoint(e.target.value)}
                     placeholder="Ví dụ: Đối thủ chỉ ra rằng chi phí vận hành quá cao và gây áp lực lên học sinh có hoàn cảnh khó khăn..."
-                    disabled={isReflectionSaved}
+                    disabled={isReflectionSaved || isSavingReflection}
                     className="w-full p-2 rounded bg-[#FFFFFF] border border-[#E5E1D8] text-xs text-[#1E2433] placeholder-[#6B7280] focus:outline-none focus:border-[#A16207] disabled:opacity-60"
                   />
                 </div>
@@ -1910,23 +1932,38 @@ export const DebateArenaView: React.FC<DebateArenaViewProps> = ({
                     rows={2}
                     value={reflectionOpeningIdea}
                     onChange={(e) => setReflectionOpeningIdea(e.target.value)}
-                    placeholder="Ví dụ: Nếu ở phe đối lập, tôi sẽ tập trung vào sự bất bìnhđồng cơ hội và gánh nặng tài chính..."
-                    disabled={isReflectionSaved}
+                    placeholder="Ví dụ: Nếu ở phe đối lập, tôi sẽ tập trung vào sự bất bình đẳng cơ hội và gánh nặng tài chính..."
+                    disabled={isReflectionSaved || isSavingReflection}
                     className="w-full p-2 rounded bg-[#FFFFFF] border border-[#E5E1D8] text-xs text-[#1E2433] placeholder-[#6B7280] focus:outline-none focus:border-[#A16207] disabled:opacity-60"
                   />
                 </div>
 
                 {!isReflectionSaved && (
-                  <div className="flex justify-end pt-0.5">
+                  <div className="flex flex-col items-end gap-1.5 pt-0.5">
                     <button
                       type="button"
                       onClick={handleSaveReflection}
-                      disabled={!reflectionOpponentPoint.trim() && !reflectionOpeningIdea.trim()}
+                      disabled={isSavingReflection || (!reflectionOpponentPoint.trim() && !reflectionOpeningIdea.trim())}
                       className="px-3.5 py-1.5 rounded text-xs font-bold bg-[#FACC15] hover:bg-[#EAB308] text-[#1E2433] border border-[#D6D1C4] disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
                     >
-                      <Sparkles className="w-3.5 h-3.5" />
-                      <span>Lưu phản tư vào Nhật ký (+25 XP)</span>
+                      {isSavingReflection ? (
+                        <>
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          <span>Đang lưu phản tư...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="w-3.5 h-3.5" />
+                          <span>Lưu phản tư vào Nhật ký (+25 XP)</span>
+                        </>
+                      )}
                     </button>
+                    {reflectionError && (
+                      <p className="text-[11px] text-[#DC2626] flex items-center gap-1">
+                        <AlertTriangle className="w-3 h-3 shrink-0" />
+                        <span>{reflectionError}</span>
+                      </p>
+                    )}
                   </div>
                 )}
               </div>

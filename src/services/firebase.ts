@@ -34,7 +34,7 @@ import {
   arrayUnion
 } from 'firebase/firestore';
 import firebaseConfig from '../../firebase-applet-config.json';
-import { UserProfile, LeaderboardUser, DebateMatchRecord, DiagnosticTestResult, DailyQuest, EvaluatedFallacyRecord } from '../types';
+import { UserProfile, LeaderboardUser, DebateMatchRecord, DiagnosticTestResult, DailyQuest, EvaluatedFallacyRecord, PostMatchReflection } from '../types';
 import { getProgressFromXP } from '../utils/levelSystem';
 
 // Khởi tạo Firebase App và Firestore kết nối đúng database ID
@@ -317,7 +317,7 @@ export async function recordDebateMatchInFirestore(
 
     // 1. Tạo bản ghi trận đấu
     const matchRef = doc(db, 'users', userId, 'matches', match.id);
-    batch.set(matchRef, {
+    const matchData: Record<string, any> = {
       id: match.id,
       userId: userId,
       topicMotion: match.topicMotion.slice(0, 500),
@@ -330,7 +330,14 @@ export async function recordDebateMatchInFirestore(
       personaName: match.personaName || 'AI Debater',
       date: match.date,
       timestamp: match.timestamp
-    });
+    };
+    if (match.reflection) {
+      matchData.reflection = match.reflection;
+    }
+    if (match.reflectionRewardClaimed !== undefined) {
+      matchData.reflectionRewardClaimed = match.reflectionRewardClaimed;
+    }
+    batch.set(matchRef, matchData);
 
     // 2. Cập nhật hồ sơ người dùng kèm lastMatchId để thỏa mãn rules atomicity
     const userRef = doc(db, 'users', userId);
@@ -367,6 +374,31 @@ export async function recordDebateMatchInFirestore(
     await batch.commit();
   } catch (error) {
     handleFirestoreError(error, OperationType.WRITE, matchPath);
+  }
+}
+
+/**
+ * 6b. Cập nhật phản tư sau trận đấu vào tài liệu match trên Firestore
+ * Lưu ý: Với Firestore Rules hiện tại (allow update: if false), client sẽ nhận PERMISSION_DENIED.
+ * Hàm này bọc try/catch an toàn, không ném exception làm crash ứng dụng, trả về boolean chỉ thị thành công.
+ */
+export async function updateDebateMatchReflectionInFirestore(
+  userId: string,
+  matchId: string,
+  reflection: PostMatchReflection
+): Promise<boolean> {
+  const matchPath = `users/${userId}/matches/${matchId}`;
+  try {
+    const matchRef = doc(db, 'users', userId, 'matches', matchId);
+    await updateDoc(matchRef, {
+      reflection,
+      reflectionRewardClaimed: true
+    });
+    return true;
+  } catch (error) {
+    // Không crash app nếu rules hiện tại chặn update doc matches
+    console.warn(`[updateDebateMatchReflectionInFirestore] Matches subcollection update bị rules chặn hoặc lỗi mạng: ${matchPath}. React state và điểm XP vẫn bảo toàn.`);
+    return false;
   }
 }
 

@@ -313,6 +313,7 @@ export interface DebateMatchRecord {
   steelmanScore?: number;
   concessionCount?: number;
   reflection?: PostMatchReflection; // 2 câu tự hỏi phản tư sau trận
+  reflectionRewardClaimed?: boolean; // Đánh dấu đã nhận thưởng 25 XP cho phản tư trận này
   mode?: 'classic' | 'wsdc_tournament';
   wsdcRole?: WsdcSpeakerRole;
   wsdcVerdict?: WsdcMatchVerdict;

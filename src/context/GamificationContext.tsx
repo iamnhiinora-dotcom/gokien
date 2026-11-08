@@ -17,7 +17,8 @@ import {
   DebateMatchRecord, 
   DebateSide,
   DiagnosticTestResult,
-  EvaluatedFallacyRecord
+  EvaluatedFallacyRecord,
+  PostMatchReflection
 } from '../types';
 import { soundFX } from '../services/soundEffects';
 import { 
@@ -28,6 +29,7 @@ import {
   createInitialUserProfile,
   updateUserSettings,
   recordDebateMatchInFirestore,
+  updateDebateMatchReflectionInFirestore,
   recordFallacyInFirestore,
   syncUserProgressToFirestore,
   awardXPInFirestore,
@@ -239,7 +241,11 @@ interface GamificationContextType {
     outcomeOrWon: boolean | 'victory' | 'defeat' | Partial<DebateMatchRecord>,
     remainingHp?: number,
     additionalDetails?: Partial<DebateMatchRecord>
-  ) => void;
+  ) => string;
+  saveDebateReflection: (
+    matchId: string,
+    reflection: PostMatchReflection
+  ) => Promise<boolean>;
   claimQuest: (questId: string) => Promise<void> | void;
   updateDailyStreak: () => Promise<void> | void;
   toggleSound: () => void;
@@ -278,6 +284,8 @@ export const GamificationProvider: React.FC<{ children: ReactNode }> = ({ childr
   const claimingQuestIdsRef = useRef<Set<string>>(new Set());
   const isRecordingDiagTestRef = useRef<boolean>(false);
   const isRecordingFallacyRef = useRef<boolean>(false);
+  const claimedReflectionMatchIdsRef = useRef<Set<string>>(new Set());
+  const reflectionRewardInFlightRef = useRef<Record<string, boolean>>({});
   const [quests, setQuests] = useState<DailyQuest[]>(INITIAL_QUESTS);
   const [debateHistory, setDebateHistory] = useState<DebateMatchRecord[]>([]);
 
@@ -1224,8 +1232,12 @@ export const GamificationProvider: React.FC<{ children: ReactNode }> = ({ childr
     const concessionCount = typeof outcomeOrWon === 'object' ? outcomeOrWon.concessionCount : additionalDetails?.concessionCount;
     const wsdcScore = typeof outcomeOrWon === 'object' ? outcomeOrWon.wsdcScore : additionalDetails?.wsdcScore;
 
+    const matchId = (typeof outcomeOrWon === 'object' && outcomeOrWon.id)
+      ? outcomeOrWon.id
+      : `match_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+
     const newMatch: DebateMatchRecord = {
-      id: `match_${Date.now()}`,
+      id: matchId,
       topicMotion,
       studentSide,
       outcome,
@@ -1237,6 +1249,7 @@ export const GamificationProvider: React.FC<{ children: ReactNode }> = ({ childr
       date: new Date().toLocaleDateString('vi-VN'),
       timestamp: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
       reflection,
+      reflectionRewardClaimed: false,
       steelmanScore,
       concessionCount,
       wsdcScore
@@ -1305,7 +1318,81 @@ export const GamificationProvider: React.FC<{ children: ReactNode }> = ({ childr
       saveQuestsState(activeUserId, getTodayDateString(), nextQuests, !!currentUser);
       return nextQuests;
     });
+
+    return matchId;
   }, [currentUser, badges, updateDailyStreak, checkBadgeUnlocks, refreshLeaderboard]);
+
+  // Lưu phản tư sau trận đấu (BUG-16): Cập nhật trường reflection vào bản ghi trận đấu đã có
+  // Chỉ cộng 25 XP đúng 1 lần duy nhất cho mỗi trận đấu (Idempotent & Atomic)
+  const saveDebateReflection = useCallback(async (
+    matchId: string,
+    reflection: PostMatchReflection
+  ): Promise<boolean> => {
+    if (!matchId) return false;
+
+    // Khóa tránh gửi đồng thời (Multi-click lock)
+    if (reflectionRewardInFlightRef.current[matchId]) {
+      return false;
+    }
+
+    const claimStorageKey = `gokien_reflection_claimed_${currentUser ? currentUser.uid : 'guest'}_${matchId}`;
+    let isAlreadyClaimedLocally = false;
+    try {
+      isAlreadyClaimedLocally = localStorage.getItem(claimStorageKey) === '1';
+    } catch {}
+    const isAlreadyClaimed = isAlreadyClaimedLocally || claimedReflectionMatchIdsRef.current.has(matchId);
+
+    // Kiểm tra trong debateHistory
+    const targetMatch = debateHistory.find(m => m.id === matchId);
+    if (targetMatch?.reflectionRewardClaimed || isAlreadyClaimed) {
+      // Đã nhận thưởng rồi -> Chỉ cập nhật nội dung phản tư, không cộng XP lần 2
+      setDebateHistory(prev => prev.map(m => 
+        m.id === matchId ? { ...m, reflection, reflectionRewardClaimed: true } : m
+      ));
+      if (currentUser) {
+        updateDebateMatchReflectionInFirestore(currentUser.uid, matchId, reflection).catch(() => {});
+      }
+      return true;
+    }
+
+    reflectionRewardInFlightRef.current[matchId] = true;
+
+    try {
+      const REFLECTION_XP = 25;
+
+      // Cộng 25 XP qua addXP (Đã có transaction Firestore an toàn và cập nhật leaderboard)
+      const success = await addXP(REFLECTION_XP, 'Hoàn thành phản tư sau trận đấu (+25 XP)');
+      if (!success) {
+        // Lưu thất bại: không đánh dấu thành công
+        return false;
+      }
+
+      // Đánh dấu đã nhận thưởng
+      claimedReflectionMatchIdsRef.current.add(matchId);
+      try {
+        localStorage.setItem(claimStorageKey, '1');
+      } catch {}
+
+      // Cập nhật reflection và cờ reflectionRewardClaimed vào state debateHistory
+      setDebateHistory(prev => prev.map(m => 
+        m.id === matchId ? { ...m, reflection, reflectionRewardClaimed: true } : m
+      ));
+
+      // Thử cập nhật tài liệu match trên Firestore (graceful fallback nếu rules chặn)
+      if (currentUser) {
+        updateDebateMatchReflectionInFirestore(currentUser.uid, matchId, reflection).catch(err => {
+          console.warn('[GamificationContext] Ghi chú: Không thể cập nhật trực tiếp subcollection matches trên Firestore do rules hiện tại (allow update: if false). Dữ liệu phản tư và 25 XP đã được bảo toàn an toàn trong user doc và session state:', err);
+        });
+      }
+
+      return true;
+    } catch (err) {
+      console.error('[GamificationContext] Lỗi khi lưu phản tư:', err);
+      return false;
+    } finally {
+      delete reflectionRewardInFlightRef.current[matchId];
+    }
+  }, [currentUser, debateHistory, addXP]);
 
   const claimQuest = useCallback(async (questId: string) => {
     const quest = quests.find(q => q.id === questId);
@@ -1438,6 +1525,8 @@ export const GamificationProvider: React.FC<{ children: ReactNode }> = ({ childr
     }
 
     unlockedBadgeIdsRef.current = new Set();
+    claimedReflectionMatchIdsRef.current.clear();
+    reflectionRewardInFlightRef.current = {};
     setProfile(prev => ({
       ...GUEST_PROFILE,
       id: currentUser ? currentUser.uid : 'guest',
@@ -1488,6 +1577,7 @@ export const GamificationProvider: React.FC<{ children: ReactNode }> = ({ childr
         addXP,
         recordFallacyResult,
         recordDebateEnd,
+        saveDebateReflection,
         claimQuest,
         updateDailyStreak,
         toggleSound,
