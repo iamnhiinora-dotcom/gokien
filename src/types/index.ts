@@ -411,6 +411,7 @@ export interface UserProfile {
   streakCount: number;         // Số ngày duy trì streak liên tục
   lastActiveDate: string;      // Ngày hoạt động gần nhất định dạng YYYY-MM-DD
   lastStreakRewardDate?: string; // Ngày gần nhất nhận thưởng ngọn lửa streak (YYYY-MM-DD)
+  lastReflectionRewardMatchId?: string; // ID trận đấu gần nhất đã nhận thưởng phản tư (+25 XP)
   // Quản lý nhiệm vụ hàng ngày bền vững tránh nhận thưởng lặp lại
   claimedQuestIds?: string[];
   lastQuestDate?: string;

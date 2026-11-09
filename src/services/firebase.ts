@@ -433,6 +433,7 @@ export interface SaveReflectionResult {
   level: number;
   nextLevelXP: number;
   title: string;
+  lastReflectionRewardMatchId?: string;
 }
 
 /**
@@ -440,7 +441,7 @@ export interface SaveReflectionResult {
  * - Đọc matchRef, userRef, lbRef trước
  * - Kiểm tra match thuộc đúng user
  * - Kiểm tra reflectionRewardClaimed
- * - Nếu chưa nhận: tx.update(matchRef), tx.update(userRef, +25 XP), tx.update(lbRef, +25 XP)
+ * - Nếu chưa nhận: tx.update(matchRef), tx.update(userRef, +25 XP + lastReflectionRewardMatchId), tx.update(lbRef, +25 XP)
  * - Nếu đã nhận: chỉ tx.update(matchRef, { reflection }), không cộng XP
  */
 export async function saveReflectionAndRewardInFirestore(
@@ -503,7 +504,8 @@ export async function saveReflectionAndRewardInFirestore(
           currentXP: newXP,
           level: progress.level,
           nextLevelXP: progress.nextLevelXP,
-          title: progress.title
+          title: progress.title,
+          lastReflectionRewardMatchId: matchId
         });
 
         if (lbSnap.exists()) {
@@ -526,7 +528,8 @@ export async function saveReflectionAndRewardInFirestore(
         newXP,
         level: progress.level,
         nextLevelXP: progress.nextLevelXP,
-        title: progress.title
+        title: progress.title,
+        lastReflectionRewardMatchId: claimedReward ? matchId : (userData.lastReflectionRewardMatchId || undefined)
       };
     });
   } catch (error) {
@@ -536,17 +539,22 @@ export async function saveReflectionAndRewardInFirestore(
 }
 
 /**
- * Cập nhật phản tư sau trận đấu vào tài liệu match trên Firestore (Wrapper tương thích)
+ * Cập nhật phản tư sau trận đấu vào tài liệu match trên Firestore (Chỉ cập nhật nội dung phản tư, KHÔNG cấp thưởng XP)
  */
 export async function updateDebateMatchReflectionInFirestore(
   userId: string,
   matchId: string,
   reflection: PostMatchReflection
 ): Promise<boolean> {
+  const matchPath = `users/${userId}/matches/${matchId}`;
   try {
-    await saveReflectionAndRewardInFirestore(userId, matchId, reflection);
+    const matchRef = doc(db, 'users', userId, 'matches', matchId);
+    await updateDoc(matchRef, {
+      reflection
+    });
     return true;
-  } catch {
+  } catch (error) {
+    handleFirestoreError(error, OperationType.UPDATE, matchPath);
     return false;
   }
 }
@@ -981,7 +989,8 @@ export async function resetUserProfileInFirestore(userId: string): Promise<void>
       dailyQuests: { date: today, quests: [] },
       evaluatedFallaciesHistory: [],
       diagnosticTestA: deleteField(),
-      diagnosticTestB: deleteField()
+      diagnosticTestB: deleteField(),
+      lastReflectionRewardMatchId: deleteField()
     });
 
     // 2. Reset tài liệu leaderboard

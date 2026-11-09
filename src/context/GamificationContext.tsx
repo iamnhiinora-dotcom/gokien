@@ -30,7 +30,6 @@ import {
   updateUserSettings,
   recordDebateMatchInFirestore,
   saveReflectionAndRewardInFirestore,
-  updateDebateMatchReflectionInFirestore,
   recordFallacyInFirestore,
   syncUserProgressToFirestore,
   awardXPInFirestore,
@@ -1431,7 +1430,8 @@ export const GamificationProvider: React.FC<{ children: ReactNode }> = ({ childr
             xp: result.newXP,
             level: result.level,
             nextLevelXP: result.nextLevelXP,
-            title: result.title
+            title: result.title,
+            lastReflectionRewardMatchId: matchId
           }));
 
           claimedReflectionMatchIdsRef.current.add(matchId);

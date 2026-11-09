@@ -65,14 +65,39 @@ class FirestoreRulesEngine {
     return true;
   }
 
+  // Đánh giá rule allow list trên match /users/{userId}/matches (Tách biệt get và list)
+  static evaluateMatchListRule(callerUid: string, targetUserId: string): { allowed: boolean; reason?: string } {
+    if (callerUid !== targetUserId) {
+      return { allowed: false, reason: 'Chỉ chủ tài khoản mới được truy vấn danh sách trận đấu.' };
+    }
+    if (!targetUserId || targetUserId.length === 0 || targetUserId.length > 128) {
+      return { allowed: false, reason: 'ID người dùng không hợp lệ.' };
+    }
+    return { allowed: true };
+  }
+
+  // Đánh giá rule allow get trên match /users/{userId}/matches/{matchId}
+  static evaluateMatchGetRule(callerUid: string, targetUserId: string, matchId: string): { allowed: boolean; reason?: string } {
+    if (callerUid !== targetUserId) {
+      return { allowed: false, reason: 'Chỉ chủ tài khoản mới được đọc tài liệu trận đấu.' };
+    }
+    if (!targetUserId || targetUserId.length === 0 || targetUserId.length > 128) {
+      return { allowed: false, reason: 'ID người dùng không hợp lệ.' };
+    }
+    if (!matchId || matchId.length === 0 || matchId.length > 128) {
+      return { allowed: false, reason: 'ID trận đấu không hợp lệ.' };
+    }
+    return { allowed: true };
+  }
+
   // Đánh giá rule allow update trên match /users/{userId}/matches/{matchId}
   static evaluateMatchUpdateRule(
     userId: string,
     matchId: string,
     existingMatch: any,
     incomingMatch: any,
-    existingUserXP: number,
-    projectedUserXP: number
+    existingUser: any,
+    projectedUser: any
   ): { allowed: boolean; reason?: string } {
     if (!existingMatch) {
       return { allowed: false, reason: 'Tài liệu trận đấu không tồn tại.' };
@@ -119,17 +144,20 @@ class FirestoreRulesEngine {
     }
 
     // Kiểm tra tính nguyên tử giữa match và user doc:
-    // Nếu lần đầu nhận thưởng (false/chưa có -> true): XP user phải tăng đúng 25
+    // Nếu lần đầu nhận thưởng (false/chưa có -> true): XP user phải tăng đúng 25 và ghi nhận lastReflectionRewardMatchId == matchId
     const wasClaimed = existingMatch.reflectionRewardClaimed === true;
     const nowClaimed = incomingMatch.reflectionRewardClaimed === true;
 
     if (!wasClaimed && nowClaimed) {
-      if (projectedUserXP !== existingUserXP + 25) {
+      if (projectedUser.xp !== existingUser.xp + 25) {
         return { allowed: false, reason: 'Lần đầu nhận thưởng phản tư phải đi kèm cộng đúng 25 XP trên hồ sơ người dùng.' };
+      }
+      if (projectedUser.lastReflectionRewardMatchId !== matchId) {
+        return { allowed: false, reason: 'Lần đầu nhận thưởng phản tư phải ghi nhận lastReflectionRewardMatchId khớp với matchId.' };
       }
     } else {
       // Nếu đã nhận trước đó hoặc không nhận thưởng: XP user không được thay đổi
-      if (projectedUserXP !== existingUserXP) {
+      if (projectedUser.xp !== existingUser.xp) {
         return { allowed: false, reason: 'Đã nhận thưởng phản tư trước đó, không được cộng thêm XP.' };
       }
     }
@@ -141,8 +169,13 @@ class FirestoreRulesEngine {
   static evaluateUserUpdateBranch7(
     userId: string,
     existingUser: any,
-    incomingUser: any
+    incomingUser: any,
+    existingMatch?: any,
+    incomingMatch?: any
   ): { allowed: boolean; reason?: string } {
+    if (!('lastReflectionRewardMatchId' in incomingUser) || !incomingUser.lastReflectionRewardMatchId) {
+      return { allowed: false, reason: 'Branch 7 yêu cầu cung cấp lastReflectionRewardMatchId hợp lệ.' };
+    }
     if (incomingUser.xp !== existingUser.xp + 25) {
       return { allowed: false, reason: 'Branch 7 yêu cầu xp tăng đúng 25.' };
     }
@@ -155,8 +188,27 @@ class FirestoreRulesEngine {
     if (incomingUser.debatesWon !== existingUser.debatesWon || incomingUser.fallaciesIdentified !== existingUser.fallaciesIdentified) {
       return { allowed: false, reason: 'Branch 7 không cho phép đổi debatesWon hay fallaciesIdentified.' };
     }
+    if ('totalDebates' in existingUser && incomingUser.totalDebates !== existingUser.totalDebates) {
+      return { allowed: false, reason: 'Branch 7 không cho phép đổi totalDebates.' };
+    }
 
-    const allowedKeys = new Set(['xp', 'currentXP', 'level', 'nextLevelXP', 'title']);
+    // Kiểm tra ràng buộc quan hệ liên kết với bản ghi trận đấu
+    if (existingMatch && incomingMatch) {
+      if (existingMatch.userId !== userId) {
+        return { allowed: false, reason: 'Trận đấu không thuộc về người dùng này.' };
+      }
+      if (existingMatch.reflectionRewardClaimed === true) {
+        return { allowed: false, reason: 'Trận đấu này đã nhận thưởng trước đó, không thể nhận lại.' };
+      }
+      if (incomingMatch.reflectionRewardClaimed !== true) {
+        return { allowed: false, reason: 'Transaction phải chuyển reflectionRewardClaimed thành true trên match.' };
+      }
+      if (incomingUser.lastReflectionRewardMatchId !== incomingMatch.id) {
+        return { allowed: false, reason: 'lastReflectionRewardMatchId không khớp với match đang cập nhật.' };
+      }
+    }
+
+    const allowedKeys = new Set(['xp', 'currentXP', 'level', 'nextLevelXP', 'title', 'lastReflectionRewardMatchId']);
     for (const key of Object.keys(incomingUser)) {
       if (JSON.stringify(incomingUser[key]) !== JSON.stringify(existingUser[key])) {
         if (!allowedKeys.has(key)) {
@@ -319,6 +371,16 @@ class MockFirestoreDb {
       reflectionRewardClaimed: true
     };
 
+    const projectedUser = {
+      ...user,
+      xp: newXP,
+      currentXP: newXP,
+      level: progress.level,
+      nextLevelXP: progress.nextLevelXP,
+      title: progress.title,
+      lastReflectionRewardMatchId: claimedReward ? matchId : user.lastReflectionRewardMatchId
+    };
+
     // Kiểm tra Firestore Rules
     if (!this.deployNewRules) {
       // Deployed rules cũ: allow update: if false
@@ -330,12 +392,25 @@ class MockFirestoreDb {
       matchId,
       existingMatch,
       projectedMatch,
-      currentServerXP,
-      newXP
+      user,
+      projectedUser
     );
 
     if (!ruleEval.allowed) {
       throw new Error(`PERMISSION_DENIED: ${ruleEval.reason}`);
+    }
+
+    if (claimedReward) {
+      const userRuleEval = FirestoreRulesEngine.evaluateUserUpdateBranch7(
+        userId,
+        user,
+        projectedUser,
+        existingMatch,
+        projectedMatch
+      );
+      if (!userRuleEval.allowed) {
+        throw new Error(`PERMISSION_DENIED: ${userRuleEval.reason}`);
+      }
     }
 
     // Ghi nguyên tử trong transaction
@@ -347,11 +422,14 @@ class MockFirestoreDb {
       user.level = progress.level;
       user.nextLevelXP = progress.nextLevelXP;
       user.title = progress.title;
+      user.lastReflectionRewardMatchId = matchId;
 
       const lb = this.leaderboard[userId];
-      lb.xp = newXP;
-      lb.level = progress.level;
-      lb.title = progress.title;
+      if (lb) {
+        lb.xp = newXP;
+        lb.level = progress.level;
+        lb.title = progress.title;
+      }
     }
 
     return {
@@ -360,8 +438,19 @@ class MockFirestoreDb {
       newXP,
       level: progress.level,
       nextLevelXP: progress.nextLevelXP,
-      title: progress.title
+      title: progress.title,
+      lastReflectionRewardMatchId: claimedReward ? matchId : user.lastReflectionRewardMatchId
     };
+  }
+
+  // Tải danh sách trận đấu qua Firestore Rules
+  fetchMatches(callerUid: string, targetUserId: string): DebateMatchRecord[] {
+    const evalList = FirestoreRulesEngine.evaluateMatchListRule(callerUid, targetUserId);
+    if (!evalList.allowed) {
+      throw new Error(`PERMISSION_DENIED: ${evalList.reason}`);
+    }
+    const userMatches = this.matches[targetUserId] || {};
+    return Object.values(userMatches);
   }
 }
 
@@ -496,7 +585,8 @@ class AppClientSimulator {
             xp: result.newXP,
             level: result.level,
             nextLevelXP: result.nextLevelXP,
-            title: result.title
+            title: result.title,
+            lastReflectionRewardMatchId: matchId
           };
           this.claimedReflectionMatchIds.add(matchId);
           this.floatingXps.push({
@@ -796,7 +886,21 @@ async function runRegressionSuite() {
       reflectionRewardClaimed: false
     };
 
-    // Test 10.1: Cập nhật hợp lệ kèm cộng 25 XP -> ALLOWED
+    const existingSecUser = {
+      id: 'user_sec',
+      xp: 180,
+      currentXP: 180,
+      level: 1,
+      title: 'Tập sự'
+    };
+    const projectedSecUser = {
+      ...existingSecUser,
+      xp: 205,
+      currentXP: 205,
+      lastReflectionRewardMatchId: 'match_sec_test'
+    };
+
+    // Test 10.1: Cập nhật hợp lệ kèm cộng 25 XP và matchId -> ALLOWED
     const validUpdate = {
       ...existingMatch,
       reflection: {
@@ -810,12 +914,12 @@ async function runRegressionSuite() {
       'match_sec_test',
       existingMatch,
       validUpdate,
-      180,
-      205 // user XP +25
+      existingSecUser,
+      projectedSecUser
     );
     assert(eval1.allowed === true, 'Rules cho phép cập nhật reflection hợp lệ kèm +25 XP');
 
-    // Test 10.2: Cố tình gian lận thay đổi outcome từ defeat thành victory -> BLOCKED
+    // Test 10.2: Cố tình gian lận thay đổi outcome từ victory thành defeat -> BLOCKED
     const hackedOutcome = {
       ...validUpdate,
       outcome: 'defeat'
@@ -825,8 +929,8 @@ async function runRegressionSuite() {
       'match_sec_test',
       existingMatch,
       hackedOutcome,
-      180,
-      205
+      existingSecUser,
+      projectedSecUser
     );
     assert(eval2.allowed === false, 'Rules chặn gian lận thay đổi outcome');
 
@@ -840,19 +944,24 @@ async function runRegressionSuite() {
       'match_sec_test',
       existingMatch,
       hackedXP,
-      180,
-      205
+      existingSecUser,
+      projectedSecUser
     );
     assert(eval3.allowed === false, 'Rules chặn gian lận thay đổi xpEarned');
 
     // Test 10.4: Cố tình gian lận tăng nhiều hơn 25 XP trên user doc -> BLOCKED
+    const hackedUserXP = {
+      ...existingSecUser,
+      xp: 300,
+      lastReflectionRewardMatchId: 'match_sec_test'
+    };
     const eval4 = FirestoreRulesEngine.evaluateMatchUpdateRule(
       'user_sec',
       'match_sec_test',
       existingMatch,
       validUpdate,
-      180,
-      300 // hack +120 XP
+      existingSecUser,
+      hackedUserXP
     );
     assert(eval4.allowed === false, 'Rules chặn gian lận tăng quá 25 XP trên user document');
 
@@ -864,13 +973,13 @@ async function runRegressionSuite() {
       'match_sec_test',
       claimedMatch,
       unclaimAttempt,
-      205,
-      205
+      existingSecUser,
+      existingSecUser
     );
     assert(eval5.allowed === false, 'Rules chặn chuyển reflectionRewardClaimed từ true về false');
 
     // Test 10.6: Kiểm tra Branch 7 trên users/{userId} (Post-Match Reflection Reward)
-    const existingUser = {
+    const existingUserProd = {
       id: 'user_prod_test',
       xp: 390,
       currentXP: 390,
@@ -878,24 +987,57 @@ async function runRegressionSuite() {
       nextLevelXP: 300,
       title: 'Tập sự phản biện',
       debatesWon: 1,
+      totalDebates: 1,
       fallaciesIdentified: 0
     };
     const incomingUserValid = {
-      ...existingUser,
+      ...existingUserProd,
       xp: 415,
       currentXP: 415,
       level: 2,
       nextLevelXP: 700,
-      title: 'Người dò tìm lỗi'
+      title: 'Người dò tìm lỗi',
+      lastReflectionRewardMatchId: 'match_prod_1'
+    };
+    const existingMatchProd = {
+      id: 'match_prod_1',
+      userId: 'user_prod_test',
+      reflectionRewardClaimed: false
+    };
+    const incomingMatchProd = {
+      id: 'match_prod_1',
+      userId: 'user_prod_test',
+      reflectionRewardClaimed: true
     };
     const evalUserBranch7 = FirestoreRulesEngine.evaluateUserUpdateBranch7(
       'user_prod_test',
-      existingUser,
-      incomingUserValid
+      existingUserProd,
+      incomingUserValid,
+      existingMatchProd,
+      incomingMatchProd
     );
-    assert(evalUserBranch7.allowed === true, 'Branch 7 cho phép cập nhật +25 XP, lên Level 2 và danh hiệu mới');
+    assert(evalUserBranch7.allowed === true, 'Branch 7 cho phép cập nhật +25 XP, lên Level 2 và danh hiệu mới khi gắn đúng match');
 
-    // Test 10.7: Kiểm tra Leaderboard update tương ứng
+    // Test 10.7: Kiểm tra Branch 7 CHẶN nếu match đã nhận thưởng trước đó
+    const claimedMatchProd = { ...existingMatchProd, reflectionRewardClaimed: true };
+    const evalUserReuseMatch = FirestoreRulesEngine.evaluateUserUpdateBranch7(
+      'user_prod_test',
+      existingUserProd,
+      incomingUserValid,
+      claimedMatchProd,
+      incomingMatchProd
+    );
+    assert(evalUserReuseMatch.allowed === false, 'Branch 7 CHẶN việc tái sử dụng trận đấu đã nhận thưởng');
+
+    // Test 10.8: Kiểm tra Branch 7 CHẶN nếu tự ý cộng 25 XP mà không có match hợp lệ
+    const evalUserWithoutMatch = FirestoreRulesEngine.evaluateUserUpdateBranch7(
+      'user_prod_test',
+      existingUserProd,
+      { ...incomingUserValid, lastReflectionRewardMatchId: undefined }
+    );
+    assert(evalUserWithoutMatch.allowed === false, 'Branch 7 CHẶN tăng XP độc lập mà không gắn lastReflectionRewardMatchId');
+
+    // Test 10.9: Kiểm tra Leaderboard update tương ứng
     const existingLb = {
       id: 'user_prod_test',
       displayName: 'Học sinh',
@@ -920,11 +1062,31 @@ async function runRegressionSuite() {
     assert(evalLb.allowed === true, 'Leaderboard update hợp lệ với dữ liệu từ reflection transaction');
   }
 
-  // Kịch bản 11: Xác nhận BUG-13 (chống trùng XP kết thúc trận 1v1) vẫn hoạt động hoàn hảo
-  console.log('\n--- Kịch bản 11: Bảo toàn tuyệt đối bản vá BUG-13 ---');
+  // Kịch bản 11: Kiểm tra quyền truy vấn danh sách (Lỗi B - allow list vs allow get)
+  console.log('\n--- Kịch bản 11: Kiểm tra phân tách allow get & allow list trên matches ---');
   {
-    const client = new AppClientSimulator('user_k11', db, 0, 0, 0);
-    const matchId = 'match_k11';
+    // Test 11.1: Chủ tài khoản đọc danh sách trận đấu của chính mình -> ALLOWED
+    const evalListOwner = FirestoreRulesEngine.evaluateMatchListRule('student_123', 'student_123');
+    assert(evalListOwner.allowed === true, 'Chủ tài khoản đọc được danh sách trận của chính mình (allow list)');
+
+    // Test 11.2: Người dùng khác cố tình đọc danh sách trận của học sinh khác -> BLOCKED
+    const evalListHacker = FirestoreRulesEngine.evaluateMatchListRule('stranger_456', 'student_123');
+    assert(evalListHacker.allowed === false, 'Người dùng khác không thể truy vấn danh sách trận của người khác');
+
+    // Test 11.3: Đọc tài liệu trận đấu cụ thể của chính mình -> ALLOWED
+    const evalGetOwner = FirestoreRulesEngine.evaluateMatchGetRule('student_123', 'student_123', 'match_valid_id');
+    assert(evalGetOwner.allowed === true, 'Chủ tài khoản đọc được trận đấu cụ thể bằng get');
+
+    // Test 11.4: Người khác đọc tài liệu trận cụ thể của học sinh khác -> BLOCKED
+    const evalGetHacker = FirestoreRulesEngine.evaluateMatchGetRule('stranger_456', 'student_123', 'match_valid_id');
+    assert(evalGetHacker.allowed === false, 'Người khác không thể đọc trận đấu của người khác');
+  }
+
+  // Kịch bản 12: Xác nhận BUG-13 (chống trùng XP kết thúc trận 1v1) vẫn hoạt động hoàn hảo
+  console.log('\n--- Kịch bản 12: Bảo toàn tuyệt đối bản vá BUG-13 ---');
+  {
+    const client = new AppClientSimulator('user_k12', db, 0, 0, 0);
+    const matchId = 'match_k12';
 
     // Thắng 1 trận 1v1
     await client.recordDebateEnd({ id: matchId, outcome: 'victory', xpEarned: 180 });
@@ -944,9 +1106,10 @@ async function runRegressionSuite() {
     assertEquals(client.profile.currentXP, 205, 'Sau phản tư: Đúng 205 XP (180 + 25)');
     assertEquals(client.profile.totalDebates, 1, 'totalDebates vẫn là 1');
     assertEquals(client.profile.debatesWon, 1, 'debatesWon vẫn là 1');
+    assertEquals(client.profile.lastReflectionRewardMatchId, matchId, 'Hồ sơ lưu đúng lastReflectionRewardMatchId');
   }
 
-  console.log('\n🎉 TOÀN BỘ 11/11 KỊCH BẢN KIỂM THỬ HỒI QUY CHO BUG-16 & BUG-13 ĐÃ VƯỢT QUA 100%! 🎉\n');
+  console.log('\n🎉 TOÀN BỘ 12/12 KỊCH BẢN KIỂM THỬ HỒI QUY CHO BUG-16 & BUG-13 ĐÃ VƯỢT QUA 100%! 🎉\n');
 }
 
 runRegressionSuite().catch(err => {

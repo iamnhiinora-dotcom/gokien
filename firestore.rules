@@ -55,6 +55,7 @@ service cloud.firestore {
         && (!('soundEnabled' in data) || data.soundEnabled is bool)
         && (!('screenShakeEnabled' in data) || data.screenShakeEnabled is bool)
         && (!('lastMatchId' in data) || (data.lastMatchId is string && data.lastMatchId.size() <= 128))
+        && (!('lastReflectionRewardMatchId' in data) || (data.lastReflectionRewardMatchId is string && data.lastReflectionRewardMatchId.size() <= 128))
         && (!('diagnosticTestA' in data) || data.diagnosticTestA is map)
         && (!('diagnosticTestB' in data) || data.diagnosticTestB is map)
         && (!('dailyQuests' in data) || data.dailyQuests is map)
@@ -240,7 +241,8 @@ service cloud.firestore {
               'dailyQuests',
               'evaluatedFallaciesHistory',
               'diagnosticTestA',
-              'diagnosticTestB'
+              'diagnosticTestB',
+              'lastReflectionRewardMatchId'
             ])
           )
           ||
@@ -257,19 +259,30 @@ service cloud.firestore {
             )
           )
           ||
-          // Branch 7: Post-Match Reflection Reward (Học sinh lưu phản tư sau trận đấu được nhận đúng 25 XP)
+          // Branch 7: Post-Match Reflection Reward (Gắn chặt với bản ghi trận đấu trong cùng transaction)
           (
-            incoming().xp == existing().xp + 25
+            'lastReflectionRewardMatchId' in incoming()
+            && isValidId(incoming().lastReflectionRewardMatchId)
+            && incoming().xp == existing().xp + 25
             && (!('currentXP' in incoming()) || incoming().currentXP == existing().currentXP + 25)
             && incoming().level >= existing().level && incoming().level <= 10
             && incoming().debatesWon == existing().debatesWon
             && incoming().fallaciesIdentified == existing().fallaciesIdentified
+            && (!('totalDebates' in existing()) || incoming().totalDebates == existing().totalDebates)
+            && exists(/databases/$(database)/documents/users/$(userId)/matches/$(incoming().lastReflectionRewardMatchId))
+            && get(/databases/$(database)/documents/users/$(userId)/matches/$(incoming().lastReflectionRewardMatchId)).data.userId == userId
+            && (
+              !('reflectionRewardClaimed' in get(/databases/$(database)/documents/users/$(userId)/matches/$(incoming().lastReflectionRewardMatchId)).data)
+              || get(/databases/$(database)/documents/users/$(userId)/matches/$(incoming().lastReflectionRewardMatchId)).data.reflectionRewardClaimed == false
+            )
+            && getAfter(/databases/$(database)/documents/users/$(userId)/matches/$(incoming().lastReflectionRewardMatchId)).data.reflectionRewardClaimed == true
             && incoming().diff(existing()).affectedKeys().hasOnly([
               'xp',
               'currentXP',
               'level',
               'nextLevelXP',
-              'title'
+              'title',
+              'lastReflectionRewardMatchId'
             ])
           )
         );
@@ -278,7 +291,9 @@ service cloud.firestore {
 
       // 3. SUBCOLLECTION: Lịch sử trận đấu của học sinh
       match /matches/{matchId} {
-        allow get, list: if isOwner(userId) && isValidId(userId) && isValidId(matchId);
+        // Tách biệt get (cần matchId hợp lệ) và list (truy vấn collection không mang matchId cụ thể)
+        allow get: if isOwner(userId) && isValidId(userId) && isValidId(matchId);
+        allow list: if isOwner(userId) && isValidId(userId);
 
         allow create: if isOwner(userId)
           && isValidId(userId)
@@ -307,10 +322,11 @@ service cloud.firestore {
             (!('reflectionRewardClaimed' in existing()) || existing().reflectionRewardClaimed == false || incoming().reflectionRewardClaimed == true)
           )
           && (
-            // TH1: Nhận thưởng lần đầu (false/chưa có -> true): Bắt buộc transaction phải kèm theo cộng đúng 25 XP trên user document
+            // TH1: Nhận thưởng lần đầu (false/chưa có -> true): Bắt buộc transaction phải kèm theo cộng đúng 25 XP và ghi nhận lastReflectionRewardMatchId == matchId trên user document
             (
               (!('reflectionRewardClaimed' in existing()) || existing().reflectionRewardClaimed == false)
               && ('reflectionRewardClaimed' in incoming() && incoming().reflectionRewardClaimed == true)
+              && getAfter(/databases/$(database)/documents/users/$(userId)).data.lastReflectionRewardMatchId == matchId
               && getAfter(/databases/$(database)/documents/users/$(userId)).data.xp == get(/databases/$(database)/documents/users/$(userId)).data.xp + 25
             )
             ||
