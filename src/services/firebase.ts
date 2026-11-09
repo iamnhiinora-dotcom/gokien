@@ -466,6 +466,8 @@ export async function saveReflectionAndRewardInFirestore(
         throw new Error('Không tìm thấy hồ sơ người dùng.');
       }
 
+      const lbSnap = await tx.get(lbRef);
+
       const matchData = matchSnap.data();
       const userData = userSnap.data();
 
@@ -504,11 +506,13 @@ export async function saveReflectionAndRewardInFirestore(
           title: progress.title
         });
 
-        tx.update(lbRef, {
-          xp: newXP,
-          level: progress.level,
-          title: progress.title
-        });
+        if (lbSnap.exists()) {
+          tx.update(lbRef, {
+            xp: newXP,
+            level: progress.level,
+            title: progress.title
+          });
+        }
       } else {
         // Đã nhận thưởng trước đó: chỉ cập nhật nội dung reflection, không đổi XP
         tx.update(matchRef, {

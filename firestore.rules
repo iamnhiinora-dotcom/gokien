@@ -256,6 +256,22 @@ service cloud.firestore {
               incoming().diff(existing()).affectedKeys().hasOnly(['dailyQuests', 'lastActiveDate'])
             )
           )
+          ||
+          // Branch 7: Post-Match Reflection Reward (Học sinh lưu phản tư sau trận đấu được nhận đúng 25 XP)
+          (
+            incoming().xp == existing().xp + 25
+            && (!('currentXP' in incoming()) || incoming().currentXP == existing().currentXP + 25)
+            && incoming().level >= existing().level && incoming().level <= 10
+            && incoming().debatesWon == existing().debatesWon
+            && incoming().fallaciesIdentified == existing().fallaciesIdentified
+            && incoming().diff(existing()).affectedKeys().hasOnly([
+              'xp',
+              'currentXP',
+              'level',
+              'nextLevelXP',
+              'title'
+            ])
+          )
         );
 
       allow delete: if false;

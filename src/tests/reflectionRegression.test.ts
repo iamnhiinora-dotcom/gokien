@@ -136,6 +136,64 @@ class FirestoreRulesEngine {
 
     return { allowed: true };
   }
+
+  // Đánh giá rule allow update trên users/{userId} theo Branch 7 (Post-Match Reflection Reward)
+  static evaluateUserUpdateBranch7(
+    userId: string,
+    existingUser: any,
+    incomingUser: any
+  ): { allowed: boolean; reason?: string } {
+    if (incomingUser.xp !== existingUser.xp + 25) {
+      return { allowed: false, reason: 'Branch 7 yêu cầu xp tăng đúng 25.' };
+    }
+    if ('currentXP' in incomingUser && incomingUser.currentXP !== existingUser.currentXP + 25) {
+      return { allowed: false, reason: 'Branch 7 yêu cầu currentXP tăng đúng 25.' };
+    }
+    if (incomingUser.level < existingUser.level || incomingUser.level > 10) {
+      return { allowed: false, reason: 'Branch 7 cấp độ phải từ 1 đến 10 và không giảm.' };
+    }
+    if (incomingUser.debatesWon !== existingUser.debatesWon || incomingUser.fallaciesIdentified !== existingUser.fallaciesIdentified) {
+      return { allowed: false, reason: 'Branch 7 không cho phép đổi debatesWon hay fallaciesIdentified.' };
+    }
+
+    const allowedKeys = new Set(['xp', 'currentXP', 'level', 'nextLevelXP', 'title']);
+    for (const key of Object.keys(incomingUser)) {
+      if (JSON.stringify(incomingUser[key]) !== JSON.stringify(existingUser[key])) {
+        if (!allowedKeys.has(key)) {
+          return { allowed: false, reason: `Branch 7 không cho phép sửa đổi trường ${key}.` };
+        }
+      }
+    }
+
+    return { allowed: true };
+  }
+
+  // Đánh giá rule allow update trên leaderboard/{userId}
+  static evaluateLeaderboardUpdate(
+    userId: string,
+    existingLb: any,
+    incomingLb: any
+  ): { allowed: boolean; reason?: string } {
+    if (incomingLb.id !== existingLb.id) {
+      return { allowed: false, reason: 'Không được thay đổi id trên bảng xếp hạng.' };
+    }
+    if (incomingLb.xp < existingLb.xp) {
+      return { allowed: false, reason: 'XP không được giảm trên bảng xếp hạng.' };
+    }
+
+    const allowedKeys = new Set([
+      'displayName', 'name', 'schoolClass', 'avatarSeed',
+      'level', 'xp', 'title', 'debatesWon', 'fallaciesFound'
+    ]);
+    for (const key of Object.keys(incomingLb)) {
+      if (JSON.stringify(incomingLb[key]) !== JSON.stringify(existingLb[key])) {
+        if (!allowedKeys.has(key)) {
+          return { allowed: false, reason: `Không được thay đổi trường ${key} trên bảng xếp hạng.` };
+        }
+      }
+    }
+    return { allowed: true };
+  }
 }
 
 // --------------------------------------------------------------------------
@@ -810,6 +868,56 @@ async function runRegressionSuite() {
       205
     );
     assert(eval5.allowed === false, 'Rules chặn chuyển reflectionRewardClaimed từ true về false');
+
+    // Test 10.6: Kiểm tra Branch 7 trên users/{userId} (Post-Match Reflection Reward)
+    const existingUser = {
+      id: 'user_prod_test',
+      xp: 390,
+      currentXP: 390,
+      level: 1,
+      nextLevelXP: 300,
+      title: 'Tập sự phản biện',
+      debatesWon: 1,
+      fallaciesIdentified: 0
+    };
+    const incomingUserValid = {
+      ...existingUser,
+      xp: 415,
+      currentXP: 415,
+      level: 2,
+      nextLevelXP: 700,
+      title: 'Người dò tìm lỗi'
+    };
+    const evalUserBranch7 = FirestoreRulesEngine.evaluateUserUpdateBranch7(
+      'user_prod_test',
+      existingUser,
+      incomingUserValid
+    );
+    assert(evalUserBranch7.allowed === true, 'Branch 7 cho phép cập nhật +25 XP, lên Level 2 và danh hiệu mới');
+
+    // Test 10.7: Kiểm tra Leaderboard update tương ứng
+    const existingLb = {
+      id: 'user_prod_test',
+      displayName: 'Học sinh',
+      schoolClass: '11A1',
+      xp: 390,
+      level: 1,
+      title: 'Tập sự phản biện',
+      debatesWon: 1,
+      fallaciesFound: 0
+    };
+    const incomingLbValid = {
+      ...existingLb,
+      xp: 415,
+      level: 2,
+      title: 'Người dò tìm lỗi'
+    };
+    const evalLb = FirestoreRulesEngine.evaluateLeaderboardUpdate(
+      'user_prod_test',
+      existingLb,
+      incomingLbValid
+    );
+    assert(evalLb.allowed === true, 'Leaderboard update hợp lệ với dữ liệu từ reflection transaction');
   }
 
   // Kịch bản 11: Xác nhận BUG-13 (chống trùng XP kết thúc trận 1v1) vẫn hoạt động hoàn hảo
