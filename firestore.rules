@@ -37,6 +37,28 @@ service cloud.firestore {
         : data.xp;
     }
 
+    // ---- Eval-budget helpers (BUG-16) ----
+    // Mỗi get()/getAfter() tốn rất nhiều expression khi doc lớn
+    // (users có dailyQuests...). Truyền map vào helper để chỉ get 1 lần.
+
+    // Match chưa nhận thưởng + thuộc đúng chủ (1 get duy nhất)
+    function matchPre(m, uid) {
+      return m.userId == uid
+        && (!('reflectionRewardClaimed' in m) || m.reflectionRewardClaimed == false);
+    }
+
+    // Điều kiện cộng +25 XP thưởng phản tư (1 get + 1 getAfter trên user doc)
+    function reflectionPayable(pre, post, mid) {
+      return post.xp == canonicalXP(pre) + 25
+        && post.currentXP == post.xp
+        && post.lastReflectionRewardMatchId == mid;
+    }
+
+    // XP không được thay đổi (1 get + 1 getAfter trên user doc)
+    function xpUnchanged(pre, post) {
+      return post.xp == pre.xp && post.currentXP == pre.currentXP;
+    }
+
     // Validation for UserProfile
     function isValidUserProfile(data) {
       return data.id is string && data.id.size() <= 128
@@ -126,6 +148,9 @@ service cloud.firestore {
         && incoming().fallaciesIdentified == 0;
 
       // Action-Based Updates:
+      // NOTE: các nhánh được SẮP XẾP theo chi phí eval — || short-circuit khi TRUE,
+      // nhưng một nhánh ERROR (ví dụ vượt eval budget 1000 expressions) sẽ deny
+      // toàn bộ request. Nhánh 7 (phản tư) đi trước, get/getAfter gộp qua helper.
       // Action 1 (Profile Edit): Cập nhật thông tin cá nhân/cài đặt. XP và số trận thắng không đổi.
       // Action 2 (AI Match Evaluation Reward): Chỉ được cộng XP và thắng trận khi ghi kèm bản ghi trận đấu tương ứng qua batch write (existsAfter).
       // Action 3 (AI Fallacy Evaluation Reward): Chỉ được cộng XP khi ghi nhận tiến trình kèm số lỗi vạch được tăng đúng 1 đơn vị và XP tăng tối đa 150.
@@ -135,6 +160,30 @@ service cloud.firestore {
         && isValidUserProfile(incoming())
         && incoming().id == existing().id
         && (
+          // Branch 7: Post-Match Reflection Reward (BUG-16)
+          // Gắn chặt với bản ghi trận đấu trong cùng transaction.
+          // 1 get + 1 getAfter trên match doc (matchPre + kiểm tra claim).
+          (
+            'lastReflectionRewardMatchId' in incoming()
+            && isValidId(incoming().lastReflectionRewardMatchId)
+            && incoming().xp == canonicalXP(existing()) + 25
+            && incoming().currentXP == incoming().xp
+            && incoming().level >= existing().level && incoming().level <= 10
+            && incoming().debatesWon == existing().debatesWon
+            && incoming().fallaciesIdentified == existing().fallaciesIdentified
+            && (!('totalDebates' in existing()) || incoming().totalDebates == existing().totalDebates)
+            && incoming().diff(existing()).affectedKeys().hasOnly([
+              'xp',
+              'currentXP',
+              'level',
+              'nextLevelXP',
+              'title',
+              'lastReflectionRewardMatchId'
+            ])
+            && matchPre(get(/databases/$(database)/documents/users/$(userId)/matches/$(incoming().lastReflectionRewardMatchId)).data, userId)
+            && getAfter(/databases/$(database)/documents/users/$(userId)/matches/$(incoming().lastReflectionRewardMatchId)).data.reflectionRewardClaimed == true
+          )
+          ||
           // Branch 1: Profile Settings Update (XP không đổi)
           (
             incoming().xp == existing().xp
@@ -152,75 +201,6 @@ service cloud.firestore {
               'lastActiveDate',
               'streakCount',
               'unlockedBadgeIds'
-            ])
-          )
-          ||
-          // Branch 2: Match Result Atomic Batch (Phải kèm theo bản ghi trận đấu)
-          (
-            'lastMatchId' in incoming()
-            && isValidId(incoming().lastMatchId)
-            && existsAfter(/databases/$(database)/documents/users/$(userId)/matches/$(incoming().lastMatchId))
-            && incoming().xp >= existing().xp
-            && incoming().xp <= existing().xp + 350
-            && incoming().diff(existing()).affectedKeys().hasOnly([
-              'xp',
-              'currentXP',
-              'level',
-              'nextLevelXP',
-              'title',
-              'totalDebates',
-              'debatesWon',
-              'unlockedBadgeIds',
-              'lastActiveDate',
-              'streakCount',
-              'lastStreakRewardDate',
-              'lastMatchId'
-            ])
-          )
-          ||
-          // Branch 3: Fallacy Result Reward & Daily Streak (XP tăng tối đa 300 sau khi AI chấm điểm và cộng streak)
-          (
-            incoming().fallaciesIdentified >= existing().fallaciesIdentified
-            && incoming().fallaciesIdentified <= existing().fallaciesIdentified + 1
-            && incoming().xp >= existing().xp
-            && incoming().xp <= existing().xp + 300
-            && incoming().diff(existing()).affectedKeys().hasOnly([
-              'xp',
-              'currentXP',
-              'level',
-              'nextLevelXP',
-              'title',
-              'fallaciesIdentified',
-              'evaluatedFallaciesHistory',
-              'unlockedBadgeIds',
-              'lastActiveDate',
-              'streakCount',
-              'lastStreakRewardDate'
-            ])
-          )
-          ||
-          // Branch 4: Hoạt động học tập (Nhiệm vụ, Điểm danh Streak, Bài test chẩn đoán, Cờ cá ngựa)
-          (
-            incoming().xp >= existing().xp
-            && incoming().xp <= existing().xp + 300
-            && incoming().level >= existing().level && incoming().level <= 10
-            && incoming().debatesWon == existing().debatesWon
-            && incoming().fallaciesIdentified == existing().fallaciesIdentified
-            && incoming().diff(existing()).affectedKeys().hasOnly([
-              'xp',
-              'currentXP',
-              'level',
-              'nextLevelXP',
-              'title',
-              'streakCount',
-              'lastActiveDate',
-              'lastStreakRewardDate',
-              'claimedQuestIds',
-              'lastQuestDate',
-              'dailyQuests',
-              'unlockedBadgeIds',
-              'diagnosticTestA',
-              'diagnosticTestB'
             ])
           )
           ||
@@ -267,31 +247,75 @@ service cloud.firestore {
             )
           )
           ||
-          // Branch 7: Post-Match Reflection Reward (Gắn chặt với bản ghi trận đấu trong cùng transaction)
+          // Branch 3: Fallacy Result Reward & Daily Streak (XP tăng tối đa 300 sau khi AI chấm điểm và cộng streak)
+          // hasOnly ĐI TRƯỚC để short-circuit, tránh eval existsAfter/get không cần thiết
           (
-            'lastReflectionRewardMatchId' in incoming()
-            && isValidId(incoming().lastReflectionRewardMatchId)
-            && incoming().xp == canonicalXP(existing()) + 25
-            && incoming().currentXP == canonicalXP(existing()) + 25
-            && incoming().level >= existing().level && incoming().level <= 10
-            && incoming().debatesWon == existing().debatesWon
-            && incoming().fallaciesIdentified == existing().fallaciesIdentified
-            && (!('totalDebates' in existing()) || incoming().totalDebates == existing().totalDebates)
-            && exists(/databases/$(database)/documents/users/$(userId)/matches/$(incoming().lastReflectionRewardMatchId))
-            && get(/databases/$(database)/documents/users/$(userId)/matches/$(incoming().lastReflectionRewardMatchId)).data.userId == userId
-            && (
-              !('reflectionRewardClaimed' in get(/databases/$(database)/documents/users/$(userId)/matches/$(incoming().lastReflectionRewardMatchId)).data)
-              || get(/databases/$(database)/documents/users/$(userId)/matches/$(incoming().lastReflectionRewardMatchId)).data.reflectionRewardClaimed == false
-            )
-            && getAfter(/databases/$(database)/documents/users/$(userId)/matches/$(incoming().lastReflectionRewardMatchId)).data.reflectionRewardClaimed == true
-            && incoming().diff(existing()).affectedKeys().hasOnly([
+            incoming().diff(existing()).affectedKeys().hasOnly([
               'xp',
               'currentXP',
               'level',
               'nextLevelXP',
               'title',
-              'lastReflectionRewardMatchId'
+              'fallaciesIdentified',
+              'evaluatedFallaciesHistory',
+              'unlockedBadgeIds',
+              'lastActiveDate',
+              'streakCount',
+              'lastStreakRewardDate'
             ])
+            && incoming().fallaciesIdentified >= existing().fallaciesIdentified
+            && incoming().fallaciesIdentified <= existing().fallaciesIdentified + 1
+            && incoming().xp >= existing().xp
+            && incoming().xp <= existing().xp + 300
+          )
+          ||
+          // Branch 4: Hoạt động học tập (Nhiệm vụ, Điểm danh Streak, Bài test chẩn đoán, Cờ cá ngựa)
+          (
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'xp',
+              'currentXP',
+              'level',
+              'nextLevelXP',
+              'title',
+              'streakCount',
+              'lastActiveDate',
+              'lastStreakRewardDate',
+              'claimedQuestIds',
+              'lastQuestDate',
+              'dailyQuests',
+              'unlockedBadgeIds',
+              'diagnosticTestA',
+              'diagnosticTestB'
+            ])
+            && incoming().xp >= existing().xp
+            && incoming().xp <= existing().xp + 300
+            && incoming().level >= existing().level && incoming().level <= 10
+            && incoming().debatesWon == existing().debatesWon
+            && incoming().fallaciesIdentified == existing().fallaciesIdentified
+          )
+          ||
+          // Branch 2: Match Result Atomic Batch (Phải kèm theo bản ghi trận đấu)
+          // existsAfter ĐI SAU CÙNG — chỉ eval khi hasOnly đã pass
+          (
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'xp',
+              'currentXP',
+              'level',
+              'nextLevelXP',
+              'title',
+              'totalDebates',
+              'debatesWon',
+              'unlockedBadgeIds',
+              'lastActiveDate',
+              'streakCount',
+              'lastStreakRewardDate',
+              'lastMatchId'
+            ])
+            && 'lastMatchId' in incoming()
+            && isValidId(incoming().lastMatchId)
+            && incoming().xp >= existing().xp
+            && incoming().xp <= existing().xp + 350
+            && existsAfter(/databases/$(database)/documents/users/$(userId)/matches/$(incoming().lastMatchId))
           )
         );
 
@@ -330,13 +354,16 @@ service cloud.firestore {
             (!('reflectionRewardClaimed' in existing()) || existing().reflectionRewardClaimed == false || incoming().reflectionRewardClaimed == true)
           )
           && (
-            // TH1: Nhận thưởng lần đầu (false/chưa có -> true): Bắt buộc transaction phải kèm theo cộng đúng 25 XP và ghi nhận lastReflectionRewardMatchId == matchId trên user document
+            // TH1: Nhận thưởng lần đầu (false/chưa có -> true): Bắt buộc transaction
+            // phải kèm theo cộng đúng 25 XP và ghi nhận lastReflectionRewardMatchId == matchId.
+            // reflectionPayable = 1 get + 1 getAfter trên user doc (gộp để tránh vượt eval budget)
             (
               (!('reflectionRewardClaimed' in existing()) || existing().reflectionRewardClaimed == false)
               && ('reflectionRewardClaimed' in incoming() && incoming().reflectionRewardClaimed == true)
-              && getAfter(/databases/$(database)/documents/users/$(userId)).data.lastReflectionRewardMatchId == matchId
-              && getAfter(/databases/$(database)/documents/users/$(userId)).data.xp == canonicalXP(get(/databases/$(database)/documents/users/$(userId)).data) + 25
-              && getAfter(/databases/$(database)/documents/users/$(userId)).data.currentXP == canonicalXP(get(/databases/$(database)/documents/users/$(userId)).data) + 25
+              && reflectionPayable(
+                get(/databases/$(database)/documents/users/$(userId)).data,
+                getAfter(/databases/$(database)/documents/users/$(userId)).data,
+                matchId)
             )
             ||
             // TH2: Đã nhận thưởng rồi hoặc không nhận thưởng (chỉ cập nhật nội dung phản tư): XP không được thay đổi
@@ -345,7 +372,9 @@ service cloud.firestore {
                 ('reflectionRewardClaimed' in existing() && existing().reflectionRewardClaimed == true && incoming().reflectionRewardClaimed == true)
                 || (!('reflectionRewardClaimed' in incoming()) || incoming().reflectionRewardClaimed == false)
               )
-              && getAfter(/databases/$(database)/documents/users/$(userId)).data.xp == get(/databases/$(database)/documents/users/$(userId)).data.xp
+              && xpUnchanged(
+                get(/databases/$(database)/documents/users/$(userId)).data,
+                getAfter(/databases/$(database)/documents/users/$(userId)).data)
             )
           );
       }
