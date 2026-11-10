@@ -29,6 +29,14 @@ service cloud.firestore {
       return resource.data;
     }
 
+    // XP chuẩn trước khi nhận thưởng phản tư:
+    // lấy giá trị lớn hơn giữa xp và currentXP.
+    function canonicalXP(data) {
+      return ('currentXP' in data && data.currentXP > data.xp)
+        ? data.currentXP
+        : data.xp;
+    }
+
     // Validation for UserProfile
     function isValidUserProfile(data) {
       return data.id is string && data.id.size() <= 128
@@ -263,8 +271,8 @@ service cloud.firestore {
           (
             'lastReflectionRewardMatchId' in incoming()
             && isValidId(incoming().lastReflectionRewardMatchId)
-            && incoming().xp == existing().xp + 25
-            && (!('currentXP' in incoming()) || incoming().currentXP == existing().currentXP + 25)
+            && incoming().xp == canonicalXP(existing()) + 25
+            && incoming().currentXP == canonicalXP(existing()) + 25
             && incoming().level >= existing().level && incoming().level <= 10
             && incoming().debatesWon == existing().debatesWon
             && incoming().fallaciesIdentified == existing().fallaciesIdentified
@@ -327,7 +335,8 @@ service cloud.firestore {
               (!('reflectionRewardClaimed' in existing()) || existing().reflectionRewardClaimed == false)
               && ('reflectionRewardClaimed' in incoming() && incoming().reflectionRewardClaimed == true)
               && getAfter(/databases/$(database)/documents/users/$(userId)).data.lastReflectionRewardMatchId == matchId
-              && getAfter(/databases/$(database)/documents/users/$(userId)).data.xp == get(/databases/$(database)/documents/users/$(userId)).data.xp + 25
+              && getAfter(/databases/$(database)/documents/users/$(userId)).data.xp == canonicalXP(get(/databases/$(database)/documents/users/$(userId)).data) + 25
+              && getAfter(/databases/$(database)/documents/users/$(userId)).data.currentXP == canonicalXP(get(/databases/$(database)/documents/users/$(userId)).data) + 25
             )
             ||
             // TH2: Đã nhận thưởng rồi hoặc không nhận thưởng (chỉ cập nhật nội dung phản tư): XP không được thay đổi
